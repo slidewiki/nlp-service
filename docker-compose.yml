@@ -1,0 +1,10 @@
+nlpservice:
+  image: slidewiki/nlpservice
+  restart: on-failure:5
+  expose:
+    - "80"
+  environment:
+    - APPLICATION_PORT=80
+    - VIRTUAL_HOST=nlpservice.experimental.slidewiki.org
+    - LETSENCRYPT_HOST=nlpservice.experimental.slidewiki.org
+    - LETSENCRYPT_EMAIL=meissner@informatik.uni-leipzig.de
