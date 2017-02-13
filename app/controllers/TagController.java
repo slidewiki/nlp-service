@@ -18,7 +18,7 @@ import services.nlp.ITagger;
 import services.nlp.NlpTag;
 
 
-@Api(value = "/getTag")
+@Api(value = "/getTags")
 //@javax.ws.rs.Path
 public class TagController extends Controller{
     

@@ -1,6 +1,5 @@
 package controllers;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -16,11 +15,9 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import services.nlp.ITokenizer;
-import services.nlp.NlpTag;
 
 
 @Api(value = "/nlp")
-//@javax.ws.rs.Path
 public class NLPController extends Controller{
     
 	private static String defaultLanguageToUseIfLanguageNotAvailale = "en";
@@ -31,10 +28,11 @@ public class NLPController extends Controller{
     public NLPController(Map<String,ITokenizer> tokenizerMap) {
        this.tokenizerMap = tokenizerMap;
     }
-
+    
+    @javax.ws.rs.Path(value = "/tokenize")
     @ApiOperation(value = "returns tokens for given input", notes = "tokens are calculated for the given input")
-    public Result getTag(
-    		@ApiParam(value = "Input text the tags should be calculated for") String inputText, 
+    public Result tokenize(
+    		@ApiParam(value = "input text") String inputText, 
     		@ApiParam(value = "language") String language) {
     	
     	ITokenizer tokenizerToUse;
@@ -57,14 +55,4 @@ public class NLPController extends Controller{
        
     }
     
-//    @BodyParser.Of(BodyParser.Json.class)
-//    public Result sayHello() {
-//        JsonNode json = request().body().asJson();
-//        String name = json.findPath("name").textValue();
-//        if(name == null) {
-//            return badRequest("Missing parameter [name]");
-//        } else {
-//            return ok("Hello " + name);
-//        }
-//    }
 }

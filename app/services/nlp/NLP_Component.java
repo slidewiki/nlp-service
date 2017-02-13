@@ -13,26 +13,15 @@ public class NLP_Component implements ITagger{
 
     private ITokenizer tokenizer;
     private Map<String,INER> nerMap;
-//    private ITagResultSelector tagresultSelector;
+//  private ITagResultSelector tagresultSelector; // maybe implement in future
     
-//    @Inject
- //   public NLP_Component(ITokenizerProvider tokenizerProvider, List<INER> nerList, ITagResultSelector tagresultSelector){
-        
-   //     this.tokenizerProvider = tokenizerProvider;
-     //   this.nerList = nerList;
-        //this.tagresultSelector = tagresultSelector;
-
-        
-   // }
     
     @Inject
     public NLP_Component(ITokenizer tokenizer, Map<String,INER> nerMap){
         
         this.tokenizer = tokenizer;
         this.nerMap = nerMap;
-        //this.tagresultSelector = tagresultSelector;
-
-        
+       
     }
     
     @Override
