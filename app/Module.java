@@ -5,9 +5,12 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 import play.Configuration;
+import play.Logger;
+import services.nlp.ILanguageDetector;
 import services.nlp.INER;
 import services.nlp.ITagger;
 import services.nlp.ITokenizer;
+import services.nlp.LanguageDetector_optimaize;
 import services.nlp.NER_OpenNLP;
 import services.nlp.NLP_Component;
 import services.nlp.Tokenizer_OpenNLP;
@@ -30,7 +33,8 @@ public class Module extends AbstractModule {
         //bind(ITagger.class).to(Tokenizer_OpenNLP.class);
         bind(ITokenizer.class).to(Tokenizer_OpenNLP.class);
         bind(ITagger.class).to(NLP_Component.class);
-    
+        bind(ILanguageDetector.class).to(LanguageDetector_optimaize.class);
+
     }
 
 
@@ -42,10 +46,11 @@ public class Module extends AbstractModule {
         return tokenizerOpenNLP;
     }
     
-     @Provides
+    @Provides
     public Map<String,INER> provideNERMap(Configuration configuration) {
         
-        System.out.println("calling NER map provider");
+        Logger.info("calling NER map provider");
+
         Map<String,INER> map = new HashMap<>();
         
         // TODO: make configurable
@@ -59,8 +64,7 @@ public class Module extends AbstractModule {
         map.put("openNLP-nl-organisation", new NER_OpenNLP("resources/opennlp/nl-ner-organization.bin"));
         map.put("openNLP-nl-location", new NER_OpenNLP("resources/opennlp/nl-ner-location.bin"));
 
-        
-        System.out.println("\t ner map size " + map.size());
+        Logger.info("NER map loaded with size of " + map.size());
 
         return map;
     }
@@ -68,7 +72,7 @@ public class Module extends AbstractModule {
      @Provides
      public Map<String,ITokenizer> provideTokenizerMap(Configuration configuration) {
          
-         System.out.println("calling tokenizer map provider");
+    	 Logger.info("calling tokenizer map provider");
          Map<String,ITokenizer> map = new HashMap<>();
          
          // TODO: make configurable
@@ -76,7 +80,7 @@ public class Module extends AbstractModule {
          map.put("de", new Tokenizer_OpenNLP("resources/opennlp/de-token.bin"));
   
          
-         System.out.println("\t token map size " + map.size());
+         Logger.info("token map loaded with size " + map.size());
 
          return map;
      }

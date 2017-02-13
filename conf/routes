@@ -8,8 +8,9 @@ GET     /docs/*file         controllers.Assets.at(path="/public/swagger-ui",file
 
 
 # An example controller showing how to use dependency injection
-GET     /getTag/:input               controllers.TagController.getTag(input: String)
-#GET     /nlp/:input               controllers.NLPController.getTag(input: String, lang: String)
+GET     /getTags/:input           controllers.TagController.getTag(input: String)
+GET     /nlp/detectLanguage/:input         controllers.LanguageDetectionController.detectLanguage(input: String)
+GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(input: String, lang: String)
 
 # An example controller showing how to use dependency injection
 #POST     /sayHello               controllers.TagController.sayHello
