@@ -1,5 +1,8 @@
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -8,11 +11,15 @@ import play.Configuration;
 import play.Logger;
 import services.nlp.ILanguageDetector;
 import services.nlp.INER;
+import services.nlp.INERLanguageDependent;
 import services.nlp.ITagger;
 import services.nlp.ITokenizer;
+import services.nlp.ITokenizerLanguageDependent;
 import services.nlp.LanguageDetector_optimaize;
+import services.nlp.NERLanguageDependentViaMap;
 import services.nlp.NER_OpenNLP;
-import services.nlp.NLP_Component;
+import services.nlp.TaggerComponent;
+import services.nlp.TokenizerLanguageDependentViaMap;
 import services.nlp.Tokenizer_OpenNLP;
 
 /**
@@ -30,59 +37,58 @@ public class Module extends AbstractModule {
     @Override
     public void configure() {
         
-        //bind(ITagger.class).to(Tokenizer_OpenNLP.class);
-        bind(ITokenizer.class).to(Tokenizer_OpenNLP.class);
-        bind(ITagger.class).to(NLP_Component.class);
         bind(ILanguageDetector.class).to(LanguageDetector_optimaize.class);
+        bind(ITokenizerLanguageDependent.class).to(TokenizerLanguageDependentViaMap.class);
+//        bind(ITokenizer.class).to(Tokenizer_OpenNLP.class);
+        bind(INERLanguageDependent.class).to(NERLanguageDependentViaMap.class);
+
+       bind(ITagger.class).to(TaggerComponent.class);
 
     }
-
 
     @Provides
-    public Tokenizer_OpenNLP provideTokenizerOpenNLP(Configuration configuration) {
+    public TokenizerLanguageDependentViaMap provideTokenizerLanguageDependentViaMap(Configuration configuration) {
         
-        String filepathModel = configuration.getString("tokenizer.opennlp.model.filepath");
-        Tokenizer_OpenNLP tokenizerOpenNLP= new Tokenizer_OpenNLP(filepathModel);
-        return tokenizerOpenNLP;
-    }
-    
-    @Provides
-    public Map<String,INER> provideNERMap(Configuration configuration) {
-        
-        Logger.info("calling NER map provider");
-
-        Map<String,INER> map = new HashMap<>();
-        
-        // TODO: make configurable
-        map.put("openNLP-en-person", new NER_OpenNLP("resources/opennlp/en-ner-person.bin"));
-        map.put("openNLP-en-organisation", new NER_OpenNLP("resources/opennlp/en-ner-organization.bin"));
-        map.put("openNLP-en-location", new NER_OpenNLP("resources/opennlp/en-ner-location.bin"));
-        map.put("openNLP-es-person", new NER_OpenNLP("resources/opennlp/es-ner-person.bin"));
-        map.put("openNLP-es-organisation", new NER_OpenNLP("resources/opennlp/es-ner-organization.bin"));
-        map.put("openNLP-es-location", new NER_OpenNLP("resources/opennlp/es-ner-location.bin"));
-        map.put("openNLP-nl-person", new NER_OpenNLP("resources/opennlp/nl-ner-person.bin"));
-        map.put("openNLP-nl-organisation", new NER_OpenNLP("resources/opennlp/nl-ner-organization.bin"));
-        map.put("openNLP-nl-location", new NER_OpenNLP("resources/opennlp/nl-ner-location.bin"));
-
-        Logger.info("NER map loaded with size of " + map.size());
-
-        return map;
-    }
-    
-     @Provides
-     public Map<String,ITokenizer> provideTokenizerMap(Configuration configuration) {
-         
-    	 Logger.info("calling tokenizer map provider");
-         Map<String,ITokenizer> map = new HashMap<>();
-         
-         // TODO: make configurable
-         map.put("en", new Tokenizer_OpenNLP("resources/opennlp/en-token.bin"));
-         map.put("de", new Tokenizer_OpenNLP("resources/opennlp/de-token.bin"));
-  
-         
-         Logger.info("token map loaded with size " + map.size());
-
-         return map;
+    	String defaultLanguageToUseIfGivenLanguageNotAvailable = configuration.getString("tokenizer.defaultLanguageToUseIfGivenLanguageNotAvailable");
+    	
+    	Map<String,ITokenizer> tokenizerMap = new HashMap<>();
+    	// openNLP
+    	List<String> tokenizerModelFilepathsOpenNLP = configuration.getStringList("tokenizer.opennlp.model.filepaths");
+    	for (String tokenizerModelFilepath : tokenizerModelFilepathsOpenNLP) {
+			String modelFullName = tokenizerModelFilepath.substring(tokenizerModelFilepath.lastIndexOf("/")+1);
+    		String language = modelFullName.substring(0,2);
+    		Logger.info("loading tokenizer model for language \"" + language +"\"");
+			tokenizerMap.put(language, new Tokenizer_OpenNLP(tokenizerModelFilepath));
+		}
+    	return new TokenizerLanguageDependentViaMap(tokenizerMap, defaultLanguageToUseIfGivenLanguageNotAvailable);
      }
 
+    
+    @Provides
+    public NERLanguageDependentViaMap provideNERLanguageDependentViaMap(Configuration configuration){
+    	    	
+    	String defaultLanguageToUseIfGivenLanguageNotAvailable = configuration.getString("NER.defaultLanguageToUseIfGivenLanguageNotAvailable");
+    	boolean useAllNERMethodsInMapRegardlessGivenLanguage = configuration.getBoolean("NER.useAllGivenNERModelsRegardlessLanguage");
+
+    	
+    	Configuration configOpenNLP = configuration.getConfig("NER.opennlp.model.filepaths");
+    	Map<String,Set<INER>> mapLanguageToNERs = new HashMap<>();
+    	Set<String> languageKeyNames = configOpenNLP.keys();
+    	for (String languageKeyName : languageKeyNames) {
+    		Logger.info("loading NER models for language \"" + languageKeyName +"\"");
+    		Set<String> modelPaths = new HashSet<String>(configOpenNLP.getStringList(languageKeyName));
+    		Set<INER> nerSet = new HashSet<>();
+    		for (String modelPath : modelPaths) {
+				String modelName = modelPath.substring(modelPath.lastIndexOf("/")+1, modelPath.lastIndexOf("."));
+	    		String sourceNameToUse = "NER_OPENNLP_" + modelName;
+				Logger.info("loading model \"" + modelName +"\"");
+				INER ner = new NER_OpenNLP(modelPath, sourceNameToUse);
+				nerSet.add(ner);
+    		}
+    		mapLanguageToNERs.put(languageKeyName, nerSet);
+		}
+    	
+    	return new NERLanguageDependentViaMap(mapLanguageToNERs, defaultLanguageToUseIfGivenLanguageNotAvailable, useAllNERMethodsInMapRegardlessGivenLanguage);
+    }
+    
 }

@@ -4,28 +4,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import opennlp.tools.namefind.NameFinderME;
 import opennlp.tools.namefind.TokenNameFinderModel;
-import opennlp.tools.util.Span;
-import play.libs.Json; 
+import opennlp.tools.util.Span; 
 
 public class NER_OpenNLP implements INER{
 
     private NameFinderME nameFinder;
-   
- //   @Inject
-   // public NER_OpenNLP(Configuration configuration){
-     //   String filepathModel = configuration.getString("NER.opennlp.model.filepath");
-       // loadModelFromFile(filepathModel);
-        //
- //   }
+    private String name;
+     
     
-    
-    public NER_OpenNLP(String filepathModel){
+    public NER_OpenNLP(String filepathModel, String name){
        
+    	this.name = name;
         loadModelFromFile(filepathModel);
         
     }
@@ -105,6 +96,12 @@ public class NER_OpenNLP implements INER{
         }
         return result;
     }
+
+	@Override
+	public String getName() {
+		
+		return this.name;
+	}
 
 	
 }

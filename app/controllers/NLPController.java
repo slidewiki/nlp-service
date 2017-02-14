@@ -1,11 +1,7 @@
 package controllers;
 
-import java.util.Map;
-
 import javax.inject.Inject;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.swagger.annotations.Api;
@@ -14,45 +10,64 @@ import io.swagger.annotations.ApiParam;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import services.nlp.ITokenizer;
+import services.nlp.ILanguageDetector;
+import services.nlp.INERLanguageDependent;
+import services.nlp.ITokenizerLanguageDependent;
+import services.nlp.NLPComponent;
 
 
 @Api(value = "/nlp")
 public class NLPController extends Controller{
     
-	private static String defaultLanguageToUseIfLanguageNotAvailale = "en";
-    private Map<String,ITokenizer> tokenizerMap;
+    private NLPComponent nlpComponent;
 
     
     @Inject
-    public NLPController(Map<String,ITokenizer> tokenizerMap) {
-       this.tokenizerMap = tokenizerMap;
-    }
-    
-    @javax.ws.rs.Path(value = "/tokenize")
+    public NLPController(ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
+			INERLanguageDependent ner) {
+		super();
+		this.nlpComponent = new NLPComponent(languageDetector, tokenizer, ner);
+	}
+
+
+
+	@javax.ws.rs.Path(value = "/tokenize")
     @ApiOperation(value = "returns tokens for given input", notes = "tokens are calculated for the given input")
     public Result tokenize(
     		@ApiParam(value = "input text") String inputText, 
     		@ApiParam(value = "language") String language) {
     	
-    	ITokenizer tokenizerToUse;
-    	if(this.tokenizerMap.containsKey(language)){
-    		tokenizerToUse = tokenizerMap.get(language);
-    	}else{
-    		tokenizerToUse = tokenizerMap.get(defaultLanguageToUseIfLanguageNotAvailale);
-    	}
+		ObjectNode result = Json.newObject();
+		result = nlpComponent.tokenize(inputText, language, result);
     	
-    	String[] tokens = tokenizerToUse.tokenize(inputText);
-    	ArrayNode jsonArray = Json.newArray();
-    	for (String token : tokens) {		
-    		JsonNode node = Json.toJson(token);
-        	jsonArray.add(node);
-		}
-    	
-    	ObjectNode result = Json.newObject();
-        result.set("tokens", jsonArray);
         return ok(result);
        
     }
+    
+    
+    @javax.ws.rs.Path(value = "/language")
+    @ApiOperation(value = "returns language detection result for given input", notes = "language detection performed for given input")
+    public Result detectLanguage(
+    		@ApiParam(value = "input text") String inputText) {
+    	
+    	ObjectNode result = Json.newObject();
+		result = nlpComponent.detectLanguage(inputText, result);
+    	
+        return ok(result);
+       
+    }
+    
+    @javax.ws.rs.Path(value = "/nlp")
+    @ApiOperation(value = "performs different available nlp steps", notes = "different nlp steps performed")
+    public Result performNLP(
+    		@ApiParam(value = "input text") String inputText) {
+    	
+    	ObjectNode result = Json.newObject();
+		result = nlpComponent.performNLP(inputText, result);
+    	
+        return ok(result);
+       
+    }
+
     
 }

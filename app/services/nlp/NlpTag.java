@@ -22,9 +22,9 @@ public class NlpTag {
 		this.probability = probability;
 		this.link = link;
 	}
-	
-	
-	
+
+
+
 	public NlpTag(Span span, String[] tokens, String sourceName){
 		this.name = NER_OpenNLP.getTokenStringFromSpan(span, tokens);
 		this.type = span.getType();
@@ -89,6 +89,15 @@ public class NlpTag {
 	}
 	
 	
-	
+	public String getLink() {
+		return link;
+	}
+
+
+
+	public void setLink(String link) {
+		this.link = link;
+	}
+
 
 }

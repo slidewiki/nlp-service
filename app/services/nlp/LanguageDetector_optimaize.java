@@ -46,7 +46,9 @@ public class LanguageDetector_optimaize implements ILanguageDetector {
 
 		TextObject textObject = textObjectFactory.forText(text);
 		Optional<LdLocale> lang = languageDetector.detect(textObject);
-		
+		if(lang.equals(Optional.absent())){
+			return ILanguageDetector.valueForUnknownLanguage;
+		}
 		return lang.get().getLanguage();
 	}
 

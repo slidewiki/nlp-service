@@ -11,9 +11,9 @@ GET     /docs/*file         controllers.Assets.at(path="/public/swagger-ui",file
 GET     /getTags/:input           controllers.TagController.getTag(input: String)
 GET     /nlp/detectLanguage/:input         controllers.LanguageDetectionController.detectLanguage(input: String)
 GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(input: String, lang: String)
+GET     /nlp/nlp/:input              controllers.NLPController.performNLP(input: String)
 
-# An example controller showing how to use dependency injection
-#POST     /sayHello               controllers.TagController.sayHello
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
