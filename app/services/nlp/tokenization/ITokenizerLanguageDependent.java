@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.tokenization;
 
 public interface ITokenizerLanguageDependent {
 	

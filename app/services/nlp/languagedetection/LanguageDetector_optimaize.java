@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.languagedetection;
 
 import java.io.IOException;
 import java.util.List;

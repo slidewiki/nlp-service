@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.ner;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import opennlp.tools.util.Span;
+import services.nlp.NlpTag;
 
 public class NERLanguageDependentViaMap implements INERLanguageDependent {
 

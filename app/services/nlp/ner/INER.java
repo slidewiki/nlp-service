@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.ner;
 
 import opennlp.tools.util.Span; 
 

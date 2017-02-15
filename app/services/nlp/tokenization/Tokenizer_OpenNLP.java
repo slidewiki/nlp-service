@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.tokenization;
 
 import java.io.FileInputStream;
 import java.io.IOException;
