@@ -49,6 +49,22 @@ public class DocumentFrequencyProviderViaMap implements IDocFrequencyProvider, S
 		}		
 	}
 	
+	public void removeDocument(Set<String> termtypesOfDoc){
+		this.numberOfDocs--;
+		for (String term : termtypesOfDoc) {
+			if(this.mapTermToDocFrequencies.containsKey(term)){
+				Integer valueInMap = mapTermToDocFrequencies.get(term);
+				if(valueInMap.equals(new Integer(1))){
+					mapTermToDocFrequencies.remove(term);
+				}else{
+					this.mapTermToDocFrequencies.put(term, new Integer(valueInMap-1));
+				}
+			}else{
+				this.mapTermToDocFrequencies.put(term, new Integer(1));
+			}
+		}		
+	}
+	
 	@Override
 	public Integer getDocFrequency(String term) {
 		if(this.mapTermToDocFrequencies.containsKey(term)){
