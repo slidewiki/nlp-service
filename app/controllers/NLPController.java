@@ -10,10 +10,10 @@ import io.swagger.annotations.ApiParam;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
-import services.nlp.ILanguageDetector;
-import services.nlp.INERLanguageDependent;
-import services.nlp.ITokenizerLanguageDependent;
 import services.nlp.NLPComponent;
+import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tokenization.ITokenizerLanguageDependent;
 
 
 @Api(value = "/nlp")

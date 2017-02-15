@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import opennlp.tools.util.Span;
+import services.nlp.ner.NER_OpenNLP;
 
 public class NlpTag {
 	

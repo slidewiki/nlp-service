@@ -4,6 +4,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tokenization.ITokenizerLanguageDependent;
+
 public class TaggerComponent implements ITagger{
 
 	private ILanguageDetector languageDetector;

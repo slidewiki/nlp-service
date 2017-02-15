@@ -8,6 +8,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
+import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tokenization.ITokenizerLanguageDependent;
 
 public class NLPComponent implements INLPComponent{
 	

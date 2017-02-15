@@ -9,18 +9,18 @@ import com.google.inject.Provides;
 
 import play.Configuration;
 import play.Logger;
-import services.nlp.ILanguageDetector;
-import services.nlp.INER;
-import services.nlp.INERLanguageDependent;
 import services.nlp.ITagger;
-import services.nlp.ITokenizer;
-import services.nlp.ITokenizerLanguageDependent;
-import services.nlp.LanguageDetector_optimaize;
-import services.nlp.NERLanguageDependentViaMap;
-import services.nlp.NER_OpenNLP;
 import services.nlp.TaggerComponent;
-import services.nlp.TokenizerLanguageDependentViaMap;
-import services.nlp.Tokenizer_OpenNLP;
+import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.languagedetection.LanguageDetector_optimaize;
+import services.nlp.ner.INER;
+import services.nlp.ner.INERLanguageDependent;
+import services.nlp.ner.NERLanguageDependentViaMap;
+import services.nlp.ner.NER_OpenNLP;
+import services.nlp.tokenization.ITokenizer;
+import services.nlp.tokenization.ITokenizerLanguageDependent;
+import services.nlp.tokenization.TokenizerLanguageDependentViaMap;
+import services.nlp.tokenization.Tokenizer_OpenNLP;
 
 /**
  * This class is a Guice module that tells Guice how to bind several
