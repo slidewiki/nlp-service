@@ -1,34 +1,44 @@
 package services.nlp;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
+import services.util.Sorter;
 
 public class NLPComponent implements INLPComponent{
 	
 	public String propertyNameLanguage = "detectedLanguage";
 	public String propertyNameTokens = "tokens";
 	public String propertyNameNER = "NER";
+	public String propertyNameTFIDF = "TFIDF";
+	public int maxEntriesForTFIDFResult = 10;
 
 	private ILanguageDetector languageDetector;
 	private ITokenizerLanguageDependent tokenizer;
     private INERLanguageDependent ner;
+    private TFIDF tfidf;
+    private boolean tfidfCalculationWithToLowerCase = true;
 
 	@Inject
 	public NLPComponent(ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
-			INERLanguageDependent ner) {
+			INERLanguageDependent ner, TFIDF tfidf) {
 		super();
 		this.languageDetector = languageDetector;
 		this.tokenizer = tokenizer;
 		this.ner = ner;
+		this.tfidf = tfidf;
 	}
 	
 	public ObjectNode detectLanguage(String input, ObjectNode node){
@@ -50,6 +60,14 @@ public class NLPComponent implements INLPComponent{
     	return node;
 	}
 	
+	public ObjectNode tfidf(String[] tokens, ObjectNode node){
+		Map<String,Double> tfidf = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase);
+    	tfidf = Sorter.sortByValue(tfidf, true);
+		JsonNode tfidfNode = Json.toJson(tfidf);
+		node.set(propertyNameTFIDF, tfidfNode);
+		return node;
+	}
+	
 	public ObjectNode performNLP(String input, ObjectNode node){
 		
 		String detectedLanguage = this.languageDetector.getLanguage(input);	
@@ -63,6 +81,25 @@ public class NLPComponent implements INLPComponent{
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(propertyNameNER, nerNode);
     	
+    	// TFIDF all token tyoes (regardless NER)
+    	Map<String,Double> tfidfTypes = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase);
+    	List<Entry<String,Double>> entries = Sorter.sortByValueAndReturnAsList(tfidfTypes, true);
+     	
+		// output as array for top x entries
+		ArrayNode arrayNode = Json.newArray();
+		int countEntries = 0;
+		for (Entry<String,Double> entry : entries) {
+			countEntries++;
+			if(countEntries>maxEntriesForTFIDFResult){
+				break;
+			}
+			ObjectNode singleNode = Json.newObject();
+			singleNode.put("term", entry.getKey());
+			singleNode.put("tfidf", entry.getValue());
+			arrayNode.add(singleNode);
+		}
+		node.set(propertyNameTFIDF, arrayNode);
+		
     	return node;
 	}
 

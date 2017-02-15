@@ -25,3 +25,5 @@ server.pid
 .sbtserver
 .externalToolBuilders
 /project/project
+
+app/execplayground/
