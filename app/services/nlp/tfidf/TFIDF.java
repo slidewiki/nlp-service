@@ -9,13 +9,6 @@ import services.util.Sorter;
 
 public class TFIDF {
 	
-	private IDocFrequencyProvider docFrequencyProvider;
-	
-	
-	public TFIDF(IDocFrequencyProvider docFrequencyProvider) {
-
-		this.docFrequencyProvider = docFrequencyProvider;
-	}
 
 	public static double calcTFIDF(Integer frequencyOfTermInDoc, double frequencyOfMostFrequentTermInDoc, Integer numberOfDocsContainingTerm, Integer numberOfAllDocuments){
 		double tf = calcTermFrequency_Augmented(frequencyOfTermInDoc, frequencyOfMostFrequentTermInDoc);
@@ -23,18 +16,26 @@ public class TFIDF {
 		return tf * idf;
 	}
 	
-	public Map<String,Double> getTFIDFValues(String[] tokens, boolean toLowerCase){
+	/**
+	 * Convenience method getting tfidf for an array of tokens and dependent on language
+	 * @param tokens
+	 * @param toLowerCase
+	 * @param language
+	 * @param docFrequencyProvider
+	 * @return
+	 */
+	public static Map<String,Double> getTFIDFValues(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider){
 		
 		Map<String,Double> tfidfResult = new HashMap<>();
 		Map<String,Integer> rawTermFrequencies = getRawTermFrequencies(tokens, toLowerCase);
 
-		int numberOfAllDocuments = this.docFrequencyProvider.getNumberOfAllDocs();
+		int numberOfAllDocuments = docFrequencyProvider.getNumberOfAllDocs(language);
 		int frequencyOfMostFrequentTermInDoc = Sorter.sortByValueAndReturnAsList(rawTermFrequencies, true).get(0).getValue();
 		Set<String> terms = rawTermFrequencies.keySet();
 		for (String term : terms) {
 			
 			Integer frequencyOfTermInDoc = rawTermFrequencies.get(term);
-			Integer numberOfDocsContainingTerm = docFrequencyProvider.getDocFrequency(term);
+			Integer numberOfDocsContainingTerm = docFrequencyProvider.getDocFrequency(term, language);
 			double tfIdfCurrentTerm = calcTFIDF(frequencyOfTermInDoc, frequencyOfMostFrequentTermInDoc, numberOfDocsContainingTerm, numberOfAllDocuments);
 			tfidfResult.put(term, new Double(tfIdfCurrentTerm));
 		}
@@ -44,7 +45,7 @@ public class TFIDF {
 	}
 	
 	
-	private Map<String,Integer> getRawTermFrequencies(String[] tokens, boolean toLowerCase){
+	private static Map<String,Integer> getRawTermFrequencies(String[] tokens, boolean toLowerCase){
 		Map<String,Integer> countingMap = new HashMap<>();
 		for (String token : tokens) {
 			String tokenToUse = token;

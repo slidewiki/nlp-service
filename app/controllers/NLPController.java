@@ -13,6 +13,7 @@ import play.mvc.Result;
 import services.nlp.NLPComponent;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tfidf.IDocFrequencyProvider;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 
@@ -25,9 +26,9 @@ public class NLPController extends Controller{
     
     @Inject
     public NLPController(ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
-			INERLanguageDependent ner, TFIDF tfidf) {
+			INERLanguageDependent ner, TFIDF tfidf, IDocFrequencyProvider docFrequencyProvider) {
 		super();
-		this.nlpComponent = new NLPComponent(languageDetector, tokenizer, ner, tfidf);
+		this.nlpComponent = new NLPComponent(languageDetector, tokenizer, ner, tfidf, docFrequencyProvider);
 	}
 
 

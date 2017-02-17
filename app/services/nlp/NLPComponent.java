@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import play.libs.Json;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.tfidf.IDocFrequencyProvider;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.util.Sorter;
@@ -29,16 +30,18 @@ public class NLPComponent implements INLPComponent{
 	private ITokenizerLanguageDependent tokenizer;
     private INERLanguageDependent ner;
     private TFIDF tfidf;
+    private IDocFrequencyProvider docFrequencyProvider;
     private boolean tfidfCalculationWithToLowerCase = true;
 
 	@Inject
 	public NLPComponent(ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
-			INERLanguageDependent ner, TFIDF tfidf) {
+			INERLanguageDependent ner, TFIDF tfidf, IDocFrequencyProvider docFrequencyProvider) {
 		super();
 		this.languageDetector = languageDetector;
 		this.tokenizer = tokenizer;
 		this.ner = ner;
 		this.tfidf = tfidf;
+		this.docFrequencyProvider = docFrequencyProvider;
 	}
 	
 	public ObjectNode detectLanguage(String input, ObjectNode node){
@@ -60,8 +63,8 @@ public class NLPComponent implements INLPComponent{
     	return node;
 	}
 	
-	public ObjectNode tfidf(String[] tokens, ObjectNode node){
-		Map<String,Double> tfidf = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase);
+	public ObjectNode tfidf(String[] tokens, String language, ObjectNode node){
+		Map<String,Double> tfidf = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, language, this.docFrequencyProvider);
     	tfidf = Sorter.sortByValue(tfidf, true);
 		JsonNode tfidfNode = Json.toJson(tfidf);
 		node.set(propertyNameTFIDF, tfidfNode);
@@ -82,7 +85,7 @@ public class NLPComponent implements INLPComponent{
     	node.set(propertyNameNER, nerNode);
     	
     	// TFIDF all token tyoes (regardless NER)
-    	Map<String,Double> tfidfTypes = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase);
+    	Map<String,Double> tfidfTypes = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, detectedLanguage, this.docFrequencyProvider);
     	List<Entry<String,Double>> entries = Sorter.sortByValueAndReturnAsList(tfidfTypes, true);
      	
 		// output as array for top x entries

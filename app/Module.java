@@ -19,9 +19,8 @@ import services.nlp.ner.INER;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
-import services.nlp.tfidf.DocumentFrequencyProviderViaMap;
+import services.nlp.tfidf.DocFrequencyProviderViaMap;
 import services.nlp.tfidf.IDocFrequencyProvider;
-import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizer;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.tokenization.TokenizerLanguageDependentViaMap;
@@ -97,11 +96,11 @@ public class Module extends AbstractModule {
     }
     
     @Provides
-    public TFIDF provideTFIDF(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
+    public IDocFrequencyProvider provideDocFreqencyProvider(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
     	
     	String filepathDocFreqProvider = configuration.getString("tfidf.filepathDocumentFrequency");
-		IDocFrequencyProvider docFrequencyProvider = DocumentFrequencyProviderViaMap.deserializeFromFile(filepathDocFreqProvider );
-		return new TFIDF(docFrequencyProvider);
+		IDocFrequencyProvider docFrequencyProvider = DocFrequencyProviderViaMap.deserializeFromFile(filepathDocFreqProvider );
+		return docFrequencyProvider;
     }
 
 }
