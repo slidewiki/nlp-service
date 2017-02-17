@@ -1,7 +1,9 @@
 package services.nlp.tfidf;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import services.util.MapCounting;
@@ -44,6 +46,25 @@ public class TFIDF {
 		
 	}
 	
+	/**
+	 * Convenience method getting top x tfidf values for an array of tokens and dependent on language.
+	 * @param tokens
+	 * @param toLowerCase
+	 * @param language
+	 * @param docFrequencyProvider
+	 * @param maxTypesToReturn
+	 * @return
+	 */
+	public static List<Entry<String,Double>> getTFIDFValuesTopX(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, int maxTypesToReturn){
+		
+		Map<String,Double> tfidfResult = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider);
+		List<Entry<String,Double>> result = Sorter.sortByValueAndReturnAsList(tfidfResult, true);
+		if(maxTypesToReturn<0 || maxTypesToReturn>=result.size()){
+			return result;
+		}
+		return result.subList(0, maxTypesToReturn);		
+		
+	}
 	
 	private static Map<String,Integer> getRawTermFrequencies(String[] tokens, boolean toLowerCase){
 		Map<String,Integer> countingMap = new HashMap<>();

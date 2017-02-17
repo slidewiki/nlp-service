@@ -13,6 +13,8 @@ import play.Configuration;
 import play.Logger;
 import services.nlp.ITagger;
 import services.nlp.TaggerComponent;
+import services.nlp.html.HTMLJsoup;
+import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.languagedetection.LanguageDetector_optimaize;
 import services.nlp.ner.INER;
@@ -43,10 +45,11 @@ public class Module extends AbstractModule {
         
         bind(ILanguageDetector.class).to(LanguageDetector_optimaize.class);
         bind(ITokenizerLanguageDependent.class).to(TokenizerLanguageDependentViaMap.class);
-//        bind(ITokenizer.class).to(Tokenizer_OpenNLP.class);
+//      bind(ITokenizer.class).to(Tokenizer_OpenNLP.class);
         bind(INERLanguageDependent.class).to(NERLanguageDependentViaMap.class);
 
-       bind(ITagger.class).to(TaggerComponent.class);
+        bind(ITagger.class).to(TaggerComponent.class);
+        bind(IHtmlToText.class).to(HTMLJsoup.class);
 
     }
 

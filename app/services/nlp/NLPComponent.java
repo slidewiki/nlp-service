@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
+import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.tfidf.IDocFrequencyProvider;
@@ -20,28 +21,35 @@ import services.util.Sorter;
 
 public class NLPComponent implements INLPComponent{
 	
+	public String propertyNameOriginalInput = "input";
+	public String propertyNameHtmlToPlainText = "htmlToPlainText";
 	public String propertyNameLanguage = "detectedLanguage";
 	public String propertyNameTokens = "tokens";
 	public String propertyNameNER = "NER";
 	public String propertyNameTFIDF = "TFIDF";
 	public int maxEntriesForTFIDFResult = 10;
 
+	private IHtmlToText htmlToPlainText;
 	private ILanguageDetector languageDetector;
 	private ITokenizerLanguageDependent tokenizer;
     private INERLanguageDependent ner;
-    private TFIDF tfidf;
     private IDocFrequencyProvider docFrequencyProvider;
     private boolean tfidfCalculationWithToLowerCase = true;
 
 	@Inject
-	public NLPComponent(ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
-			INERLanguageDependent ner, TFIDF tfidf, IDocFrequencyProvider docFrequencyProvider) {
+	public NLPComponent(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
+			INERLanguageDependent ner, IDocFrequencyProvider docFrequencyProvider) {
 		super();
+		this.htmlToPlainText = htmlToText;
 		this.languageDetector = languageDetector;
 		this.tokenizer = tokenizer;
 		this.ner = ner;
-		this.tfidf = tfidf;
 		this.docFrequencyProvider = docFrequencyProvider;
+	}
+	
+	public ObjectNode getPlainTextFromHTML(String input, ObjectNode node){
+    	String plainText = this.htmlToPlainText.getText(input);
+    	return node.put(propertyNameHtmlToPlainText, plainText);
 	}
 	
 	public ObjectNode detectLanguage(String input, ObjectNode node){
@@ -64,7 +72,7 @@ public class NLPComponent implements INLPComponent{
 	}
 	
 	public ObjectNode tfidf(String[] tokens, String language, ObjectNode node){
-		Map<String,Double> tfidf = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, language, this.docFrequencyProvider);
+		Map<String,Double> tfidf = TFIDF.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, language, this.docFrequencyProvider);
     	tfidf = Sorter.sortByValue(tfidf, true);
 		JsonNode tfidfNode = Json.toJson(tfidf);
 		node.set(propertyNameTFIDF, tfidfNode);
@@ -73,10 +81,14 @@ public class NLPComponent implements INLPComponent{
 	
 	public ObjectNode performNLP(String input, ObjectNode node){
 		
-		String detectedLanguage = this.languageDetector.getLanguage(input);	
+		String plainText = htmlToPlainText.getText(input).trim();
+		node.put(propertyNameOriginalInput, input);
+		node.put(propertyNameHtmlToPlainText, plainText);
+		
+		String detectedLanguage = this.languageDetector.getLanguage(plainText);	
 		node.put(propertyNameLanguage, detectedLanguage);
 		
-    	String[] tokens = this.tokenizer.tokenize(input, detectedLanguage);	
+    	String[] tokens = this.tokenizer.tokenize(plainText, detectedLanguage);	
     	JsonNode tokenNode = Json.toJson(tokens);
     	node.set(propertyNameTokens, tokenNode);
 
@@ -85,7 +97,7 @@ public class NLPComponent implements INLPComponent{
     	node.set(propertyNameNER, nerNode);
     	
     	// TFIDF all token tyoes (regardless NER)
-    	Map<String,Double> tfidfTypes = this.tfidf.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, detectedLanguage, this.docFrequencyProvider);
+    	Map<String,Double> tfidfTypes = TFIDF.getTFIDFValues(tokens, this.tfidfCalculationWithToLowerCase, detectedLanguage, this.docFrequencyProvider);
     	List<Entry<String,Double>> entries = Sorter.sortByValueAndReturnAsList(tfidfTypes, true);
      	
 		// output as array for top x entries
@@ -176,6 +188,38 @@ public class NLPComponent implements INLPComponent{
 
 	public void setNer(INERLanguageDependent ner) {
 		this.ner = ner;
+	}
+
+	public String getPropertyNameOriginalInput() {
+		return propertyNameOriginalInput;
+	}
+
+	public void setPropertyNameOriginalInput(String propertyNameOriginalInput) {
+		this.propertyNameOriginalInput = propertyNameOriginalInput;
+	}
+
+	public String getPropertyNameHtmlToPlainText() {
+		return propertyNameHtmlToPlainText;
+	}
+
+	public void setPropertyNameHtmlToPlainText(String propertyNameHtmlToPlainText) {
+		this.propertyNameHtmlToPlainText = propertyNameHtmlToPlainText;
+	}
+
+	public String getPropertyNameTFIDF() {
+		return propertyNameTFIDF;
+	}
+
+	public void setPropertyNameTFIDF(String propertyNameTFIDF) {
+		this.propertyNameTFIDF = propertyNameTFIDF;
+	}
+
+	public int getMaxEntriesForTFIDFResult() {
+		return maxEntriesForTFIDFResult;
+	}
+
+	public void setMaxEntriesForTFIDFResult(int maxEntriesForTFIDFResult) {
+		this.maxEntriesForTFIDFResult = maxEntriesForTFIDFResult;
 	}
 
 
