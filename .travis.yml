@@ -1,5 +1,6 @@
 language: java
-java: 8
+jdk:
+  - oraclejdk8
 sudo: required
 git:
   depth: 5
@@ -7,28 +8,27 @@ branches:
   only:
   - "/^(?i:SWIK)-.*$/"
   - master
-#cache:
-#  directories:
-#  - "./application/node_modules"
+cache:
+  directories:
+  - "$HOME/.sbt"
 before_install:
-#- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/install_compose.sh ; fi
-#- cd application
+- ./travis_scripts/install_activator.sh
+- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/install_compose.sh ; fi
 before_script:
-#- npm run start:mongodb
+- activator update
 script:
-#- sleep 15
-#- npm run lint
-#- npm run test:unit
-#- npm run test:integration
+- activator compile
+- activator test
 after_success:
-- cd ..
+- activator clean docker:stage
+- cp Dockerfile target/docker
 - openssl aes-256-cbc -K $encrypted_2036d518b976_key -iv $encrypted_2036d518b976_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
+- cd target/docker
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/dockerhub.sh ; fi
+- cd ../../
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/deploy.sh ; fi
-#- cd application
 after_script:
-#- npm run coverall
-#- npm run stop:mongodb
+#- XXX run coverall
 - rm -f deployment_keys.tar
 - rm -f ~/.docker/{cert.pem,key.pem,ca.pem,config.json}
 services:
@@ -40,3 +40,4 @@ notifications:
 env:
   global:
   - DOCKER_COMPOSE_VERSION=1.6.2
+  - ACTIVATOR_VERSION=1.3.12
