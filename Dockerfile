@@ -1,25 +1,20 @@
 FROM openjdk:8-jre
 MAINTAINER Roy Meissner <meissner@informatik.uni-leipzig.de>
 
-#TODO convert to java Play!
-
-#RUN mkdir /nodeApp
-#WORKDIR /nodeApp
+WORKDIR /opt/docker
 
 # ---------------- #
 #   Installation   #
 # ---------------- #
 
-#ADD ./application/package.json ./
-#RUN npm install --production
-
-#ADD ./application/ ./
+ADD stage/opt /opt
+RUN echo '\nplay.crypto.secret=${?APPLICATION_SECRET}' >> conf/application.conf
 
 # ----------------- #
 #   Configuration   #
 # ----------------- #
 
-EXPOSE 80
+EXPOSE 9000
 
 # ----------- #
 #   Cleanup   #
@@ -32,4 +27,5 @@ RUN apt-get autoremove -y && apt-get -y clean && \
 #   Run!   #
 # -------- #
 
-#CMD npm start
+ENTRYPOINT []
+CMD ["bin/nlp-services"]
