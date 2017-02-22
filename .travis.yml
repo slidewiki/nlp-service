@@ -38,6 +38,8 @@ notifications:
   slack:
     on_success: change
     on_failure: always
+    rooms:
+      secure: aOpr6rvtR7x4BQ+x8//2SFvgiNMKEaLTFr+B44p61ntK9PzOL5Zs9rMc7sFFG8QXNrk8mfTlT8rql5baAObRGPcrcJiA4ydakv2o9wyCICKXNxk+mWGF+ud/g8wlBw3A4BTz116Xeyble1Ijb94wpZX0exA7/u4A/JY8ZyiTn1rX7tUbalOpBEyo3sqdxoXTql5WeZm295SLDaWKhbza2zQP2RF3azfyUc/3doJTKT1yalou6RXfQa7Xo/MhvubaNwpg2p3CB2+CN8Ezv/VBsiKUWLINTJhLQtG2u/Jg3xjO3AFX386qIwnBnC9cD/jUvmLJvEhMAjxEU1X3Jp9y9m1Ek4aWNBCnyXxSXi1lMGs5Iu9USRdQr0JfRmo0evLfVO7b8ecBRXTnEWTSa2hC6kraW4E2y72B3ECjHTaW4DGq1X6z0EP7OTohEIChTk1H46DyfksAD7VWL8mqDyBh0XAw+swAZNdiA9WvMZlMGfWZ/WhoifdRCbNbG8wDzSwJOvm8aUtFpKpSFj9JoX8JsMCCafVsQodrjUpnNv6o56Nl/XCrvxXJEtTfd9wlrDKPZtSVRu1Dj/c1GkN7wxFZKTaZaomb6uKzX97t42awffKqb7d+p8VrQu6kh2UqbLJhgicQiFa1I8WVdRYhZKTrq57jBHQMJoErw13cwsb7H10=
 env:
   global:
   - DOCKER_COMPOSE_VERSION=1.6.2

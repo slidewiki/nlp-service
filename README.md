@@ -1,9 +1,9 @@
 # Microservice Template #
-// TODO: URL zu richtigen service [![Build Status](https://travis-ci.org/slidewiki/microservice-template.svg?branch=master)](https://travis-ci.org/slidewiki/microservice-template)
-// TODO: auf eigenen Service [![License](https://img.shields.io/badge/License-MPL%202.0-green.svg)](https://github.com/slidewiki/microservice-template/blob/master/LICENSE)
-[![Language](https://img.shields.io/badge/Language-Java%8.0-lightgrey.svg)](https://en.wikipedia.org/wiki/Java_(software_platform))
+[![Build Status](https://travis-ci.org/slidewiki/nlp-service.svg?branch=master)](https://travis-ci.org/slidewiki/nlp-service)
+[![License](https://img.shields.io/badge/License-MPL%202.0-green.svg)](https://github.com/slidewiki/nlp-service/blob/master/LICENSE)
+[![Language](https://img.shields.io/badge/Language-Java%208.0-lightgrey.svg)](https://en.wikipedia.org/wiki/Java_version_history#Java_8)
 [![Framework](https://img.shields.io/badge/Framework-Play%20Framework%202.5.12-blue.svg)](https://www.playframework.com/)
-// TODO: URL zum Service[![Coverage Status](https://coveralls.io/repos/github/slidewiki/microservice-template/badge.svg?branch=master)](https://coveralls.io/github/slidewiki/microservice-template?branch=master)
+<!--[![Coverage Status](https://coveralls.io/repos/github/slidewiki/microservice-template/badge.svg?branch=master)](https://coveralls.io/github/slidewiki/microservice-template?branch=master)-->
 
 // TODO: Service beschreiben
 This repository contains the template code for a NodeJS based Microservice of the Slidewiki 2.0 project. Please do **NOT** clone this repository and develop your application in it. Instead fork it (following the instructions below) and develop your application there. The CI maintainer ([Roy Meissner](https://github.com/rmeissn)) will setup continuous integration and delivery for your fork. Just notify him.
@@ -11,7 +11,7 @@ This repository contains the template code for a NodeJS based Microservice of th
 Remember to exchange badge urls when forking!
 
 
-// TODO bis unten zu Install etc. 
+// TODO bis unten zu Install etc.
 ### Install NodeJS ###
 ---
 Please visit the wiki at [**Install NodeJS**](https://github.com/slidewiki/microservice-template/wiki/Install-NodeJS).
