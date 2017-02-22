@@ -2,9 +2,9 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /docs/             controllers.Assets.at(path="/public/swagger-ui",file="index.html")
-GET     /docs/swagger.json  controllers.ApiHelpController.getResources
-GET     /docs/*file         controllers.Assets.at(path="/public/swagger-ui",file)
+GET     /documentation             controllers.Assets.at(path="/public/swagger-ui",file="index.html")
+GET     /documentation/swagger.json  controllers.ApiHelpController.getResources
+GET     /documentation/*file         controllers.Assets.at(path="/public/swagger-ui",file)
 
 
 # An example controller showing how to use dependency injection
