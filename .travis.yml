@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 sudo: required
 git:
   depth: 5
@@ -12,7 +12,7 @@ cache:
   directories:
   - "$HOME/.sbt"
 before_install:
-- ./travis_scripts/install_activator.sh
+- "./travis_scripts/install_activator.sh"
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/install_compose.sh ; fi
 before_script:
 - activator update
@@ -22,13 +22,12 @@ script:
 after_success:
 - activator clean docker:stage
 - cp Dockerfile target/docker
-- openssl aes-256-cbc -K $encrypted_2036d518b976_key -iv $encrypted_2036d518b976_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
 - cd target/docker
+- openssl aes-256-cbc -K $encrypted_194a5f03fdee_key -iv $encrypted_194a5f03fdee_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/dockerhub.sh ; fi
 - cd ../../
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/deploy.sh ; fi
 after_script:
-#- XXX run coverall
 - rm -f deployment_keys.tar
 - rm -f ~/.docker/{cert.pem,key.pem,ca.pem,config.json}
 services:
@@ -41,3 +40,6 @@ env:
   global:
   - DOCKER_COMPOSE_VERSION=1.6.2
   - ACTIVATOR_VERSION=1.3.12
+  - secure: UrWJqHCg3yCDfTZoaqp6iCJQ/FCSh+RlA05vHHg7Ye2/GY9LR+V4q2vxV5bEdxykTwGPlmjmFS+/n+TelNLbVl62WIF2BzUjhceK8a8fveaEdyNc+GcSA8/uD6rIqRq7HtNoxr75VvmL1rWbbfvY+Z0/L00TuMKrw6WPy/v+W3vhGuUlUjfLQk2PGSP8galdaFTolPMAzooEoajkPXcHiLtBiPc0hH380Xga2c1LZxujxr2x+lktaYIah4IJ9yZpRlblEtuxbNRPBXqLtdVKrDqGDUZgI2lyrJctFUm8I6DaswNfaiiWQEE9b8Y/fuzTuppiOXWWEAgII9ZOy2axcrsW/VfxEHMd+YSZ6etlO/Q9Ouoegs3FQO6LJor8M1vGpjZlsdvMUIh8UKXHO9FK9LTnkQX3MezUPPftMXRV1XMm4DNhzi/toWwLzXa+iU9tnyBwSJzYqn7gWjYEc8E0WUj7RH2MaPotwecQjdVatEedrghtyn/ADhnlR6/CVfZiTFCraGO1BH4+b54Fv0bTr7nOnLylHS0pizB/iNFJDiaHjFAmYo/qEQbRwIoQthjtXHnEljo9l9KnF82ephSJgdeTkwECZRUim5+5Kv41q0b6GAfWvW6vwR9jjuh+M9bMPS6UjBjAJfcAFrI1gvWo1bBIAbK0r++mFzrGNVGt4XQ=
+  - secure: MeUZEBvsxb6pBTt4+sLIWJkeg8Jbda5wKm83b6kLmR4tHkJnfGUqw7v4RpzJGdYERfXzTVcP1VFhzLIbEu0XjFYBaYrDuwKF4dV1GA8oFX7Gi5O8LaVKI8oK9zuG7eWQ5c3gMnimJB6gTpGEPFENXIlXx/u41npg1DFS1+ALUD3lZXlPfEjr7qbic8U6WQIAhktnWy4yq+ja7km2u6y6b5MugcElIYm8rM3QePyyd+am2jM1+bO+0MFVPBbPc/UmFirfYsXt4Umi1fX3Pz3pP8UK1JSmq1qHJriad/80QN90cNLtQAX4UGLGSoBj/Da/KL02PvCy8p95kAtonkCwvv2RVXVG8z9UtCWvjHEAbJaCTQaHZcj4pTj0RqKcCy0tj1BSpoVLSAxISznk+aKZ4xXKSxws2c4+cuylFM6Y9S0MGuTOz9NEXdDkKINlvt4uvJ9x5Ya6fdXyLSQa663ft8pdJWOno9Zt9S40MRqkqOkXLTOvf6NQ/BgM8jQEY+1qtWX0dIiu9EzAP+9UXyKulEm1JKTacVWUHtUGOb5dmAt7u3oe+PuQrM3xzIEQ+l7E65v0TSutIfxvZwKlvdUo3fNurYALdiu7kdE8mzixSJBBEbH9fzbOxP2P1lP8Yu86HzkwpXsKWFQXEIL0wMT2Wh06YM8Mapm0CUZ/XwEN6+E=
+  - secure: Q9iMZRH4BsVmCIaZN1o07CZc7uUj391S5Yp+52nEt9sClWyTxykx20dqxUvtqTMeQcr8tp26gkPhRye/ZYmH550YtdhlLrGFrkDJStI0jAvBc6ps8CzJFVGGuYqxPI1/inp/JLxb8WP+ZPEL18bHMXV/IBezC7rBqhHBwbeiukKyT0jM9mGDiixJJ9nkvaUr+BarnpqMlzCWOvYRrY1VgEpcFDx5VHxyQiJpcFMVeA7Q04YjpQ413KGP0jL8XBrQAPMSWs9KovlXn2ECBruwhgtvEv4FZ7wYb2HGAKCA54SiUOKS3vpCEBgaxXfMtT+NzzSaZAHwYtHr4KCznwLVqoPaWErKfDYUEsuBpcutIsyjMDemp7EaQoyR2d2XQodw51Ib4x+Jndo6BQt3xWBa93wR1xQ7QJLxZt2JGyvbPlc0NPP59N2Bqmhwqg9Bv/SzsKJ94WIKPCBIAnESczm9vu4NB6ABeJ6uTM8IxCoEPnqR3CY3N+atkxhmoSQ2C3YtH9XJKjNdeq+zOCuM61qslsmELQcVefJbZrXmmy4jPoZNnx2ZuHEFriUzp27vOPXAAYpfT5xtDZmCZQz4dIqaej3zFy4sWiOYNzow9cJu8NZcryFseRVre2MuIh/U8EGOJznMOWhKHoMyb3GcSEwp/FtzinC2iIUUUMByalGJHtQ=

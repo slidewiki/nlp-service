@@ -14,7 +14,7 @@ RUN echo '\nplay.crypto.secret=${?APPLICATION_SECRET}' >> conf/application.conf
 #   Configuration   #
 # ----------------- #
 
-EXPOSE 80
+EXPOSE 9000
 
 # ----------- #
 #   Cleanup   #
