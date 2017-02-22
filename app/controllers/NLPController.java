@@ -37,7 +37,7 @@ public class NLPController extends Controller{
     		@ApiParam(value = "input text") String inputText) {
     	
     	ObjectNode result = Json.newObject();
-		result = nlpComponent.detectLanguage(inputText, result);
+		result = nlpComponent.getPlainTextFromHTML(inputText, result);
     	
         return ok(result);
        
