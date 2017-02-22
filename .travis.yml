@@ -11,6 +11,7 @@ branches:
 cache:
   directories:
   - "$HOME/.sbt"
+  - "$HOME/.ivy2"
 before_install:
 - ./travis_scripts/install_activator.sh
 - export PATH=$PATH:~/.activator/bin/
