@@ -12,7 +12,7 @@ cache:
   directories:
   - "$HOME/.sbt"
 before_install:
-- "./travis_scripts/install_activator.sh"
+- ./travis_scripts/install_activator.sh
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/install_compose.sh ; fi
 before_script:
 - activator update
