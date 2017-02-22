@@ -11,8 +11,10 @@ branches:
 cache:
   directories:
   - "$HOME/.sbt"
+  - "$HOME/.ivy2"
 before_install:
 - ./travis_scripts/install_activator.sh
+- export PATH=$PATH:~/.activator/bin/
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/install_compose.sh ; fi
 before_script:
 - activator update
@@ -20,11 +22,11 @@ script:
 - activator compile
 - activator test
 after_success:
-- activator clean docker:stage
-- cp Dockerfile target/docker
-- cd target/docker
 - openssl aes-256-cbc -K $encrypted_194a5f03fdee_key -iv $encrypted_194a5f03fdee_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
-- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/dockerhub.sh ; fi
+- activator clean docker:stage
+- cp Dockerfile target/docker/
+- cd target/docker
+- if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ../../travis_scripts/dockerhub.sh ; fi
 - cd ../../
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/deploy.sh ; fi
 after_script:
