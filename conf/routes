@@ -14,6 +14,7 @@ GET     /nlp/htmlToText/:input              controllers.NLPController.htmlToText
 GET     /nlp/detectLanguage/:input         controllers.NLPController.detectLanguage(input: String)
 GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(input: String, lang: String)
 GET     /nlp/nlp/:input              controllers.NLPController.performNLP(input: String)
+GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpediaSpotlight(input: String, confidence: Double)
 
 
 

@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
   "org.webjars" % "swagger-ui" % "2.2.10",
   "javax.ws.rs" % "javax.ws.rs-api" % "2.1-m03",
   "com.optimaize.languagedetector" % "language-detector" % "0.6",
-  "org.jsoup" % "jsoup" % "1.10.2"
+  "org.jsoup" % "jsoup" % "1.10.2",
+  "org.glassfish.jersey.core" % "jersey-client" % "2.26-b02"
 
 )
 

@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -27,6 +30,7 @@ public class NLPComponent implements INLPComponent{
 	public String propertyNameTokens = "tokens";
 	public String propertyNameNER = "NER";
 	public String propertyNameTFIDF = "TFIDF";
+	public String propertyNameDBPediaSpotlight = "DBPediaSpotlight";
 	public int maxEntriesForTFIDFResult = 10;
 
 	private IHtmlToText htmlToPlainText;
@@ -35,6 +39,7 @@ public class NLPComponent implements INLPComponent{
     private INERLanguageDependent ner;
     private IDocFrequencyProvider docFrequencyProvider;
     private boolean tfidfCalculationWithToLowerCase = true;
+    private double dbpediaspotlightdefaultConfidence = 0.35; // TODO: make this configurable
 
 	@Inject
 	public NLPComponent(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
@@ -79,6 +84,17 @@ public class NLPComponent implements INLPComponent{
 		return node;
 	}
 	
+	public ObjectNode dbpediaSpotlight(String input, double confidence, ObjectNode node){
+		Client client = ClientBuilder.newClient();
+		String spotlightResult = client.target("http://www.dbpedia-spotlight.com/en/annotate")
+        .queryParam("text", input)
+        .queryParam("confidence", confidence)
+        .request(MediaType.APPLICATION_JSON).get(String.class);
+		JsonNode resultNode = Json.parse(spotlightResult);
+		node.set(propertyNameDBPediaSpotlight, resultNode);
+		return node;
+	}
+	
 	public ObjectNode performNLP(String input, ObjectNode node){
 		
 		String plainText = htmlToPlainText.getText(input).trim();
@@ -114,6 +130,9 @@ public class NLPComponent implements INLPComponent{
 			arrayNode.add(singleNode);
 		}
 		node.set(propertyNameTFIDF, arrayNode);
+		
+		// dbpediaspotlight
+		node = dbpediaSpotlight(input, dbpediaspotlightdefaultConfidence, node);
 		
     	return node;
 	}
