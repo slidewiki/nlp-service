@@ -14,7 +14,7 @@ RUN echo '\nplay.crypto.secret=${?APPLICATION_SECRET}' >> conf/application.conf
 #   Configuration   #
 # ----------------- #
 
-ENV APPLICATION_PORT=80
+EXPOSE 9000
 
 # ----------- #
 #   Cleanup   #
@@ -28,4 +28,4 @@ RUN apt-get autoremove -y && apt-get -y clean && \
 # -------- #
 
 ENTRYPOINT []
-CMD /bin/bash -c bin/nlp-services -Dhttp.port=$APPLICATION_PORT
+CMD ["bin/nlp-services"]
