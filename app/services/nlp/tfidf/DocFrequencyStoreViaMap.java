@@ -123,7 +123,7 @@ public class DocFrequencyStoreViaMap implements Serializable{
 		 
 	}
 	
-	public String getTopXTypesBasedOnDocFreqAsString(int x, String delimiterBetweenEntries, boolean outputNumDocsForType, String delimiterBetweenTypeAndNumDocs){
+	public String getTopXTypesBasedOnDocFreqAsString(int x, String delimiterBetweenEntries, boolean outputNumDocsForType, String delimiterBetweenTypeAndNumDocs, String delimiterBetweenAfterNumDocs){
 		List<Entry<String,Integer>> entries = getTopXTypesBasedOnDocFreq(x);
 		StringBuilder sb = new StringBuilder();
 		for (Entry<String, Integer> entry : entries) {
@@ -131,6 +131,7 @@ public class DocFrequencyStoreViaMap implements Serializable{
 			if(outputNumDocsForType){
 				sb.append(delimiterBetweenTypeAndNumDocs);
 				sb.append(entry.getValue());
+				sb.append(delimiterBetweenAfterNumDocs);
 			}
 			sb.append(delimiterBetweenEntries);
 		}

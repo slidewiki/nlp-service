@@ -140,7 +140,8 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 		return sb.toString();
 	}
 	
-	public String getStatisticsOfDocsPerLanguageAsStringInclTopXTerms(int x){
+	public String getStatisticsOfDocsPerLanguageAsStringInclTopXTerms(int x, String delimiterBetweenEntries, boolean outputNumDocsForType, String delimiterBetweenTypeAndNumDocs, String delimiterBetweenAfterNumDocs){
+		
 		Map<String,Integer> stats = getStatisticsOfDocsPerLanguage();
 		List<Entry<String,Integer>> statsSorted = Sorter.sortByValueAndReturnAsList(stats, true);
 		StringBuilder sb = new StringBuilder();
@@ -149,7 +150,7 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 			sb.append(language + "\t" + entry.getValue());
 			sb.append("\ttop terms:\t");
 			DocFrequencyStoreViaMap docStore = this.mapLanguageToDocFreqStore.get(language);
-			String topTermsString = docStore.getTopXTypesBasedOnDocFreqAsString(x, ", ", true, ":");
+			String topTermsString = docStore.getTopXTypesBasedOnDocFreqAsString(x, delimiterBetweenEntries, outputNumDocsForType, delimiterBetweenTypeAndNumDocs, delimiterBetweenAfterNumDocs);
 			
 			sb.append(topTermsString);
 			sb.append("\n");
