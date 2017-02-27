@@ -5,15 +5,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
+import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
@@ -85,14 +83,11 @@ public class NLPComponent implements INLPComponent{
 	}
 	
 	public ObjectNode dbpediaSpotlight(String input, double confidence, ObjectNode node){
-		Client client = ClientBuilder.newClient();
-		String spotlightResult = client.target("http://www.dbpedia-spotlight.com/en/annotate")
-        .queryParam("text", input)
-        .queryParam("confidence", confidence)
-        .request(MediaType.APPLICATION_JSON).get(String.class);
-		JsonNode resultNode = Json.parse(spotlightResult);
+		
+		JsonNode resultNode = DBPediaSpotlightUtil.callDBPediaSpotlight(input, confidence);
 		node.set(propertyNameDBPediaSpotlight, resultNode);
 		return node;
+		
 	}
 	
 	public ObjectNode performNLP(String input, ObjectNode node){
