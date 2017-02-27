@@ -127,7 +127,7 @@ public class NLPComponent implements INLPComponent{
 		node.set(propertyNameTFIDF, arrayNode);
 		
 		// dbpediaspotlight
-		node = dbpediaSpotlight(input, dbpediaspotlightdefaultConfidence, node);
+		node = dbpediaSpotlight(plainText, dbpediaspotlightdefaultConfidence, node);
 		
     	return node;
 	}
