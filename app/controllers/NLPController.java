@@ -84,13 +84,13 @@ public class NLPController extends Controller{
     }
     
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
-    @ApiOperation(value = "returns results for dbpedia spotlight", notes = "different nlp steps are performed, currently: language detection, tokenization, NER and tfidf (top 10)")
+    @ApiOperation(value = "returns results for dbpedia spotlight", notes = "returns result of dbpedia spotlight for the given input")
     public Result dbpediaSpotlight(
     		@ApiParam(value = "input text") String inputText,
     		@ApiParam(value = "confidence") double confidence) {
     	
     	ObjectNode result = Json.newObject();
-    	
+    	result = nlpComponent.dbpediaSpotlight(inputText, confidence, result);
         return ok(result);
        
     }
