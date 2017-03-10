@@ -1,5 +1,7 @@
 package services.nlp.tfidf;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +19,52 @@ public class TFIDF {
 		double idf = calcInverseDocumentFrequency(numberOfDocsContainingTerm, numberOfAllDocuments);
 		return tf * idf;
 	}
+	
+	/**
+	 * Convenience method getting top x tfidf values for an array of tokens and dependent on language.
+	 * @param tokens
+	 * @param toLowerCase
+	 * @param language
+	 * @param docFrequencyProvider
+	 * @param maxTypesToReturn
+	 * @return
+	 */
+	public static List<Entry<String,Double>> getTFIDFValuesTopX(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, int maxTypesToReturn){
+		
+		if(maxTypesToReturn==0){
+			return new ArrayList<Entry<String,Double>>();
+		}
+		List<Entry<String,Double>> result = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider, true);
+		if(maxTypesToReturn<0 || maxTypesToReturn>=result.size()){
+			return result;
+		}
+		return result.subList(0, maxTypesToReturn);		
+		
+	}
+
+	
+	/**
+	 * Convenience method getting tfidf for an array of tokens and dependent on language with option to return sorted list with terms with highest tfidf at the beginning
+	 * @param tokens
+	 * @param toLowerCase
+	 * @param language
+	 * @param docFrequencyProvider
+	 * @param maxTypesToReturn
+	 * @param sortByValueReverse if true, the entries are sorted reverse by their values, if false, the entries are not sorted at all
+	 * @return
+	 */
+	public static List<Entry<String,Double>> getTFIDFValues(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, boolean sortByValueReverse){
+		
+		Map<String,Double> tfidfResult = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider);
+
+		if(sortByValueReverse){
+			return Sorter.sortByValueAndReturnAsList(tfidfResult, true);
+		}else{
+			return new ArrayList<>(tfidfResult.entrySet());
+		}
+		
+	}
+	
 	
 	/**
 	 * Convenience method getting tfidf for an array of tokens and dependent on language
@@ -45,26 +93,7 @@ public class TFIDF {
 		return tfidfResult;		
 		
 	}
-	
-	/**
-	 * Convenience method getting top x tfidf values for an array of tokens and dependent on language.
-	 * @param tokens
-	 * @param toLowerCase
-	 * @param language
-	 * @param docFrequencyProvider
-	 * @param maxTypesToReturn
-	 * @return
-	 */
-	public static List<Entry<String,Double>> getTFIDFValuesTopX(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, int maxTypesToReturn){
-		
-		Map<String,Double> tfidfResult = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider);
-		List<Entry<String,Double>> result = Sorter.sortByValueAndReturnAsList(tfidfResult, true);
-		if(maxTypesToReturn<0 || maxTypesToReturn>=result.size()){
-			return result;
-		}
-		return result.subList(0, maxTypesToReturn);		
-		
-	}
+
 	
 	private static Map<String,Integer> getRawTermFrequencies(String[] tokens, boolean toLowerCase){
 		Map<String,Integer> countingMap = new HashMap<>();
