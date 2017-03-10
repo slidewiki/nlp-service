@@ -28,7 +28,7 @@ import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.util.DeckServiceUtil;
 
 //TODO: clean up
-public class NLPComponent implements INLPComponent{
+public class NLPComponent {
 	
 	public static String propertyNameOriginalInput = "input";
 	public static String propertyNameHtmlToPlainText = "htmlToPlainText";
@@ -68,7 +68,6 @@ public class NLPComponent implements INLPComponent{
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
     private boolean tfidfCalculationWithToLowerCase = true;
     private boolean stopwordRemovalWithToLowerCase = true;
-    private double dbpediaspotlightdefaultConfidence = 0.6; // TODO: make this configurable
 
     
 	@Inject
@@ -120,15 +119,15 @@ public class NLPComponent implements INLPComponent{
 			
 	}
 	
-	public ObjectNode performDBpediaSpotlight(String input, double confidence, ObjectNode node){
+	public ObjectNode performDBpediaSpotlight(String input, double dbpediaSpotlightConfidence, ObjectNode node){
 		
-		JsonNode resultNode = performDBpediaSpotlight(input, confidence);
+		JsonNode resultNode = performDBpediaSpotlight(input, dbpediaSpotlightConfidence);
 		node.set(propertyNameDBPediaSpotlight, resultNode);
 		return node;
 		
 	}
 	
-	public ObjectNode performNLP(String input, ObjectNode node){
+	public ObjectNode performNLP(String input, ObjectNode node, double dbpediaSpotlightConfidence){
 		
 		String plainText = htmlToPlainText.getText(input).trim();
 		node.put(propertyNameOriginalInput, input);
@@ -152,18 +151,18 @@ public class NLPComponent implements INLPComponent{
 		node.set(propertyNameTFIDF, tfidfNode);
 		
 		// dbpediaspotlight
-		node = performDBpediaSpotlight(plainText, dbpediaspotlightdefaultConfidence, node);
+		node = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence, node);
 		
     	return node;
 	}
 
 	
-	public ObjectNode processDeck(int deckId, boolean performDBPediaSpotlightPerSlide){
+	public ObjectNode processDeck(int deckId, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
 		Logger.info("deckId: " + deckId);
 
 		JsonNode deckNode = this.deckServiceUtil.getSlidesForDeckIdFromDeckservice(deckId);
 		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorForDeckserviceResultDeckSlides(deckNode);
-		ObjectNode result = processSlidesOfDeck(slidesIterator, performDBPediaSpotlightPerSlide);
+		ObjectNode result = processSlidesOfDeck(slidesIterator, minConfidenceDBPediaSpotlightPerSlide, minConfidenceDBPediaSpotlightPerDeck);
 		return result;
 	}
 	
@@ -279,7 +278,17 @@ public class NLPComponent implements INLPComponent{
 	 * @param performDBPediaSpotlightPerDeck
 	 * @return
 	 */
-	public ObjectNode processSlidesOfDeck(Iterator<JsonNode> slidesIterator, boolean performDBPediaSpotlightPerSlide){
+	public ObjectNode processSlidesOfDeck(Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
+		
+
+		boolean performDBPediaSpotlightPerSlide = true;
+		if(minConfidenceDBPediaSpotlightPerSlide>1){
+			performDBPediaSpotlightPerSlide = false;
+		}
+		boolean performDBPediaSpotlightPerDeck = true;
+		if(minConfidenceDBPediaSpotlightPerDeck>1){
+			performDBPediaSpotlightPerDeck = false;
+		}
 		
 		ObjectNode result = Json.newObject();
 		ArrayNode slideArrayNode = Json.newArray();
@@ -334,7 +343,7 @@ public class NLPComponent implements INLPComponent{
 			// dbpedia spotlight per slide
 			if(performDBPediaSpotlightPerSlide){
 	
-				JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(slideTitleAndText, 0.35);
+				JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
 				resultsForSlide.set(NLPComponent.propertyNameDBPediaSpotlight, spotlightresult);
 
 				// track all resources of deck to analyze them later
@@ -436,11 +445,11 @@ public class NLPComponent implements INLPComponent{
 		}
 
 		
-//		// dbpedia spotlight per deck 
-//		if(performDBPediaSpotlightPerDeck){
-//			JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(deckText, 0.35);
-//			resultNodeWholeDeck.set(propertyNameDBPediaSpotlight, Json.toJson(resourceURIsOfDeckRetrievedPerDeck));
-//		}
+		// dbpedia spotlight per deck 
+		if(performDBPediaSpotlightPerDeck){
+			JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			resultNodeWholeDeck.set(propertyNameDBPediaSpotlight, spotlightresult);
+		}
 
 
 		result.set("nlpProcessResults", resultNodeWholeDeck);

@@ -13,7 +13,8 @@ import play.libs.Json;
 public class DBPediaSpotlightUtil {
 
 	private Client client;
-	private static final String URL = "http://www.dbpedia-spotlight.com/en/annotate";
+	private static final String URL = "http://api.dbpedia-spotlight.org/annotate";
+	public static double dbpediaspotlightdefaultConfidence = 0.6;
 	
 	public DBPediaSpotlightUtil() {
 		this.client = ClientBuilder.newClient();

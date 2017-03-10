@@ -13,6 +13,7 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import services.nlp.NLPComponent;
+import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
@@ -80,7 +81,8 @@ public class NLPController extends Controller{
     		@ApiParam(value = "input text") String inputText) {
     	
     	ObjectNode result = Json.newObject();
-		result = nlpComponent.performNLP(inputText, result);
+    	double dbpediaSpotlightConfidence = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
+		result = nlpComponent.performNLP(inputText, result, dbpediaSpotlightConfidence);
     	
         return ok(result);
        
@@ -91,8 +93,10 @@ public class NLPController extends Controller{
     public Result performNlpForDeck(
     		@ApiParam(value = "deckId") int deckId) {
     	
-    	// TODO: make boolean vaulues configurable
-    	ObjectNode result = nlpComponent.processDeck(deckId, true);
+    	double dbpediaSpotlightConfidenceForSlide = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
+    	double dbpediaSpotlightConfidenceForDeck = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
+
+    	ObjectNode result = nlpComponent.processDeck(deckId, dbpediaSpotlightConfidenceForSlide, dbpediaSpotlightConfidenceForDeck);
     	
         return ok(result);
        
