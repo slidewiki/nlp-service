@@ -11,9 +11,11 @@ version := "0.1"
 
 lazy val root = (project in file(".")).enablePlugins(PlayJava)
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
+//scalaVersion := "2.12.0" // not compatible with play 2.5.x
 
 libraryDependencies ++= Seq(
+	javaWs,
   "org.apache.commons" % "commons-compress" % "1.13",
   "commons-io" % "commons-io" % "2.5",
   "org.apache.opennlp" % "opennlp-tools" % "1.7.1",
