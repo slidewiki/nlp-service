@@ -1,5 +1,7 @@
 package controllers;
 
+import java.util.Map;
+
 import javax.inject.Inject;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +16,7 @@ import services.nlp.NLPComponent;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProvider;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 
@@ -25,10 +28,10 @@ public class NLPController extends Controller{
 
     
     @Inject
-    public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer,
-			INERLanguageDependent ner,  IDocFrequencyProvider docFrequencyProvider) {
+    public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
+			INERLanguageDependent ner,  Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
 		super();
-		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, ner, docFrequencyProvider);
+		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, mapDocFrequencyProvider);
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
@@ -83,6 +86,18 @@ public class NLPController extends Controller{
        
     }
     
+    @javax.ws.rs.Path(value = "/nlpForDeck")
+    @ApiOperation(value = "performs different available nlp steps for content of deck", notes = "different nlp steps are performed, currently: language detection, tokenization, NER, DBPedia Spotlight, tfidf (top 10) for tokens and dbPediaSpotlight")
+    public Result performNlpForDeck(
+    		@ApiParam(value = "deckId") int deckId) {
+    	
+    	// TODO: make boolean vaulues configurable
+    	ObjectNode result = nlpComponent.processDeck(deckId, true);
+    	
+        return ok(result);
+       
+    }
+
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(value = "returns results for dbpedia spotlight", notes = "returns result of dbpedia spotlight for the given input")
     public Result dbpediaSpotlight(
@@ -90,7 +105,7 @@ public class NLPController extends Controller{
     		@ApiParam(value = "confidence") double confidence) {
     	
     	ObjectNode result = Json.newObject();
-    	result = nlpComponent.dbpediaSpotlight(inputText, confidence, result);
+    	result = nlpComponent.performDBpediaSpotlight(inputText, confidence, result);
         return ok(result);
        
     }

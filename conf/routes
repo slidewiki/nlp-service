@@ -15,6 +15,7 @@ GET     /nlp/detectLanguage/:input         controllers.NLPController.detectLangu
 GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(input: String, lang: String)
 GET     /nlp/nlp/:input              controllers.NLPController.performNLP(input: String)
 GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpediaSpotlight(input: String, confidence: Double)
+GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: Integer)
 
 
 
