@@ -573,7 +573,8 @@ public class NLPComponent {
 
 	public String retrieveSlideTitleAndTextWithoutHTML(JsonNode slide, String separatorToUseBetweenSlideTitleAndSlideContent){
 		// slide title
-		String slidetitle = normalizeSlideTitle(DeckServiceUtil.getSlideTitle(slide));
+		String slidetitle = this.htmlToPlainText.getText(DeckServiceUtil.getSlideTitle(slide));
+		slidetitle =	normalizeSlideTitle(slidetitle);
 		String slideTitleAndText = "";
 		if(slidetitle.length()>0 ){
 			slideTitleAndText = slidetitle;
@@ -600,7 +601,7 @@ public class NLPComponent {
 	 */
 	public static String normalizeSlideTitle(String input){
 		String result = input;
-		String[] thingsToRemove = new String[]{"no title", "No title", "new slide", "New slide"};
+		String[] thingsToRemove = new String[]{"no title", "No title", "new slide", "New slide", "\n"};
 		for (String stringToRemove : thingsToRemove) {
 			result = result.replace(stringToRemove, " ").trim();
 		}
