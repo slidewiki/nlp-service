@@ -13,7 +13,9 @@ import play.libs.Json;
 public class DBPediaSpotlightUtil {
 
 	private Client client;
-	private static final String URL = "http://api.dbpedia-spotlight.org/rest/annotate";
+	private static final String URL = "http://www.dbpedia-spotlight.com/en/annotate";
+	//private static final String URL = "http://api.dbpedia-spotlight.org/rest/annotate"; // new URL but currently not working
+	
 	public static double dbpediaspotlightdefaultConfidence = 0.6;
 	
 	public DBPediaSpotlightUtil() {
