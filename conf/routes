@@ -13,9 +13,9 @@ GET     /docs/*file         controllers.Assets.at(path="/public/swagger-ui",file
 GET     /nlp/htmlToText/:input              controllers.NLPController.htmlToText(input: String)
 GET     /nlp/detectLanguage/:input         controllers.NLPController.detectLanguage(input: String)
 GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(input: String, lang: String)
-GET     /nlp/nlp/:input              controllers.NLPController.performNLP(input: String)
+#GET     /nlp/nlp/:input              controllers.NLPController.performNLP(input: String)
 GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpediaSpotlight(input: String, confidence: Double)
-GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: Integer)
+GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: String, dbpediaSpotlightConfidenceForSlide: Double, dbpediaSpotlightConfidenceForDeck: Double)
 
 
 

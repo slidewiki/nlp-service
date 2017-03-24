@@ -15,6 +15,7 @@ import play.Logger;
 import services.nlp.ITagger;
 import services.nlp.NLPComponent;
 import services.nlp.TaggerComponent;
+import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.HTMLJsoup;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
@@ -103,6 +104,15 @@ public class Module extends AbstractModule {
     	return new NERLanguageDependentViaMap(mapLanguageToNERs, defaultLanguageToUseIfGivenLanguageNotAvailable, useAllNERMethodsInMapRegardlessGivenLanguage);
     }
     
+    @Provides
+    public DBPediaSpotlightUtil provideDBPediaSpotlightUtil(Configuration configuration){
+    	String spotlightURL = configuration.getString("dbpediaSpotlight.webservice.url");
+    	List<String> spotlightFallBackURLsList = configuration.getStringList("dbpediaSpotlight.webservice.fallbackURLs");
+    	String[] spotlightFallBackURLs = new String[spotlightFallBackURLsList.size()];
+    	spotlightFallBackURLsList.toArray(spotlightFallBackURLs);
+    	return new DBPediaSpotlightUtil(spotlightURL, spotlightFallBackURLs);
+    }
+    
 //    @Provides
 //    public IDocFrequencyProvider provideDocFreqencyProvider(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
 //    	
@@ -118,33 +128,33 @@ public class Module extends AbstractModule {
     	//
     	String filepath;
     	
-    	//=================
-    	// old platform (slidewiki1)
-    	// ================
-    	// tokens language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent);
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// tokens not language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent);
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// dbpedia spotlight language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent);
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// dbpedia spotlight not language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent);
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
+//    	//=================
+//    	// old platform (slidewiki1)
+//    	// ================
+//    	// tokens language dependent
+//    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent);
+//    	Logger.info("loading " + filepath);
+//    	if(filepath !=null && filepath.trim().length()>0){
+//        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+//    	}
+//    	// tokens not language dependent
+//    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent);
+//    	Logger.info("loading " + filepath);
+//    	if(filepath !=null && filepath.trim().length()>0){
+//        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+//    	}
+//    	// dbpedia spotlight language dependent
+//    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent);
+//    	Logger.info("loading " + filepath);
+//    	if(filepath !=null && filepath.trim().length()>0){
+//        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+//    	}
+//    	// dbpedia spotlight not language dependent
+//    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent);
+//    	Logger.info("loading " + filepath);
+//    	if(filepath !=null && filepath.trim().length()>0){
+//        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+//    	}
 
   
       	//=================
@@ -180,8 +190,8 @@ public class Module extends AbstractModule {
  
     @Provides
     public NLPController provideNLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner,  Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
-    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, mapDocFrequencyProvider);
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
+    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, mapDocFrequencyProvider);
     }
 
 

@@ -66,7 +66,8 @@ public class TFIDF {
 	
 	
 	/**
-	 * Convenience method getting tfidf for an array of tokens and dependent on language
+	 * Convenience method getting tfidf for an array of tokens and dependent on language.
+	 * Uses frequencyOfMostFrequentTermInDoc for calculating augmented term frequency. So provide full list of tokens and do not remove stopwords before.
 	 * @param tokens
 	 * @param toLowerCase
 	 * @param language

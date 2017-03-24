@@ -3,15 +3,25 @@ package controllers;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import play.Logger;
 import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
+import play.mvc.Results;
 import services.nlp.NLPComponent;
 import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
@@ -30,9 +40,9 @@ public class NLPController extends Controller{
     
     @Inject
     public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner,  Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
 		super();
-		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, mapDocFrequencyProvider);
+		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, mapDocFrequencyProvider);
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
@@ -91,28 +101,116 @@ public class NLPController extends Controller{
     @javax.ws.rs.Path(value = "/nlpForDeck")
     @ApiOperation(value = "performs different available nlp steps for content of deck", notes = "different nlp steps are performed, currently: language detection, tokenization, NER, DBPedia Spotlight, tfidf (top 10) for tokens and dbPediaSpotlight")
     public Result performNlpForDeck(
-    		@ApiParam(value = "deckId") int deckId) {
+    		@ApiParam(value = "deckId") String deckId, 
+    		@ApiParam(value = "dbpediaSpotlightConfidenceForSlide (use a value >1 to skip spotlight processing per slides)") double dbpediaSpotlightConfidenceForSlide, 
+    		@ApiParam(value = "dbpediaSpotlightConfidenceForDeck  (use a value >1 to skip spotlight processing per deck (text of whole deck as 1 input to spotlight). Spotlight per slide will be processed if <=1") double dbpediaSpotlightConfidenceForDeck) {
     	
-    	double dbpediaSpotlightConfidenceForSlide = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
-    	double dbpediaSpotlightConfidenceForDeck = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
+    	
+    	
+    	try{
+        	ObjectNode resultNode = nlpComponent.processDeck(deckId, dbpediaSpotlightConfidenceForSlide, dbpediaSpotlightConfidenceForDeck);
+        	Result r = Results.ok(resultNode);        	
+            return r;
+    	}catch (WebApplicationException e) {
 
-    	ObjectNode result = nlpComponent.processDeck(deckId, dbpediaSpotlightConfidenceForSlide, dbpediaSpotlightConfidenceForDeck);
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}catch(ProcessingException f){
+    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
+    		
+    		return createResultForProcessingException(500, f, message);
+    	}
     	
-        return ok(result);
        
     }
 
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
-    @ApiOperation(value = "returns results for dbpedia spotlight", notes = "returns result of dbpedia spotlight for the given input")
+    @ApiOperation(
+    		value = "returns results for dbpedia spotlight", // displayed next to path
+    		notes = "returns result of dbpedia spotlight for the given input"// displayed under "Implementation notes"
+    		)
     public Result dbpediaSpotlight(
     		@ApiParam(value = "input text") String inputText,
     		@ApiParam(value = "confidence") double confidence) {
     	
-    	ObjectNode result = Json.newObject();
-    	result = nlpComponent.performDBpediaSpotlight(inputText, confidence, result);
-        return ok(result);
+    	Logger.debug("confidence set to " + confidence);
+    	if(confidence>1 || confidence < 0 ){
+    		return badRequest("Please provide a confidence value in the range of 0 to 1");
+    	}
+    	
+    	Response response;
+    	try{
+    		response = nlpComponent.performDBpediaSpotlight(inputText, confidence);
+    		if(response.getStatus()!=200){
+        		
+        		return createResultForResponseObject(response, "Problem occured during calling spotlight service. For more information see details provided.");
+        	}else{
+        		return createResultForResponseObject(response, "");
+        	}
+    	}catch(ProcessingException e){
+    		return createResultForProcessingException(500, e, "Problem occured during calling spotlight service. For more information see details provided.");
+    	}
+    	
        
     }
 
+    /**
+     * Creates a Result for a {@link WebApplicationException} which is thrown when other called service do not return expected result.
+     * Creates a Result with the same status code like returned by the called service.
+     * @param e
+     * @return
+     */
+    public static Result createResultForExceptionalResponseCausedByWebApllicationException(WebApplicationException e){
+    	
+    	ObjectNode responseContent = Json.newObject();
+		String message = e.getMessage();
+		responseContent.put("message", message);
+		Response response = e.getResponse();
+		int status = response.getStatus();
+		responseContent.put("status", status);
+		String responseAsString = response.readEntity(String.class);
+		JsonNode responseAsJsonNode = Json.parse(responseAsString);
+		responseContent.set("Response", responseAsJsonNode);
+
+		Result result = Results.status(status, responseContent);
+		return result;
+    }
+    
+    public static Result createResultForResponseObject(Response response, String optionalMessage){
+    	
+    	ObjectNode responseContent = Json.newObject();
+    	
+    	if(optionalMessage!=null && optionalMessage.length()>0){
+    		responseContent.put("message", optionalMessage);
+    	}
+    	
+		int status = response.getStatus();
+		responseContent.put("status", status);
+		String responseAsString = response.readEntity(String.class);
+		try{
+			JsonNode responseAsJsonNode = Json.parse(responseAsString);
+			responseContent.set("Response", responseAsJsonNode);
+		}
+		catch(RuntimeException e){// problem parsing json
+			responseContent.put("Response", responseAsString);
+
+		}
+		Result result = Results.status(status, responseContent);
+		return result;
+    }
+    
+    public static Result createResultForProcessingException(int statusToReturn, Exception e, String optionalMessage){
+    	ObjectNode responseContent = Json.newObject();
+		responseContent.put("status", statusToReturn);
+
+    	if(optionalMessage!=null && optionalMessage.length()>0){
+    		responseContent.put("message", optionalMessage);
+    	}
+    	responseContent.put("detailsErrorMessage", e.getMessage());
+    	if(e.getCause()!=null){
+        	responseContent.put("detailsErrorCause", e.getCause().toString());
+    	}
+
+    	return Results.status(statusToReturn, responseContent);
+    }
     
 }

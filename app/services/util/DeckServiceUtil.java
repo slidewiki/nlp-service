@@ -1,5 +1,6 @@
 package services.util;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 import javax.ws.rs.client.Client;
@@ -9,7 +10,6 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import play.libs.Json;
@@ -22,36 +22,48 @@ public class DeckServiceUtil {
 		this.client = ClientBuilder.newClient();
 	}
 	
-	public JsonNode getSlidesForDeckIdFromDeckservice(int deckId){
-		try{
-			Response response = client.target("https://deckservice.experimental.slidewiki.org/deck/" + deckId + "/slides")
-	        .request(MediaType.APPLICATION_JSON).get();
-			int status = response.getStatus();
-			
-			Logger.info("Response status: " + status);
-			
-			if(status == 200){
-				String result = response.readEntity(String.class);
-				JsonNode resultNode = Json.parse(result);
-				return resultNode;
-			}else{
-				ObjectNode errorNode = Json.newObject();
-				String statusInfo = response.getStatusInfo().toString();
-				errorNode.put("statusInfo", statusInfo);
-				return errorNode;
-			}
-	       
+	public Response getSlidesForDeckIdFromDeckservice(String deckId){
+		
+		String URL = "https://deckservice.experimental.slidewiki.org/deck/" + deckId + "/slides";
+		Response response = client.target(URL)
+        .request(MediaType.APPLICATION_JSON).get();
+		
+		Logger.info("Response status for deck id " + deckId + ": " + response.getStatus());
 
-		}catch(Exception e){
-			System.err.println("Exception for following input: " +deckId + "\n" +e);
-		}
-		return Json.newObject();
+		return response;
+	}
+	
+	/**
+	 * Returns iterator for slides for given deck service response. Expects a normal response object. Please check for error responses before.
+	 * @param deckserviceResult
+	 * @return
+	 */
+	public static Iterator<JsonNode> getSlidesIteratorFromDeckserviceResponse(Response response){
+		JsonNode jsonNode = getJsonFromMessageBody(response);
+		Iterator<JsonNode> iterator = getSlidesIteratorFromDeckserviceJsonResult(jsonNode);
+		return iterator;
 	}
 
-	public static Iterator<JsonNode> getSlidesIteratorForDeckserviceResultDeckSlides(JsonNode deckserviceResult){
-		ArrayNode slidesNode = (ArrayNode) deckserviceResult.get("children");
-		Iterator<JsonNode> slidesIterator = slidesNode.elements();
+	
+	private static JsonNode getJsonFromMessageBody(Response response) {
+
+		String result = response.readEntity(String.class);
+		JsonNode resultNode = Json.parse(result);
+		return resultNode;
+			
+	}
+
+	private static Iterator<JsonNode> getSlidesIteratorFromDeckserviceJsonResult(JsonNode deckserviceResult){
+		Iterator<JsonNode> slidesIterator = Collections.<JsonNode>emptyList().iterator();
+		if(deckserviceResultHasSlides(deckserviceResult)){
+			ArrayNode slidesNode = (ArrayNode) deckserviceResult.get("children");
+			slidesIterator = slidesNode.elements();
+		}
 		return slidesIterator;
+	}
+	
+	private static boolean deckserviceResultHasSlides(JsonNode deckserviceResult){
+		return deckserviceResult.has("children");
 	}
 	
 	public static String getSlideTitle(JsonNode slideNode){

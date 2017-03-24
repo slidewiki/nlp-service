@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -28,6 +30,12 @@ import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.util.DeckServiceUtil;
 
 //TODO: clean up
+
+/**
+ * Convenience class for performing complex nlp processes of several sub components with 1 class.
+ * @author aschlaf
+ *
+ */
 public class NLPComponent {
 	
 	public static String propertyNameOriginalInput = "input";
@@ -40,15 +48,7 @@ public class NLPComponent {
 	public static String propertyNameTFIDF = "TFIDF";
 	public static String propertyNameDBPediaSpotlight = "DBPediaSpotlight";
 	
-	// slidewiki 1 (old platform)
-	public static String propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent = "docFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent";
-	public static String propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent = "docFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent";
-//	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki1_perSlide_languageDependent = "docFreqProvider_Spotlight_SlideWiki1_perSlide_languageDependent";
-//	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki1_perSlide_notlanguageDependent = "docFreqProvider_Spotlight_SlideWiki1_perSlide_notlanguageDependent";
-	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent = "docFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent";
-	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent = "docFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent";
-
-	// slidewiki 2 (new platform)
+	// key names for specific document frequency providers
 	public static String propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent = "docFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent";
 	public static String propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent = "docFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent";
 //	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki2_perSlide_languageDependent = "docFreqProvider_Spotlight_SlideWiki2_perSlide_languageDependent";
@@ -56,7 +56,7 @@ public class NLPComponent {
 	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent = "docFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent";
 	public static String propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent = "docFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent";
 
-	public int maxEntriesForTFIDFResult = 10;
+	public int maxEntriesForTFIDFResult = 10; //TODO: make this configurable?
 
 	private IHtmlToText htmlToPlainText;
 	private ILanguageDetector languageDetector;
@@ -66,13 +66,14 @@ public class NLPComponent {
     private Map<String,IDocFrequencyProvider> mapDocFrequencyProvider; 
     private DeckServiceUtil deckServiceUtil;  
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
+    
     private boolean tfidfCalculationWithToLowerCase = true;
     private boolean stopwordRemovalWithToLowerCase = true;
 
     
 	@Inject
 	public NLPComponent(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
 		super();
 		this.htmlToPlainText = htmlToText;
 		this.languageDetector = languageDetector;
@@ -81,12 +82,31 @@ public class NLPComponent {
 		this.ner = ner;
 		this.mapDocFrequencyProvider = mapDocFrequencyProvider;
 		this.deckServiceUtil = new DeckServiceUtil();
-		this.dbPediaSpotlightUtil = new DBPediaSpotlightUtil();
+		this.dbPediaSpotlightUtil = dbPediaSpotlightUtil;
 	}
 	
+	/**
+	 * Extracts text from html.
+	 * @param input hmtl string
+	 * @return extracted text
+	 */
+	public String getPlainTextFromHTML(String input){
+    	return this.htmlToPlainText.getText(input);
+	}
+	
+	/**
+	 * Extracts text from html and puts result to objectsNode with key name of value of propertyNameHtmlToPlainText
+	 * @param input
+	 * @param node
+	 * @return
+	 */
 	public ObjectNode getPlainTextFromHTML(String input, ObjectNode node){
     	String plainText = this.htmlToPlainText.getText(input);
     	return node.put(propertyNameHtmlToPlainText, plainText);
+	}
+	
+	public String detectLanguage(String input){
+    	return this.languageDetector.getLanguage(input);	
 	}
 	
 	public ObjectNode detectLanguage(String input, ObjectNode node){
@@ -94,8 +114,8 @@ public class NLPComponent {
     	return node.put(propertyNameLanguage, language);
 	}
 	
-	public String detectLanguage(String input){
-    	return this.languageDetector.getLanguage(input);	
+	public String[] tokenize(String input, String language){
+    	return this.tokenizer.tokenize(input, language);	
 	}
 	
 	public ObjectNode tokenize(String input, String language, ObjectNode node){
@@ -105,7 +125,11 @@ public class NLPComponent {
     	return node;
 	}
 	
-	public ObjectNode ner(String[] tokens, String language, ObjectNode node){
+	public List<NlpTag> performNER(String[] tokens, String language){
+    	return this.ner.getNEs(tokens, language);	
+	}
+	
+	public ObjectNode performNER(String[] tokens, String language, ObjectNode node){
     	List<NlpTag> ners = this.ner.getNEs(tokens, language);	
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(propertyNameNER, nerNode);
@@ -113,20 +137,22 @@ public class NLPComponent {
 	}
 	
 	
-	public JsonNode performDBpediaSpotlight(String input, double confidence){
+	public Response performDBpediaSpotlight(String input, double confidence){
 		
-		return dbPediaSpotlightUtil.callDBPediaSpotlight(input, confidence);
+		return dbPediaSpotlightUtil.performDBPediaSpotlight(input, confidence);
 			
 	}
 	
-	public ObjectNode performDBpediaSpotlight(String input, double dbpediaSpotlightConfidence, ObjectNode node){
-		
-		JsonNode resultNode = performDBpediaSpotlight(input, dbpediaSpotlightConfidence);
-		node.set(propertyNameDBPediaSpotlight, resultNode);
-		return node;
-		
-	}
+//	public ObjectNode performDBpediaSpotlight(String input, double dbpediaSpotlightConfidence, ObjectNode node){
+//		
+//		JsonNode resultNode = performDBpediaSpotlight(input, dbpediaSpotlightConfidence);
+//		node.set(propertyNameDBPediaSpotlight, resultNode);
+//		return node;
+//		
+//	}
 	
+
+	@Deprecated
 	public ObjectNode performNLP(String input, ObjectNode node, double dbpediaSpotlightConfidence){
 		
 		String plainText = htmlToPlainText.getText(input).trim();
@@ -144,36 +170,84 @@ public class NLPComponent {
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(propertyNameNER, nerNode);
     	
+		ObjectNode TFIDFResultNode= Json.newObject();
+
     	// TFIDF all token tyes (regardless NER)
-		IDocFrequencyProvider docFrequencyProvider_Tokens_SlideWiki1 = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent);
-    	List<Entry<String,Double>> tfidfEntries = TFIDF.getTFIDFValuesTopX(tokens, this.tfidfCalculationWithToLowerCase, detectedLanguage, docFrequencyProvider_Tokens_SlideWiki1, maxEntriesForTFIDFResult);
-    	ArrayNode tfidfNode = tfidfEntryListAsArrayNode(tfidfEntries, "term", "tfidf");
-		node.set(propertyNameTFIDF, tfidfNode);
-		
+		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent)){
+			IDocFrequencyProvider docFrequencyProvider_Tokens_SlideWiki1 = mapDocFrequencyProvider.get(propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent);
+	    	List<Entry<String,Double>> tfidfEntries = TFIDF.getTFIDFValuesTopX(tokens, this.tfidfCalculationWithToLowerCase, detectedLanguage, docFrequencyProvider_Tokens_SlideWiki1, maxEntriesForTFIDFResult);
+	    	ArrayNode tfidfNode = tfidfEntryListAsArrayNode(tfidfEntries, "term", "tfidf");
+	    	TFIDFResultNode.set(propertyNameTFIDF + "_tokens", tfidfNode);
+		}
 		// dbpediaspotlight
-		node = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence, node);
+		Response response = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence);
+		if(response.getStatus()!=200){
+			throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + plainText + "\"", response);
+		}
+		JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+		
+		
+		// tfidf
+		List<String> spoltlightURIs = new ArrayList<>();
+		JsonNode resourcesNode = spotlightresult.get("Resources");
+		if(resourcesNode!=null && !resourcesNode.isNull()){
+			ArrayNode resources = (ArrayNode) resourcesNode;
+			for (int i = 0; i < resources.size(); i++) {
+				JsonNode resourceNode = resources.get(i);
+				String URI = resourceNode.get("@URI").textValue();
+				spoltlightURIs.add(URI);
+			}
+		}
+		String[] spoltlightURIsAsArray = new String[spoltlightURIs.size()];
+		spoltlightURIsAsArray = spoltlightURIs.toArray(spoltlightURIsAsArray);
+		
+		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent)){
+			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
+			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spoltlightURIsAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
+			TFIDFResultNode.set(propertyNameTFIDF + "_forSpotlightEntities", tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2_notlanguagedependent, "spotlightEntity", "tfidf"));	
+		}
+		node.set(propertyNameTFIDF, TFIDFResultNode);
+
 		
     	return node;
 	}
 
-	
-	public ObjectNode processDeck(int deckId, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
-		Logger.info("deckId: " + deckId);
+	/**
+	 * 
+	 * @param deckId
+	 * @param minConfidenceDBPediaSpotlightPerSlide
+	 * @param minConfidenceDBPediaSpotlightPerDeck
+	 * @return
+	 * @throws WebApplicationException if deckservice or dbpedia spotlight service doesn't return status code 200
+	 */
+	public ObjectNode processDeck(String deckId, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck) throws WebApplicationException{
 
-		JsonNode deckNode = this.deckServiceUtil.getSlidesForDeckIdFromDeckservice(deckId);
-		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorForDeckserviceResultDeckSlides(deckNode);
-		ObjectNode result = processSlidesOfDeck(deckId, slidesIterator, minConfidenceDBPediaSpotlightPerSlide, minConfidenceDBPediaSpotlightPerDeck);
-		return result;
+		
+		Logger.debug("process deckId: " + deckId);
+		Response response = this.deckServiceUtil.getSlidesForDeckIdFromDeckservice(deckId);
+		int status = response.getStatus();
+		if(status == 200){
+			Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorFromDeckserviceResponse(response);
+			ObjectNode result = processSlidesOfDeck(deckId, slidesIterator, minConfidenceDBPediaSpotlightPerSlide, minConfidenceDBPediaSpotlightPerDeck);
+			return result;
+
+		}else{
+			throw new WebApplicationException("Problem while getting slides via deck service for deck id " + deckId + ". The deck service responded with status " + status + " (" + response.getStatusInfo() + ")", response);
+		}
+		
+
 	}
 	
+	/**
 	/**
 	 * without tfidf
 	 * @param slidesIterator
 	 * @param minConfidenceDBPediaSpotlightPerSlide
 	 * @param minConfidenceDBPediaSpotlightPerDeck
 	 * @return
+	 * @throws WebApplicationException if dbpedia spotlight service doesn't return status code 200
 	 */
-	public ObjectNode processNLPForSlidesOfDeck(Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
+	public ObjectNode processNLPForSlidesOfDeck(Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck) throws WebApplicationException{
 		
 		boolean performDBPediaSpotlightPerSlide = true;
 		if(minConfidenceDBPediaSpotlightPerSlide>1){
@@ -210,14 +284,11 @@ public class NLPComponent {
 			}
 
 			// language
-			String languageOfSlide = languageDetector.getLanguage(slideTitleAndText);
+			String languageOfSlide = detectLanguage(slideTitleAndText);
 			resultsForSlide.put(NLPComponent.propertyNameLanguage, languageOfSlide);
 
 			// tokens
-			String[] tokenArray = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
-			List<String> tokens = Arrays.asList(tokenArray);
-			tokensOfWholeDeck.addAll(tokens); // needed for language detection of whole deck and tfidf
-			resultsForSlide.set(NLPComponent.propertyNameTokens, Json.toJson(tokenArray));
+			tokenize(slideTitleAndText, languageOfSlide, resultsForSlide);
 						
 			// NER
 			// TODO: add NER
@@ -225,7 +296,11 @@ public class NLPComponent {
 			// dbpedia spotlight per slide
 			if(performDBPediaSpotlightPerSlide){
 	
-				JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				if(response.getStatus()!=200){
+					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
+				}
+				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
 				resultsForSlide.set(NLPComponent.propertyNameDBPediaSpotlight, spotlightresult);
 
 				// track all resources of deck to analyze them later
@@ -260,7 +335,12 @@ public class NLPComponent {
 		
 		// dbpedia spotlight per deck 
 		if(performDBPediaSpotlightPerDeck){
-			JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			if(response.getStatus()!=200){
+				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
+			}
+			JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+			
 			resultNodeWholeDeck.set(propertyNameDBPediaSpotlight, spotlightresult);	
 		}
 
@@ -272,13 +352,14 @@ public class NLPComponent {
 	}
 	
 	/**
-	 * incl. tfidf
+	 * prforms nlp for slides of deck incl. tfidf
+	 * @param deckId
 	 * @param slidesIterator
-	 * @param performDBPediaSpotlightPerSlide
-	 * @param performDBPediaSpotlightPerDeck
+	 * @param minConfidenceDBPediaSpotlightPerSlide confidence to be used for DBPediaSpotlight performed on slide text. If >1, spotlight retrieval will be skipped for slides
+	 * @param minConfidenceDBPediaSpotlightPerDeck confidence to be used for DBPediaSpotlight performed on deck text. If >1, spotlight retrieval will be skipped for deck text (concatenated slide texts)
 	 * @return
 	 */
-	public ObjectNode processSlidesOfDeck(int deckId, Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
+	public ObjectNode processSlidesOfDeck(String deckId, Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck){
 		
 
 		boolean performDBPediaSpotlightPerSlide = true;
@@ -294,8 +375,7 @@ public class NLPComponent {
 		result.put("deckId", deckId);
 		ArrayNode slideArrayNode = Json.newArray();
 
-		List<String> tokensOfWholeDeck = new ArrayList<>(); // needed for language detection of whole deck
-		Set<String> typesOfWholeDeck = new HashSet<>();
+		List<String> tokensOfWholeDeck = new ArrayList<>(); // used for tfidf of tokens
 		StringBuilder sbWholeDeckText = new StringBuilder();
 
 		List<String> resourceURIsOfDeckRetrievedPerSlide = new ArrayList<>();
@@ -312,40 +392,30 @@ public class NLPComponent {
 
 			if(slideTitleAndText.length()==0){
 				// no text content for slide
-//				counterSlidesWithoutText++;
 				continue;
 			}
 
 			// language
-			String languageOfSlide = languageDetector.getLanguage(slideTitleAndText);
+			String languageOfSlide = detectLanguage(slideTitleAndText);
 			resultsForSlide.put(NLPComponent.propertyNameLanguage, languageOfSlide);
 
 			// tokens
-			String[] tokenArray = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
-			List<String> tokens = Arrays.asList(tokenArray);
-			tokensOfWholeDeck.addAll(tokens); // needed for language detection of whole deck and tfidf
-			resultsForSlide.set(NLPComponent.propertyNameTokens, Json.toJson(tokenArray));
-			
-//			// types (needed for tfidf)
-//			Set<String> typesOfSlide = new HashSet<>(Arrays.asList(tokenArray));			
-//			if(tfidfCalculationWithToLowerCase){
-//				Set<String> typesLowerCase = new HashSet<>();
-//				for (String type : typesOfSlide) {
-//					typesLowerCase.add(type.toLowerCase());
-//				}
-//				typesOfSlide = typesLowerCase;
-//			}
-//			stopwordRemover.removeStopwords(typesOfSlide, languageOfSlide);	
-//			typesOfWholeDeck.addAll(typesOfSlide);
-//			resultsForSlide.set(this.propertyNameTypes, Json.toJson(typesOfSlide));
-			
+			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
+			tokensOfWholeDeck.addAll(Arrays.asList(tokenArrayOfSlide)); 
+			resultsForSlide.set(NLPComponent.propertyNameTokens, Json.toJson(tokenArrayOfSlide));
+						
 			// NER
-			// TODO: add NER
+			performNER(tokenArrayOfSlide, languageOfSlide, resultsForSlide);
 			
 			// dbpedia spotlight per slide
 			if(performDBPediaSpotlightPerSlide){
 	
-				JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				if(response.getStatus()!=200){
+					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
+				}
+				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+
 				resultsForSlide.set(NLPComponent.propertyNameDBPediaSpotlight, spotlightresult);
 
 				// track all resources of deck to analyze them later for tfidf
@@ -377,7 +447,7 @@ public class NLPComponent {
 		
 		// language detection for whole deck
 		String deckText = sbWholeDeckText.toString();
-		String languageWholeDeck = languageDetector.getLanguage(deckText);
+		String languageWholeDeck = detectLanguage(deckText);
 		resultNodeWholeDeck.put("languageDetectedWholeDeck", languageWholeDeck);
 
 		
@@ -390,21 +460,9 @@ public class NLPComponent {
 		tokensOfWholeDeckStopwordsRemovedArray = tokensOfWholeDeckStopwordsRemoved.toArray(tokensOfWholeDeckStopwordsRemovedArray);
 		// TODO: add to lower case
 		
+		//TFIDF
 		ObjectNode TFIDFResultNode= Json.newObject();
 		
-//		// tfidf for tokens compared to SlideWiki1
-//		// language dependent
-//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent)){
-//			IDocFrequencyProvider docFrequencyProvider_Tokens_SlideWiki1_languagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent);
-//			List<Entry<String,Double>> tfidfresultTokensSlideWiki1_languagedependent = TFIDF.getTFIDFValuesTopX(tokensOfWholeDeckStopwordsRemovedArray, this.tfidfCalculationWithToLowerCase, languageWholeDeck, docFrequencyProvider_Tokens_SlideWiki1_languagedependent, maxEntriesForTFIDFResult);
-//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent, tfidfEntryListAsArrayNode(tfidfresultTokensSlideWiki1_languagedependent, "term", "tfidf"));
-//		}
-//		// not language dependent
-//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent)){
-//			IDocFrequencyProvider docFrequencyProvider_Tokens_SlideWiki1_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent);
-//			List<Entry<String,Double>> tfidfresultTokensSlideWiki1_notlanguagedependent = TFIDF.getTFIDFValuesTopX(tokensOfWholeDeckStopwordsRemovedArray, this.tfidfCalculationWithToLowerCase, "ALL", docFrequencyProvider_Tokens_SlideWiki1_notlanguagedependent, maxEntriesForTFIDFResult);
-//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultTokensSlideWiki1_notlanguagedependent, "term", "tfidf"));
-//		}
 		// tfidf for tokens compared to SlideWiki2
 		// language dependent
 		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent)){
@@ -419,40 +477,34 @@ public class NLPComponent {
 			TFIDFResultNode.set(propertyNameTFIDF + "_" + NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultTokensSlideWiki2_notlanguagedependent, "term", "tfidf"));
 		}
 		
-		// tfidf for spotlight entities whole deck
-		String[] spotlightEntitesOfDeckAsArray = new String[resourceURIsOfDeckRetrievedPerSlide.size()];
-		spotlightEntitesOfDeckAsArray = resourceURIsOfDeckRetrievedPerSlide.toArray(spotlightEntitesOfDeckAsArray);
-//		// compared to SlideWiki1
-//		// language dependent
-//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent)){
-//			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki1_perDeck_languagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent);
-//			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki1_languagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, languageWholeDeck, docFrequencyProvider_Spotlight_SlideWiki1_perDeck_languagedependent, maxEntriesForTFIDFResult);
-//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki1_languagedependent, "spotlightEntity", "tfidf"));	
-//		}
-//		// not language dependent
-//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent)){
-//			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki1_perDeck_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent);
-//			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki1_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki1_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
-//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + propertyNameDocFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki1_notlanguagedependent, "spotlightEntity", "tfidf"));	
-//		}
-		// compared to SlideWiki2
-//		// language dependent
-//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent)){
-//			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent);
-//			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2 = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, languageWholeDeck, docFrequencyProvider_Spotlight_SlideWiki2_perDeck, maxEntriesForTFIDFResult);
-//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2, "spotlightEntity", "tfidf"));
-//		}
-		// not language dependent
-		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent)){
-			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
-			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
-			TFIDFResultNode.set(propertyNameTFIDF + "_forSpotlightEntitiesRetrievedPerSlide_"+ propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2_notlanguagedependent, "spotlightEntity", "tfidf"));	
+		// tfidf for spotlight entity URIs
+		if(performDBPediaSpotlightPerSlide){// tfidf of spotlight entities can only be performed if spotlight entities were retrieved before
+
+			String[] spotlightEntitesOfDeckAsArray = new String[resourceURIsOfDeckRetrievedPerSlide.size()];
+			spotlightEntitesOfDeckAsArray = resourceURIsOfDeckRetrievedPerSlide.toArray(spotlightEntitesOfDeckAsArray);
+			// compared to SlideWiki2
+	//		// language dependent
+	//		if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent)){
+	//			IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent);
+	//			List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2 = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, languageWholeDeck, docFrequencyProvider_Spotlight_SlideWiki2_perDeck, maxEntriesForTFIDFResult);
+	//			resultNodeWholeDeck.set(propertyNameTFIDF + "_" + propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2, "spotlightEntity", "tfidf"));
+	//		}
+			// not language dependent
+			if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent)){
+				IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
+				List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
+				TFIDFResultNode.set(propertyNameTFIDF + "_forSpotlightEntitiesRetrievedPerSlide_"+ propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2_notlanguagedependent, "spotlightEntity", "tfidf"));	
+			}
 		}
 
 		
 		// dbpedia spotlight per deck 
 		if(performDBPediaSpotlightPerDeck){
-			JsonNode spotlightresult = dbPediaSpotlightUtil.callDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			if(response.getStatus()!=200){
+				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
+			}
+			JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
 			resultNodeWholeDeck.set(propertyNameDBPediaSpotlight + "_perDeck", spotlightresult);
 			
 			JsonNode resourcesNode = spotlightresult.get("Resources");
@@ -465,10 +517,12 @@ public class NLPComponent {
 					resourceURIsOfDeckRetrievedPerDeck.add(URI);
 				}
 			}
-			
+			String[] spotlightEntitesOfDeckRetrievedPerDeckAsArray = new String[resourceURIsOfDeckRetrievedPerDeck.size()];
+			spotlightEntitesOfDeckRetrievedPerDeckAsArray = resourceURIsOfDeckRetrievedPerDeck.toArray(spotlightEntitesOfDeckRetrievedPerDeckAsArray);
+			//tfidf for these spotlight entities
 			if(mapDocFrequencyProvider.containsKey(propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent)){
 				IDocFrequencyProvider docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent = mapDocFrequencyProvider.get(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
-				List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
+				List<Entry<String,Double>> tfidfresultSpotlightSlideWiki2_notlanguagedependent = TFIDF.getTFIDFValuesTopX(spotlightEntitesOfDeckRetrievedPerDeckAsArray, false, "ALL", docFrequencyProvider_Spotlight_SlideWiki2_perDeck_notlanguagedependent, maxEntriesForTFIDFResult);
 				TFIDFResultNode.set(propertyNameTFIDF + "_forSpotlightEntitiesRetrievedPerDeck_" + propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, tfidfEntryListAsArrayNode(tfidfresultSpotlightSlideWiki2_notlanguagedependent, "spotlightEntity", "tfidf"));	
 			}
 		}
