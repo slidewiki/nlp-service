@@ -1,6 +1,7 @@
 package services.nlp.tfidf;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,21 @@ public class TFIDF {
 		double idf = calcInverseDocumentFrequency(numberOfDocsContainingTerm, numberOfAllDocuments);
 		return tf * idf;
 	}
+		
+	public static List<Entry<String,Double>> getTFIDFValuesTopX(Map<String,Integer> typeCounts, int frequencyOfMostFrequentTokenInDoc, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider, int maxTypesToReturn){
+		
+		if(typeCounts.size()== 0 || maxTypesToReturn==0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
+			return new ArrayList<Entry<String,Double>>();
+		}
+		
+		Map<String,Double> tfidf = getTFIDFValues(typeCounts, frequencyOfMostFrequentTokenInDoc, toLowerCase, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
+		List<Entry<String, Double>> tfidfSorted = Sorter.sortByValueAndReturnAsList(tfidf, true);
+		if(maxTypesToReturn<0 || maxTypesToReturn>=tfidfSorted.size()){
+			return tfidfSorted;
+		}
+		return tfidfSorted.subList(0, maxTypesToReturn);		
+		
+	}
 	
 	/**
 	 * Convenience method getting top x tfidf values for an array of tokens and dependent on language.
@@ -28,74 +44,79 @@ public class TFIDF {
 	 * @param maxTypesToReturn
 	 * @return
 	 */
-	public static List<Entry<String,Double>> getTFIDFValuesTopX(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, int maxTypesToReturn){
+	public static List<Entry<String,Double>> getTFIDFValuesTopX(Collection<String> tokens, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider, int maxTypesToReturn){
 		
-		if(maxTypesToReturn==0){
+		if(tokens.size()== 0 || maxTypesToReturn==0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
 			return new ArrayList<Entry<String,Double>>();
 		}
-		List<Entry<String,Double>> result = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider, true);
-		if(maxTypesToReturn<0 || maxTypesToReturn>=result.size()){
-			return result;
+		Map<String,Double> tfidfValues = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
+		List<Entry<String, Double>> tfidfSorted = Sorter.sortByValueAndReturnAsList(tfidfValues, true);
+		
+		if(maxTypesToReturn<0 || maxTypesToReturn>=tfidfSorted.size()){
+			return tfidfSorted;
 		}
-		return result.subList(0, maxTypesToReturn);		
+		return tfidfSorted.subList(0, maxTypesToReturn);		
 		
 	}
 
 	
+	
+	
+	
 	/**
-	 * Convenience method getting tfidf for an array of tokens and dependent on language with option to return sorted list with terms with highest tfidf at the beginning
+	 * Convenience method getting tfidf for a collection of tokens and dependent on language.
 	 * @param tokens
 	 * @param toLowerCase
 	 * @param language
 	 * @param docFrequencyProvider
-	 * @param maxTypesToReturn
-	 * @param sortByValueReverse if true, the entries are sorted reverse by their values, if false, the entries are not sorted at all
+	 * @param sortByValueReverse if set to true, the map is sorted by their value in reverse order, if set to false, just tfidf values are returned;
 	 * @return
 	 */
-	public static List<Entry<String,Double>> getTFIDFValues(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider, boolean sortByValueReverse){
+	public static Map<String,Double> getTFIDFValues(Collection<String> tokens, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider){
 		
-		Map<String,Double> tfidfResult = getTFIDFValues(tokens, toLowerCase, language, docFrequencyProvider);
-
-		if(sortByValueReverse){
-			return Sorter.sortByValueAndReturnAsList(tfidfResult, true);
-		}else{
-			return new ArrayList<>(tfidfResult.entrySet());
+		
+		if(tokens.size()== 0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
+			return new HashMap<String,Double>();
 		}
 		
+		Map<String,Integer> rawTermFrequencies = getWordTypeFrequencies(tokens, toLowerCase);
+		int frequencyOfMostFrequentTermInDoc = Sorter.sortByValueAndReturnAsList(rawTermFrequencies, true).get(0).getValue();
+		
+		Map<String,Double> tfidfResult = getTFIDFValues(rawTermFrequencies, frequencyOfMostFrequentTermInDoc, toLowerCase, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
+		
+		return tfidfResult;
 	}
 	
 	
 	/**
-	 * Convenience method getting tfidf for an array of tokens and dependent on language.
-	 * Uses frequencyOfMostFrequentTermInDoc for calculating augmented term frequency. So provide full list of tokens and do not remove stopwords before.
-	 * @param tokens
+	 * Convenience method getting tfidf for word types with frequency information and dependent on language and dependent on entityTypeForDocFrequencyProvider.
+	 * @param wordCountings
+	 * @param frequencyOfMostFrequentWordType
 	 * @param toLowerCase
 	 * @param language
 	 * @param docFrequencyProvider
 	 * @return
 	 */
-	public static Map<String,Double> getTFIDFValues(String[] tokens, boolean toLowerCase, String language, IDocFrequencyProvider docFrequencyProvider){
+	public static Map<String,Double> getTFIDFValues(Map<String,Integer> wordCountings, int frequencyOfMostFrequentWordType, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider){
 		
 		Map<String,Double> tfidfResult = new HashMap<>();
-		Map<String,Integer> rawTermFrequencies = getRawTermFrequencies(tokens, toLowerCase);
-
-		int numberOfAllDocuments = docFrequencyProvider.getNumberOfAllDocs(language);
-		int frequencyOfMostFrequentTermInDoc = Sorter.sortByValueAndReturnAsList(rawTermFrequencies, true).get(0).getValue();
-		Set<String> terms = rawTermFrequencies.keySet();
-		for (String term : terms) {
-			
-			Integer frequencyOfTermInDoc = rawTermFrequencies.get(term);
-			Integer numberOfDocsContainingTerm = docFrequencyProvider.getDocFrequency(term, language);
-			double tfIdfCurrentTerm = calcTFIDF(frequencyOfTermInDoc, frequencyOfMostFrequentTermInDoc, numberOfDocsContainingTerm, numberOfAllDocuments);
-			tfidfResult.put(term, new Double(tfIdfCurrentTerm));
+		if(wordCountings.size()== 0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
+			return tfidfResult;
 		}
-		
-		return tfidfResult;		
-		
-	}
+		int numberOfAllDocuments = docFrequencyProvider.getNumberOfAllDocs(entityTypeForDocFrequencyProvider, language);
 
+		Set<String> words = wordCountings.keySet();
+		for (String word : words) {
+			Integer freqWordTypeInDoc = wordCountings.get(word);
+			Integer numberOfDocsContainingTerm = docFrequencyProvider.getDocFrequency(entityTypeForDocFrequencyProvider, word, language);
+			double tfIdfCurrentTerm = calcTFIDF(freqWordTypeInDoc, frequencyOfMostFrequentWordType, numberOfDocsContainingTerm, numberOfAllDocuments);
+			tfidfResult.put(word, new Double(tfIdfCurrentTerm));
+		}		
+		return tfidfResult;	
+	}
+		
 	
-	private static Map<String,Integer> getRawTermFrequencies(String[] tokens, boolean toLowerCase){
+	private static Map<String,Integer> getWordTypeFrequencies(Collection<String> tokens, boolean toLowerCase){
 		Map<String,Integer> countingMap = new HashMap<>();
 		for (String token : tokens) {
 			String tokenToUse = token;
@@ -106,6 +127,7 @@ public class TFIDF {
 		}
 		return countingMap;
 	}
+	
 	
 	private static double calcTermFrequency_Augmented(Integer frequencyOfTermInDoc, double frequencyOfMostFrequentTermInDoc){
 		

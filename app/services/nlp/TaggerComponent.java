@@ -1,6 +1,7 @@
 package services.nlp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -8,16 +9,17 @@ import javax.inject.Inject;
 
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
-import services.nlp.tfidf.IDocFrequencyProvider;
+import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 
+@Deprecated
 public class TaggerComponent implements ITagger{
 
 	private ILanguageDetector languageDetector;
 	private ITokenizerLanguageDependent tokenizer;
     private INERLanguageDependent ner;
-    private IDocFrequencyProvider docFrequencyProvider;
+    private IDocFrequencyProviderTypeDependent docFrequencyProvider;
 
     private int tfidfMaxTypesToReturn = 10;
 //  private ITagResultSelector tagresultSelector; // maybe implement in future
@@ -50,7 +52,7 @@ public class TaggerComponent implements ITagger{
     	tags.addAll(ners);
     	
     	// tags based on tfidf and tokens
-    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(tokens, true, detectedLanguage, docFrequencyProvider, tfidfMaxTypesToReturn);
+    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(Arrays.asList(tokens), true, detectedLanguage, docFrequencyProvider, NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, tfidfMaxTypesToReturn);
     	for (Entry<String, Double> entry : tfidfList) {
     		String name = entry.getKey();
     		Double tfidf = entry.getValue(); 

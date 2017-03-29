@@ -1,6 +1,8 @@
 package services.util;
 
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public class MapCounting {
@@ -16,5 +18,14 @@ public class MapCounting {
 		}
 	}
 	
+	public static <E> Map<E,Integer> retrieveCountingMap(Collection<E> input){
+		
+		Map<E,Integer> map = new HashMap<>();
+		for (E inputEntry : input) {
+			addToCountingMap(map, inputEntry);
+		}
+		
+		return map;
+	}
 	
 }

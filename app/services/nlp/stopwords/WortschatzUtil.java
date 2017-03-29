@@ -19,9 +19,9 @@ public class WortschatzUtil {
 	 * Loads top words of words file from Wortschatz project like available on http://corpora2.informatik.uni-leipzig.de/download.html
 	 * @param filepath of the words.txt of wortschatz
 	 * @param topX
-	 * @param includeSpecialCharsAtBeginningAdditionalToTopX
+	 * @param includeSpecialCharsAtBeginningAdditionalToTopX if set to true special chars (id <=100) are included additionally, so number of entries are x + number of special chars
 	 * @param toLowerCase
-	 * @return
+	 * @return A set if strings containing the special chars
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */

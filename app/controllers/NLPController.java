@@ -1,7 +1,5 @@
 package controllers;
 
-import java.util.Map;
-
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
@@ -11,8 +9,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
@@ -28,7 +24,7 @@ import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.stopwords.IStopwordRemover;
-import services.nlp.tfidf.IDocFrequencyProvider;
+import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 
 
@@ -40,15 +36,21 @@ public class NLPController extends Controller{
     
     @Inject
     public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, Map<String,IDocFrequencyProvider> mapDocFrequencyProvider) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider) {
 		super();
-		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, mapDocFrequencyProvider);
+		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider);
+	}
+    
+    @Inject
+    public NLPController(NLPComponent nlpComponent) {
+		super();
+		this.nlpComponent = nlpComponent;
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
     @ApiOperation(value = "html to text", notes = "")
     public Result htmlToText(
-    		@ApiParam(value = "input text") String inputText) {
+    		@ApiParam(required = true, value = "input text") String inputText) {
     	
     	ObjectNode result = Json.newObject();
 		result = nlpComponent.getPlainTextFromHTML(inputText, result);
@@ -72,8 +74,8 @@ public class NLPController extends Controller{
 	@javax.ws.rs.Path(value = "/tokenize")
     @ApiOperation(value = "returns tokens for given input", notes = "tokens are calculated for the given input")
     public Result tokenize(
-    		@ApiParam(value = "input text") String inputText, 
-    		@ApiParam(value = "language") String language) {
+    		@ApiParam(required = true, value = "input text") String inputText, 
+    		@ApiParam(required = true, value = "language") String language) {
     	
 		ObjectNode result = Json.newObject();
 		result = nlpComponent.tokenize(inputText, language, result);
@@ -99,11 +101,19 @@ public class NLPController extends Controller{
     }
     
     @javax.ws.rs.Path(value = "/nlpForDeck")
-    @ApiOperation(value = "performs different available nlp steps for content of deck", notes = "different nlp steps are performed, currently: language detection, tokenization, NER, DBPedia Spotlight, tfidf (top 10) for tokens and dbPediaSpotlight")
+    @ApiOperation(
+    		value = "performs different available nlp steps for content of deck", 
+    		notes = "different nlp steps are performed, currently: language detection, tokenization, NER, DBPedia Spotlight, tfidf (top 10) for tokens and dbPediaSpotlight")
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via deck service. Slides for given deck id not found. Probably this deck id does not exist."),
+    				@ApiResponse(code = 500, message = "Problem occured during calling spotlight service. For more information see details provided.")
+    				})
+
     public Result performNlpForDeck(
-    		@ApiParam(value = "deckId") String deckId, 
-    		@ApiParam(value = "dbpediaSpotlightConfidenceForSlide (use a value >1 to skip spotlight processing per slides)") double dbpediaSpotlightConfidenceForSlide, 
-    		@ApiParam(value = "dbpediaSpotlightConfidenceForDeck  (use a value >1 to skip spotlight processing per deck (text of whole deck as 1 input to spotlight). Spotlight per slide will be processed if <=1") double dbpediaSpotlightConfidenceForDeck) {
+    		@ApiParam(required = true, value = "deckId") String deckId, 
+    		@ApiParam(required = true, defaultValue = "0.6", value = "dbpediaSpotlightConfidenceForSlide (use a value>1 to skip spotlight processing per slides)") double dbpediaSpotlightConfidenceForSlide, 
+    		@ApiParam(required = true, defaultValue = "0.6", value = "dbpediaSpotlightConfidenceForDeck  (use a value>1 to skip spotlight processing per deck (=text of deck as input to spotlight). Spotlight per slide will be still processed.") double dbpediaSpotlightConfidenceForDeck) {
     	
     	
     	
@@ -126,11 +136,18 @@ public class NLPController extends Controller{
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(
     		value = "returns results for dbpedia spotlight", // displayed next to path
-    		notes = "returns result of dbpedia spotlight for the given input"// displayed under "Implementation notes"
+    		notes = "returns result of dbpedia spotlight for the given input",// displayed under "Implementation notes"
+    	    nickname = "spotlight",
+    	    httpMethod = "GET"
+    	    )
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 400, message = "Please provide a confidence value in the range of 0 to 1"),
+    				@ApiResponse(code = 500, message = "Problem occured during calling spotlight service. For more information see details provided.")}
     		)
     public Result dbpediaSpotlight(
-    		@ApiParam(value = "input text") String inputText,
-    		@ApiParam(value = "confidence") double confidence) {
+    		@ApiParam(required = true, value = "input text") String inputText,
+    		@ApiParam(required = true, defaultValue = "0.6", value = "confidence (in range of 0 to 1, e.g. 0.6)") double confidence) {
     	
     	Logger.debug("confidence set to " + confidence);
     	if(confidence>1 || confidence < 0 ){

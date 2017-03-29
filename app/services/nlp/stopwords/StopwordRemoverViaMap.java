@@ -18,8 +18,24 @@ public class StopwordRemoverViaMap implements IStopwordRemover{
 
 	@Override
 	public void removeStopwords(Collection<String> words, String language) {
-		Set<String> stopwordsForGivenLanguage = this.mapLanguageToStopwords.get(language);
-		words.removeAll(stopwordsForGivenLanguage);
+		if(this.mapLanguageToStopwords.containsKey(language)){
+			Set<String> stopwordsForGivenLanguage = this.mapLanguageToStopwords.get(language);
+			words.removeAll(stopwordsForGivenLanguage);
+		}
+		return;
+	}
+
+
+	@Override
+	public <E> void removeStopwords(Map<String, E> map, String language) {
+		if(this.mapLanguageToStopwords.containsKey(language)){
+			Set<String> stopwordsForGivenLanguage = this.mapLanguageToStopwords.get(language);
+			for (String stopword : stopwordsForGivenLanguage) {
+				map.remove(stopword);
+			}
+		}
+		
+		return;
 	}
 	
 
