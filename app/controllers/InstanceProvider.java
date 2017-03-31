@@ -20,6 +20,7 @@ import services.nlp.ner.INER;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
+import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.stopwords.StopwordRemoverFactory;
 import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaMap;
@@ -135,28 +136,28 @@ public class InstanceProvider {
     	// new platform (slidewiki2)
     	// ================
     	// tokens language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent);
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// tokens not language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent);
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// dbpedia spotlight language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent);
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// dbpedia spotlight not language dependent
-    	filepath = configuration.getString(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPComponent.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}    	
     	
     	return new DocFrequencyProviderTypeDependentViaMap(map);

@@ -9,6 +9,7 @@ import javax.inject.Inject;
 
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
@@ -52,7 +53,7 @@ public class TaggerComponent implements ITagger{
     	tags.addAll(ners);
     	
     	// tags based on tfidf and tokens
-    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(Arrays.asList(tokens), true, detectedLanguage, docFrequencyProvider, NLPComponent.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, tfidfMaxTypesToReturn);
+    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(Arrays.asList(tokens), true, detectedLanguage, docFrequencyProvider, NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, tfidfMaxTypesToReturn);
     	for (Entry<String, Double> entry : tfidfList) {
     		String name = entry.getKey();
     		Double tfidf = entry.getValue(); 
