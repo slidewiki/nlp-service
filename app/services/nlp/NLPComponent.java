@@ -456,7 +456,7 @@ public class NLPComponent {
 		
 		// language detection for whole deck
 		String languageWholeDeck = detectLanguage(deckText);
-		result.put("languageDetectedWholeDeck", languageWholeDeck);
+		result.put(NLPResultUtil.propertyNameLanguage, languageWholeDeck);
 
 		
 		//TFIDF intial node

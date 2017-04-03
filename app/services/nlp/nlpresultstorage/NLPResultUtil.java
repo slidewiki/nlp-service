@@ -18,7 +18,7 @@ public class NLPResultUtil {
 	public static String propertyNameLanguage = "detectedLanguage";
 	public static String propertyNameTokens = "tokens";
 	public static String propertyNameFrequencyOfMostFrequentWord = "frequencyOfMostFrequentWord";
-	public static String propertyNameWordTypesAndFrequencies = "wordFrequenciesStopwordsRemoved";
+	public static String propertyNameWordTypesAndFrequencies = "wordFrequenciesExclStopwords";
 	public static String propertyNameNER = "NER";
 	public static String propertyNameTFIDF = "TFIDF";
 	public static String propertyNameDBPediaSpotlight = "DBPediaSpotlight";
