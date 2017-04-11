@@ -26,6 +26,7 @@ import services.nlp.ner.INERLanguageDependent;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
+import services.util.NLPStorageUtil;
 
 
 @Api(value = "/nlp")
@@ -36,9 +37,9 @@ public class NLPController extends Controller{
     
     @Inject
     public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil) {
 		super();
-		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider);
+		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
 	}
     
     @Inject
