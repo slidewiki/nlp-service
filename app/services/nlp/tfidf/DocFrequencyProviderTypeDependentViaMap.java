@@ -27,12 +27,11 @@ public class DocFrequencyProviderTypeDependentViaMap implements IDocFrequencyPro
 	}
 
 	@Override
-	public Integer getNumberOfAllDocs(String type, String language) {
-		if(this.mapTypeToDocFrequencyProvider.containsKey(type)){
-			IDocFrequencyProvider docFreqProvider = this.mapTypeToDocFrequencyProvider.get(type);
-			return docFreqProvider.getNumberOfAllDocs(language);
-		}
-		return 0;
+	public Integer getNumberOfAllDocs(String language) {
+		
+		IDocFrequencyProvider docFreqProvider = this.mapTypeToDocFrequencyProvider.values().iterator().next();
+		return docFreqProvider.getNumberOfAllDocs(language);
+		
 	}
 
 	

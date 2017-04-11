@@ -13,6 +13,6 @@ public interface IDocFrequencyProviderTypeDependent {
 
 	public Integer getDocFrequency(String type, String term, String language);
 	
-	public Integer getNumberOfAllDocs(String type, String language);
+	public Integer getNumberOfAllDocs(String language);
 
 }

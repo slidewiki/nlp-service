@@ -23,6 +23,7 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 	 * 
 	 */
 	private static final long serialVersionUID = 6555208226879791393L;
+	private static String specialNameForLanguageIndependent = "ALL";
 	
 	private Map<String,DocFrequencyStoreViaMap> mapLanguageToDocFreqStore;
 	
@@ -39,9 +40,15 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 	@Override
 	public Integer getDocFrequency(String term, String language) {
 		
-		if(this.mapLanguageToDocFreqStore.containsKey(language)){
+		String languageToUse;
+		if(language==null){
+			languageToUse = specialNameForLanguageIndependent;
+		}else{
+			languageToUse = language;
+		}
+		if(this.mapLanguageToDocFreqStore.containsKey(languageToUse)){
 			
-			return mapLanguageToDocFreqStore.get(language).getDocFrequency(term);
+			return mapLanguageToDocFreqStore.get(languageToUse).getDocFrequency(term);
 			
 		}else{// given language not available
 			// TODO: discuss if another default language should be used as fallback?
@@ -52,8 +59,14 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 	@Override
 	public Integer getNumberOfAllDocs(String language) {
 
-		if(this.mapLanguageToDocFreqStore.containsKey(language)){
-			return this.mapLanguageToDocFreqStore.get(language).getNumberOfAllDocs();
+		String languageToUse;
+		if(language==null || language.length()==0){
+			languageToUse = specialNameForLanguageIndependent;
+		}else{
+			languageToUse = language;
+		}
+		if(this.mapLanguageToDocFreqStore.containsKey(languageToUse)){
+			return this.mapLanguageToDocFreqStore.get(languageToUse).getNumberOfAllDocs();
 		}else{
 			return 0;
 		}
@@ -61,28 +74,39 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 	
 	public void addDocument(Set<String> termtypesOfDoc, String language){
 		
-		if(this.mapLanguageToDocFreqStore.containsKey(language)){
+		String languageToUse;
+		if(language==null || language.length()==0){
+			languageToUse = specialNameForLanguageIndependent;
+		}else{
+			languageToUse = language;
+		}
+		if(this.mapLanguageToDocFreqStore.containsKey(languageToUse)){
 			// add terms to doc store
-			DocFrequencyStoreViaMap docStore = mapLanguageToDocFreqStore.get(language);
+			DocFrequencyStoreViaMap docStore = mapLanguageToDocFreqStore.get(languageToUse);
 			docStore.addDocument(termtypesOfDoc);
 				
 		}else{
 			// create new doc store with given terms and add to map
 			DocFrequencyStoreViaMap docStore = new DocFrequencyStoreViaMap();
 			docStore.addDocument(termtypesOfDoc);
-			this.mapLanguageToDocFreqStore.put(language, docStore);
+			this.mapLanguageToDocFreqStore.put(languageToUse, docStore);
 		}
 	}
 	
 	public void removeDocument(Set<String> termtypesOfDoc, String language){
-		
+		String languageToUse;
+		if(language==null || language.length()==0){
+			languageToUse = specialNameForLanguageIndependent;
+		}else{
+			languageToUse = language;
+		}
 		// language not available
-		if(!this.mapLanguageToDocFreqStore.containsKey(language)){
+		if(!this.mapLanguageToDocFreqStore.containsKey(languageToUse)){
 			return;
 		}
 		
 		// get docStore for language
-		DocFrequencyStoreViaMap docStore = mapLanguageToDocFreqStore.get(language);
+		DocFrequencyStoreViaMap docStore = mapLanguageToDocFreqStore.get(languageToUse);
 		docStore.removeDocument(termtypesOfDoc);
 		
 	}
