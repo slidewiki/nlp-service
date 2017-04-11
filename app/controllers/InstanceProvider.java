@@ -25,12 +25,14 @@ import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.stopwords.StopwordRemoverFactory;
 import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaMap;
 import services.nlp.tfidf.DocFrequencyProviderViaMap;
+import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaNLPResultStorageService;
 import services.nlp.tfidf.IDocFrequencyProvider;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tokenization.ITokenizer;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.tokenization.TokenizerLanguageDependentViaMap;
 import services.nlp.tokenization.Tokenizer_OpenNLP;
+import services.util.NLPStorageUtil;
 
 public class InstanceProvider {
 
@@ -43,8 +45,9 @@ public class InstanceProvider {
 		IStopwordRemover stopwordRemover = provideStopwordRemoverViaMap(configuration);
 		INERLanguageDependent ner = provideNERLanguageDependentViaMap(configuration);
 		DBPediaSpotlightUtil dbPediaSpotlightUtil = provideDBPediaSpotlightUtil(configuration);
-		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderSerializedFiles(configuration);
-		return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider);
+		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService();
+		NLPStorageUtil nlpStorageUtil = provideNLPStorageUtil();
+		return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
 	}
 	
 	public static NLPComponent provideNLPCompomnent(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
@@ -55,13 +58,14 @@ public class InstanceProvider {
 		IStopwordRemover stopwordRemover = provideStopwordRemoverViaMap(configuration);
 		INERLanguageDependent ner = provideNERLanguageDependentViaMap(configuration);
 		DBPediaSpotlightUtil dbPediaSpotlightUtil = provideDBPediaSpotlightUtil(configuration);
-		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderSerializedFiles(configuration);
-		return new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider);
+		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService();
+		NLPStorageUtil nlpStorageUtil = provideNLPStorageUtil();
+		return new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
 	}
 	
 	public static NLPController provideNLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil,IDocFrequencyProviderTypeDependent docFrequencyProvider) {
-    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider);
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil,IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil) {
+    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
     }
 	
 	public static ITokenizerLanguageDependent provideTokenizerLanguageDependentViaMap(Configuration configuration) {
@@ -118,6 +122,10 @@ public class InstanceProvider {
     	return new NERLanguageDependentViaMap(mapLanguageToNERs, defaultLanguageToUseIfGivenLanguageNotAvailable, useAllNERMethodsInMapRegardlessGivenLanguage);
     }
     
+    public static NLPStorageUtil provideNLPStorageUtil(){
+    	return new NLPStorageUtil();
+    }
+    
     public static DBPediaSpotlightUtil provideDBPediaSpotlightUtil(Configuration configuration){
     	String spotlightURL = configuration.getString("dbpediaSpotlight.webservice.url");
     	List<String> spotlightFallBackURLsList = configuration.getStringList("dbpediaSpotlight.webservice.fallbackURLs");
@@ -126,7 +134,12 @@ public class InstanceProvider {
     	return new DBPediaSpotlightUtil(spotlightURL, spotlightFallBackURLs);
     }
     
+    public static DocFrequencyProviderTypeDependentViaNLPResultStorageService provideDocFrequencyProviderTypeDependentViaNLPResultStorageService() throws FileNotFoundException, ClassNotFoundException, IOException {
+    	return new DocFrequencyProviderTypeDependentViaNLPResultStorageService();
+    }
+
     
+    @Deprecated
     public static DocFrequencyProviderTypeDependentViaMap provideDocFrequencyProviderSerializedFiles(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException {
     	Map<String,IDocFrequencyProvider> map = new HashMap<>();
     	//
@@ -136,28 +149,28 @@ public class InstanceProvider {
     	// new platform (slidewiki2)
     	// ================
     	// tokens language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_languageDependent");
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_languageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// tokens not language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_notlanguageDependent");
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_notlanguageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// dbpedia spotlight language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_languageDependent");
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_languageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}
     	// dbpedia spotlight not language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent);
+    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_notlanguageDependent");
     	Logger.info("loading " + filepath);
     	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent, DocFrequencyProviderViaMap.deserializeFromFile(filepath));
+        	map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_notlanguageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
     	}    	
     	
     	return new DocFrequencyProviderTypeDependentViaMap(map);
