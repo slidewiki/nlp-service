@@ -45,7 +45,7 @@ public class DeckServiceUtil {
 	}
 
 	
-	private static JsonNode getJsonFromMessageBody(Response response) {
+	public static JsonNode getJsonFromMessageBody(Response response) {
 
 		String result = response.readEntity(String.class);
 		JsonNode resultNode = Json.parse(result);
@@ -53,7 +53,7 @@ public class DeckServiceUtil {
 			
 	}
 
-	private static Iterator<JsonNode> getSlidesIteratorFromDeckserviceJsonResult(JsonNode deckserviceResult){
+	public static Iterator<JsonNode> getSlidesIteratorFromDeckserviceJsonResult(JsonNode deckserviceResult){
 		Iterator<JsonNode> slidesIterator = Collections.<JsonNode>emptyList().iterator();
 		if(deckserviceResultHasSlides(deckserviceResult)){
 			ArrayNode slidesNode = (ArrayNode) deckserviceResult.get("children");
@@ -67,13 +67,25 @@ public class DeckServiceUtil {
 	}
 	
 	public static String getSlideTitle(JsonNode slideNode){
-		return slideNode.get("title").textValue().trim();
+		if(slideNode.has("title")){
+			return slideNode.get("title").textValue().trim();
+		}
+		return "";
 	}
 	
 	public static String getSlideContent(JsonNode slideNode){
-		return slideNode.get("content").textValue().trim();
+		if(slideNode.has("content")){
+			return slideNode.get("content").textValue().trim();
+		}
+		return "";
 	}
 	
+	public static String getDeckTitle(JsonNode deckNode){
+		if(deckNode.has("title")){
+			return deckNode.get("title").textValue().trim();
+		}
+		return "";
+	}
 	
 	public void close(){
 		this.client.close();
