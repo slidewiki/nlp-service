@@ -92,7 +92,6 @@ public class NLPResultUtil {
 	public static Map<String,Integer> getSpotlightFrequenciesByAnalyzingSpotlightResults(ObjectNode nlpResult, String keyname){
 		
 		Map<String,Integer> result = new HashMap<>();
-		
 		ArrayNode spotlightResources = getSpotlightResources(nlpResult);
 		if(spotlightResources==null){
 			return result;
@@ -118,7 +117,7 @@ public class NLPResultUtil {
 			return null;
 		}
 		JsonNode spotlightResourcesNode = spotlight.get("Resources");
-		if(spotlightResourcesNode!=null && !spotlightResourcesNode.isNull()){
+		if(spotlightResourcesNode==null || spotlightResourcesNode.isNull()){
 			return null;
 		}
 		
