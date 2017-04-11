@@ -20,13 +20,13 @@ public class TFIDF {
 		return tf * idf;
 	}
 		
-	public static List<Entry<String,Double>> getTFIDFValuesTopX(Map<String,Integer> typeCounts, int frequencyOfMostFrequentTokenInDoc, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider, int maxTypesToReturn){
+	public static List<Entry<String,Double>> getTFIDFValuesTopX(Map<String,Integer> typeCounts, int frequencyOfMostFrequentTokenInDoc, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider, int maxTypesToReturn){
 		
 		if(typeCounts.size()== 0 || maxTypesToReturn==0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
 			return new ArrayList<Entry<String,Double>>();
 		}
 		
-		Map<String,Double> tfidf = getTFIDFValues(typeCounts, frequencyOfMostFrequentTokenInDoc, toLowerCase, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
+		Map<String,Double> tfidf = getTFIDFValues(typeCounts, frequencyOfMostFrequentTokenInDoc, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
 		List<Entry<String, Double>> tfidfSorted = Sorter.sortByValueAndReturnAsList(tfidf, true);
 		if(maxTypesToReturn<0 || maxTypesToReturn>=tfidfSorted.size()){
 			return tfidfSorted;
@@ -82,7 +82,7 @@ public class TFIDF {
 		Map<String,Integer> rawTermFrequencies = getWordTypeFrequencies(tokens, toLowerCase);
 		int frequencyOfMostFrequentTermInDoc = Sorter.sortByValueAndReturnAsList(rawTermFrequencies, true).get(0).getValue();
 		
-		Map<String,Double> tfidfResult = getTFIDFValues(rawTermFrequencies, frequencyOfMostFrequentTermInDoc, toLowerCase, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
+		Map<String,Double> tfidfResult = getTFIDFValues(rawTermFrequencies, frequencyOfMostFrequentTermInDoc, language, docFrequencyProvider, entityTypeForDocFrequencyProvider);
 		
 		return tfidfResult;
 	}
@@ -97,13 +97,13 @@ public class TFIDF {
 	 * @param docFrequencyProvider
 	 * @return
 	 */
-	public static Map<String,Double> getTFIDFValues(Map<String,Integer> wordCountings, int frequencyOfMostFrequentWordType, boolean toLowerCase, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider){
+	public static Map<String,Double> getTFIDFValues(Map<String,Integer> wordCountings, int frequencyOfMostFrequentWordType, String language, IDocFrequencyProviderTypeDependent docFrequencyProvider, String entityTypeForDocFrequencyProvider){
 		
 		Map<String,Double> tfidfResult = new HashMap<>();
 		if(wordCountings.size()== 0 || !docFrequencyProvider.supportsType(entityTypeForDocFrequencyProvider)){
 			return tfidfResult;
 		}
-		int numberOfAllDocuments = docFrequencyProvider.getNumberOfAllDocs(entityTypeForDocFrequencyProvider, language);
+		int numberOfAllDocuments = docFrequencyProvider.getNumberOfAllDocs(language);
 
 		Set<String> words = wordCountings.keySet();
 		for (String word : words) {
