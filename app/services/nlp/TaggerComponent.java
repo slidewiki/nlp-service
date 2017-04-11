@@ -53,11 +53,11 @@ public class TaggerComponent implements ITagger{
     	tags.addAll(ners);
     	
     	// tags based on tfidf and tokens
-    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(Arrays.asList(tokens), true, detectedLanguage, docFrequencyProvider, NLPResultUtil.propertyNameDocFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent, tfidfMaxTypesToReturn);
+    	List<Entry<String, Double>> tfidfList = TFIDF.getTFIDFValuesTopX(Arrays.asList(tokens), true, detectedLanguage, docFrequencyProvider, NLPResultUtil.propertyNameDocFreqProvider_Tokens, tfidfMaxTypesToReturn);
     	for (Entry<String, Double> entry : tfidfList) {
     		String name = entry.getKey();
     		Double tfidf = entry.getValue(); 
-			NlpTag nlptag = new NlpTag(name, null, "TFIDF_basedOnTokens_language-" + detectedLanguage, tfidf, null);
+			NlpTag nlptag = new NlpTag(name, null, "TFIDF_basedOnTokens_language-" + detectedLanguage, tfidf, -1, -1, "");
 			tags.add(nlptag);
 			// TODO: tfidf value is not a probability value but is stored in the field of probability of NLPTag -> discuss this
     	}
