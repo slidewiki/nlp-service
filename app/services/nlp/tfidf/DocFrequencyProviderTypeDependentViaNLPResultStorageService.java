@@ -29,10 +29,10 @@ public class DocFrequencyProviderTypeDependentViaNLPResultStorageService impleme
 	
 	private void initializeDefaultPaths(){
 		this.mapSupportedTypesToPaths = new HashMap<>();
-//		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens, NLPResultUtil.propertyNameWordFrequenciesExclStopwords + "." + "word"); // TODO: switch to NLPResultUtil.propertyname.. // might be also "children.tokens but in the word frequenices they are toLowercase and stopwords removed"
-//		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_NamedEntities, NLPResultUtil.propertyNameNERFrequencies); 
-//		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI, NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies );
-//		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightSurfaceForm, NLPResultUtil.propertyNameDBPediaSpotlight + ".Resources.@surfaceForm");
+		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens, NLPResultUtil.propertyNameWordFrequenciesExclStopwords + "." + NLPResultUtil.propertyNameInFrequencyEntriesForWord); // might be also "children.tokens but in the word frequenices they are toLowercase and stopwords removed"
+		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_NamedEntities, NLPResultUtil.propertyNameNERFrequencies + "." + NLPResultUtil.propertyNameInFrequencyEntriesForWord); 
+		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI, NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies + "." + NLPResultUtil.propertyNameInFrequencyEntriesForWord );
+		this.mapSupportedTypesToPaths.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightSurfaceForm, NLPResultUtil.propertyNameDBPediaSpotlight + ".Resources.@surfaceForm");
 
 	}
 	
