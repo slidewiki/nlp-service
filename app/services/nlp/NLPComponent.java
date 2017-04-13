@@ -723,6 +723,13 @@ public class NLPComponent {
 		return targetNode;
 	}
 	
+	/**
+	 * create an array node for an entry list List<Entry<String, Integer>> which would be typically a list of frequency entries
+	 * @param entryList
+	 * @param nameForKey
+	 * @param nameForValue
+	 * @return
+	 */
 	public static ArrayNode createArrayNodeFromStringIntegerEntryList(List<Entry<String,Integer>> entryList, String nameForKey, String nameForValue){
 		ArrayNode arrayNode = Json.newArray();
 		for (Entry<String,Integer> entry : entryList) {
@@ -734,6 +741,13 @@ public class NLPComponent {
 		return arrayNode;
 	}
 	
+	/**
+	 * create an array node for an entry list List<Entry<String, Double>> which would be typically a list of tfidf entries
+	 * @param list
+	 * @param nameToUseForKey
+	 * @param nameToUseForValue
+	 * @return
+	 */
 	private static ArrayNode createArrayNodeFromStringDoubleEntryList(List<Entry<String, Double>> list, String nameToUseForKey, String nameToUseForValue){
 		ArrayNode arrayNode = Json.newArray();
 		for (Entry<String, Double> entry : list) {		
