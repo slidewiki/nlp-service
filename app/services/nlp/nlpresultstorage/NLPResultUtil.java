@@ -32,6 +32,8 @@ public class NLPResultUtil {
 	public static String propertyNameInFrequencyEntriesForFrequency = "frequency";
 	
 	public static String propertyNameTFIDF = "TFIDF";
+	public static String propertyNameTFIDFProviderName = "providerName";
+	public static String propertyNameTFIDFResultArrayName = "results";
 	public static String propertyNameTFIDFEntityName = "entry";
 	public static String propertyNameTFIDFValueName = "value";
 
