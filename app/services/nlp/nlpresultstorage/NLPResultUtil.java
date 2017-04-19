@@ -162,5 +162,39 @@ public class NLPResultUtil {
 	}
 	
 	
+	public static ArrayNode getTFIDFArrayNode(JsonNode nlpResult){
+		if(!nlpResult.has(NLPResultUtil.propertyNameTFIDF)){
+			return null;
+		}
+		JsonNode node = nlpResult.get(NLPResultUtil.propertyNameTFIDF);
 		
+		ArrayNode arraynode = (ArrayNode) node;
+		return arraynode;		
+	}
+	
+	public static Map<String,Map<String,Double>> getTFIDFEntries(JsonNode nlpResult){
+		
+		Map<String,Map<String,Double>> mapProviderNameToTFIDFMap = new HashMap<>();
+		ArrayNode arrayNode = getTFIDFArrayNode(nlpResult);
+		if(arrayNode==null){
+			return null;
+		}
+		Iterator<JsonNode> iteratorTFIDFProviderResults = arrayNode.iterator();
+		while(iteratorTFIDFProviderResults.hasNext()){
+			JsonNode tfidfNode = iteratorTFIDFProviderResults.next();
+			String providerName = tfidfNode.get(NLPResultUtil.propertyNameTFIDFProviderName).asText();
+			ArrayNode tfidfResultsArrayNode = (ArrayNode) tfidfNode.get(NLPResultUtil.propertyNameTFIDFResultArrayName);
+			Iterator<JsonNode> iteratorTFIDFResults = tfidfResultsArrayNode.iterator();
+			Map<String,Double> mapEntryToTFIDF = new HashMap<>();
+			while(iteratorTFIDFResults.hasNext()){
+				JsonNode tfidfResult = iteratorTFIDFResults.next();
+				String entityName = tfidfResult.get(NLPResultUtil.propertyNameTFIDFEntityName).textValue();
+				Double tfidfValue = tfidfResult.get(NLPResultUtil.propertyNameTFIDFValueName).asDouble();
+				mapEntryToTFIDF.put(entityName, tfidfValue);
+			}
+			mapProviderNameToTFIDFMap.put(providerName, mapEntryToTFIDF);
+		}
+		
+		return mapProviderNameToTFIDFMap;
+	}
 }
