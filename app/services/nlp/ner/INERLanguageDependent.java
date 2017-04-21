@@ -2,9 +2,9 @@ package services.nlp.ner;
 
 import java.util.List;
 
-import services.nlp.NlpTag;
+import services.nlp.NlpAnnotation;
 
 public interface INERLanguageDependent {
-	List<NlpTag> getNEs(String[] tokens, String language);
+	List<NlpAnnotation> getNEs(String[] tokens, String language);
 
 }

@@ -15,7 +15,7 @@ import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import services.nlp.ITagger;
-import services.nlp.NlpTag;
+import services.nlp.NlpAnnotation;
 
 
 @Api(value = "/getTags")
@@ -34,9 +34,9 @@ public class TagController extends Controller{
     public Result getTag(@ApiParam(value = "Input text the tags should be calculated for")String input) {
     	
     	
-    	List<NlpTag> tags = this.tagger.getTags(input);
+    	List<NlpAnnotation> tags = this.tagger.getTags(input);
     	ArrayNode jsonArray = Json.newArray();
-    	for (NlpTag tag : tags) {		
+    	for (NlpAnnotation tag : tags) {		
     		JsonNode node = Json.toJson(tag);
         	jsonArray.add(node);
 		}

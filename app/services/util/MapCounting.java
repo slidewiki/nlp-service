@@ -28,7 +28,7 @@ public class MapCounting {
 		return map;
 	}
 	
-	public static <E> void addToCountingMap(Map<E,Double> map, E input, Double valueToAdd){
+	public static <E> void addToCountingMapAddingValue(Map<E,Double> map, E input, Double valueToAdd){
 		
 		if(map.containsKey(input)){
 			Double valueInMap = map.get(input);

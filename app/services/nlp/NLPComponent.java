@@ -113,12 +113,12 @@ public class NLPComponent {
     	return node;
 	}
 	
-	public List<NlpTag> performNER(String[] tokens, String language){
+	public List<NlpAnnotation> performNER(String[] tokens, String language){
     	return this.ner.getNEs(tokens, language);	
 	}
 	
 	public ObjectNode performNER(String[] tokens, String language, ObjectNode node){
-    	List<NlpTag> ners = this.ner.getNEs(tokens, language);	
+    	List<NlpAnnotation> ners = this.ner.getNEs(tokens, language);	
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(NLPResultUtil.propertyNameNER, nerNode);
     	return node;
@@ -154,7 +154,7 @@ public class NLPComponent {
     	JsonNode tokenNode = Json.toJson(tokens);
     	node.set(NLPResultUtil.propertyNameTokens, tokenNode);
 
-    	List<NlpTag> ners = this.ner.getNEs(tokens, detectedLanguage);	
+    	List<NlpAnnotation> ners = this.ner.getNEs(tokens, detectedLanguage);	
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(NLPResultUtil.propertyNameNER, nerNode);
 

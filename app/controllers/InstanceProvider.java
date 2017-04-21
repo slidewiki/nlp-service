@@ -21,6 +21,8 @@ import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
 import services.nlp.nlpresultstorage.NLPResultUtil;
+import services.nlp.recommendation.ITagRecommender;
+import services.nlp.recommendation.TagRecommenderTFIDF;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.stopwords.StopwordRemoverFactory;
 import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaMap;
@@ -37,6 +39,7 @@ import services.util.NLPStorageUtil;
 public class InstanceProvider {
 
 	
+	
 	public static NLPController provideNLPController(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
 		
 		IHtmlToText htmlToText = new HTMLJsoup();
@@ -47,7 +50,8 @@ public class InstanceProvider {
 		DBPediaSpotlightUtil dbPediaSpotlightUtil = provideDBPediaSpotlightUtil(configuration);
 		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService();
 		NLPStorageUtil nlpStorageUtil = provideNLPStorageUtil();
-		return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
+		ITagRecommender recommender = provideRecommenderBasedOnTFIDF(configuration, nlpStorageUtil);
+		return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, recommender);
 	}
 	
 	public static NLPComponent provideNLPCompomnent(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
@@ -64,8 +68,8 @@ public class InstanceProvider {
 	}
 	
 	public static NLPController provideNLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil,IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil) {
-    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil,IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender recommender) {
+    	return new NLPController(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, recommender);
     }
 	
 	public static ITokenizerLanguageDependent provideTokenizerLanguageDependentViaMap(Configuration configuration) {
@@ -174,6 +178,15 @@ public class InstanceProvider {
     	}    	
     	
     	return new DocFrequencyProviderTypeDependentViaMap(map);
+    }
+    
+    
+    public static ITagRecommender provideRecommenderBasedOnTFIDF(Configuration configuration, NLPStorageUtil nlpStorageUtil){
+    	boolean tagsToLowerCase = configuration.getBoolean("tagrecommendation.tagsToLowerCase");
+    	int minCharLengthForTag = configuration.getInt("tagrecommendation.minCharLengthForTag");
+    	int maxNumberOfWordsForNEsWhenNoLinkAvailable = configuration.getInt("tagrecommendation.maxNumberOfWordsForNEsWhenNoLinkAvailable");  	
+
+    	return new TagRecommenderTFIDF(nlpStorageUtil, tagsToLowerCase, minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable);
     }
 	
 }

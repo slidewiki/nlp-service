@@ -1,5 +1,7 @@
 package controllers;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
@@ -19,10 +21,13 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Results;
 import services.nlp.NLPComponent;
+import services.nlp.NlpTag;
 import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.nlpresultstorage.NLPResultUtil;
+import services.nlp.recommendation.ITagRecommender;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
@@ -33,19 +38,22 @@ import services.util.NLPStorageUtil;
 public class NLPController extends Controller{
     
     private NLPComponent nlpComponent;
+    private ITagRecommender recommender;
 
     
     @Inject
     public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender recommender) {
 		super();
 		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
+		this.recommender = recommender;
 	}
     
     @Inject
-    public NLPController(NLPComponent nlpComponent) {
+    public NLPController(NLPComponent nlpComponent, ITagRecommender recommender) {
 		super();
 		this.nlpComponent = nlpComponent;
+		this.recommender = recommender;
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
@@ -133,6 +141,44 @@ public class NLPController extends Controller{
     	
        
     }
+    
+    @javax.ws.rs.Path(value = "/tagRecommendations")
+    @ApiOperation(
+    		value = "retrieves tag recommendations for a given deck id", 
+    		notes = "retrieves tag recommendations for a given deck id using tfidf from stored nlp results")
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
+    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
+    				})
+
+    public Result tagRecommendations(
+    		@ApiParam(required = true, value = "deckId") String deckId) {
+    	
+   	 	ObjectNode resultNode = Json.newObject();
+    	
+    	try{
+
+        	List<NlpTag> tags = recommender.getTagRecommendations(deckId);
+        	JsonNode tagNode = Json.toJson(tags);
+        	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
+
+        	Result r = Results.ok(resultNode);        	
+            return r;
+    	}catch (WebApplicationException e) {
+
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}catch(ProcessingException f){
+    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
+    		
+    		return createResultForProcessingException(500, f, message);
+    	}
+    	
+       
+    }
+    
+    
+    
 
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(

@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
-import services.nlp.NlpTag;
+import services.nlp.NlpAnnotation;
 import services.util.MapCounting;
 
 public class NLPResultUtil {
@@ -27,7 +27,8 @@ public class NLPResultUtil {
 	public static String propertyNameNERFrequencies = "NERFrequencies";
 	public static String propertyNameDBPediaSpotlight = "DBPediaSpotlight";
 	public static String propertyNameDBPediaSpotlightURIFrequencies = "DBPediaSpotlightURIFrequencies";
-	
+	public static String propertyNameTagRecommendations = "TagRecommendations";
+
 	public static String propertyNameInFrequencyEntriesForWord = "entry";
 	public static String propertyNameInFrequencyEntriesForFrequency = "frequency";
 	
@@ -144,7 +145,7 @@ public class NLPResultUtil {
 		Set<String> tokenSpans= new HashSet<>(); // tracks tokenSpans (as String begin_end for counting NEs detected by several sources only once (identity is defined here by the token spans))
 		while(iterator.hasNext()){
 			JsonNode neEntry = iterator.next();
-			NlpTag nerEntity = Json.fromJson(neEntry, NlpTag.class);
+			NlpAnnotation nerEntity = Json.fromJson(neEntry, NlpAnnotation.class);
 			int tokenspanBegin = nerEntity.getTokenSpanBegin();
 			if(tokenspanBegin>=0){// only do tracking if token spans available
 				int tokenSpanEnd = nerEntity.getTokenSpanEnd();

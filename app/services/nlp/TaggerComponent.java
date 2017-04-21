@@ -37,9 +37,9 @@ public class TaggerComponent implements ITagger{
     
     
 	@Override
-	public List<NlpTag> getTags(String input) {
+	public List<NlpAnnotation> getTags(String input) {
 		
-		List<NlpTag> tags = new ArrayList<>();
+		List<NlpAnnotation> tags = new ArrayList<>();
 		
 		// detect language
 		String detectedLanguage = this.languageDetector.getLanguage(input);	
@@ -48,7 +48,7 @@ public class TaggerComponent implements ITagger{
     	String[] tokens = this.tokenizer.tokenize(input, detectedLanguage);	
     	
     	// tags based on NER
-    	List<NlpTag> ners = this.ner.getNEs(tokens, detectedLanguage);	
+    	List<NlpAnnotation> ners = this.ner.getNEs(tokens, detectedLanguage);	
     	
     	tags.addAll(ners);
     	
@@ -57,7 +57,7 @@ public class TaggerComponent implements ITagger{
     	for (Entry<String, Double> entry : tfidfList) {
     		String name = entry.getKey();
     		Double tfidf = entry.getValue(); 
-			NlpTag nlptag = new NlpTag(name, null, "TFIDF_basedOnTokens_language-" + detectedLanguage, tfidf, -1, -1, "");
+			NlpAnnotation nlptag = new NlpAnnotation(name, null, "TFIDF_basedOnTokens_language-" + detectedLanguage, tfidf, -1, -1, "");
 			tags.add(nlptag);
 			// TODO: tfidf value is not a probability value but is stored in the field of probability of NLPTag -> discuss this
     	}

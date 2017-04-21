@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface ITagger {
     
-    List<NlpTag> getTags(String input);
+    List<NlpAnnotation> getTags(String input);
 }
