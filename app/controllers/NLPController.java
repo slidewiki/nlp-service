@@ -15,6 +15,9 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Info;
+import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.Tag;
 import play.Logger;
 import play.libs.Json;
 import play.mvc.Controller;
@@ -34,9 +37,24 @@ import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.util.NLPStorageUtil;
 
 
-@Api(value = "/nlp")
+@Api(value="nlp")
+@SwaggerDefinition(	
+        // Attention: info part below is currently not supported by swagger-play2 and will be ignored. Configure instead in apllication.conf under swagger.api.info
+        // but tags are not ignored
+		info = @Info(
+        		description = "provides different nlp methods to be performed on decks.", 
+        		title = "NLP service API", 
+        		version = "0.1"),
+        tags = {
+                @Tag(name = "deck", description = "nlp for a given deck id"),
+                @Tag(name = "sub", description = "some sub functions for convenience for processing input")
+                
+        }
+        
+		)
 public class NLPController extends Controller{
     
+	
     private NLPComponent nlpComponent;
     private ITagRecommender recommender;
 
@@ -57,7 +75,7 @@ public class NLPController extends Controller{
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
-    @ApiOperation(value = "html to text", notes = "")
+    @ApiOperation(tags = "sub", value = "html to text", notes = "")
     public Result htmlToText(
     		@ApiParam(required = true, value = "input text") String inputText) {
     	
@@ -68,8 +86,8 @@ public class NLPController extends Controller{
        
     }
     
-    @javax.ws.rs.Path(value = "/language")
-    @ApiOperation(value = "returns language detection result for given input", notes = "language detection performed for given input")
+    @javax.ws.rs.Path(value = "/detectLanguage")
+    @ApiOperation(tags = "sub", value = "returns language detection result for given input", notes = "language detection performed for given input")
     public Result detectLanguage(
     		@ApiParam(value = "input text") String inputText) {
     	
@@ -81,7 +99,7 @@ public class NLPController extends Controller{
     }
 
 	@javax.ws.rs.Path(value = "/tokenize")
-    @ApiOperation(value = "returns tokens for given input", notes = "tokens are calculated for the given input")
+    @ApiOperation(tags = "sub", value = "returns tokens for given input", notes = "tokens are calculated for the given input")
     public Result tokenize(
     		@ApiParam(required = true, value = "input text") String inputText, 
     		@ApiParam(required = true, value = "language") String language) {
@@ -97,7 +115,7 @@ public class NLPController extends Controller{
 
     
     @javax.ws.rs.Path(value = "/nlp")
-    @ApiOperation(value = "performs different available nlp steps", notes = "different nlp steps are performed, currently: language detection, tokenization, NER and tfidf (top 10)")
+    @ApiOperation(tags = "sub", value = "performs different available nlp steps", notes = "different nlp steps are performed, currently: language detection, tokenization, NER and tfidf (top 10)")
     public Result performNLP(
     		@ApiParam(value = "input text") String inputText) {
     	
@@ -109,10 +127,11 @@ public class NLPController extends Controller{
        
     }
     
-    @javax.ws.rs.Path(value = "/nlpForDeck")
+    @javax.ws.rs.Path(value = "/processDeck")
     @ApiOperation(
+    		tags = "deck",
     		value = "performs different available nlp steps for content of deck", 
-    		notes = "different nlp steps are performed, currently: language detection, tokenization, NER, DBPedia Spotlight, tfidf (top 10) for tokens and dbPediaSpotlight")
+    		notes = "different nlp steps are performed, currently: language detection, tokenization, Stopword removal, NER, DBPedia Spotlight, frequencies, tfidf")
     @ApiResponses(
     		value = {
     				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via deck service. Slides for given deck id not found. Probably this deck id does not exist."),
@@ -144,6 +163,7 @@ public class NLPController extends Controller{
     
     @javax.ws.rs.Path(value = "/tagRecommendations")
     @ApiOperation(
+    		tags = "deck",
     		value = "retrieves tag recommendations for a given deck id", 
     		notes = "retrieves tag recommendations for a given deck id using tfidf from stored nlp results")
     @ApiResponses(
@@ -182,6 +202,7 @@ public class NLPController extends Controller{
 
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(
+    		tags = "sub",
     		value = "returns results for dbpedia spotlight", // displayed next to path
     		notes = "returns result of dbpedia spotlight for the given input",// displayed under "Implementation notes"
     	    nickname = "spotlight",
