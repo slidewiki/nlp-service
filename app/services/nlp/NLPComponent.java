@@ -868,9 +868,16 @@ public class NLPComponent {
 		String result = input;
 		String[] thingsToRemove = new String[]{"Text bullet 1", "Text bullet 2", "Text bullet 3", "Text bullet 4", "Bullet 1", "Bullet 2", "Bullet 3", "Bullet 4"};
 		for (String stringToRemove : thingsToRemove) {
-			result.replace(stringToRemove, " ").trim();
+			result = result.replace(stringToRemove, " ").trim();
 		}
-				
+		String [] thingstoReplaceByNewLine = new String[]{"•"};
+		for (String stringToReplace : thingstoReplaceByNewLine) {
+			if(result.contains(stringToReplace)){
+				result = result.replace(stringToReplace, " \n").trim();
+
+			}
+		}
+		
 		return result.trim();
 	}
 
