@@ -168,7 +168,9 @@ public class NLPResultUtil {
 			return null;
 		}
 		JsonNode node = nlpResult.get(NLPResultUtil.propertyNameTFIDF);
-		
+		if(!node.isArray()){
+			return null;
+		}
 		ArrayNode arraynode = (ArrayNode) node;
 		return arraynode;		
 	}

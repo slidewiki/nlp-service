@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -43,8 +45,24 @@ public class TagRecommenderTFIDF implements ITagRecommender {
 	public List<NlpTag> getTagRecommendations(String deckId) {
 		
 		Response response = nlpStorageUtil.getNLPResultForDeckId(deckId);
+		int status = response.getStatus();
+		if(status != 200){
+			throw new WebApplicationException("Problem while getting nlp result via nlp store service for deck id " + deckId + ". The nlp store service responded with status " + status + " (" + response.getStatusInfo() + ")", response);
+
+		}
 		JsonNode nlpResult = NLPStorageUtil.getJsonFromMessageBody(response);
+		
+		
 		Map<String,Map<String,Double>> mapProviderNameToTFIDFEnntries = NLPResultUtil.getTFIDFEntries(nlpResult);
+		
+		if(mapProviderNameToTFIDFEnntries == null){
+			throw new ProcessingException("No TFIDF results could be retrieved for deck id " + deckId + " from nlp result. Either tfidf wasn't performed or deck has no content. You can recheck via nlp store service.");
+
+		}
+		
+		if(mapProviderNameToTFIDFEnntries.size()==0){
+			return new ArrayList<>();
+		}
 		
 		Map<String,String> mapSpotlightNamesToSpotlightURIs = new HashMap<>();
 		Set<String> providers = mapProviderNameToTFIDFEnntries.keySet();
