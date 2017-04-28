@@ -17,14 +17,16 @@ import play.libs.Json;
 public class DeckServiceUtil {
 	
 	private Client client;
-
-	public DeckServiceUtil() {
+	private String serviceURL;
+	
+	public DeckServiceUtil(String deckserviceURL) {
+		this.serviceURL = deckserviceURL;
 		this.client = ClientBuilder.newClient();
 	}
 	
 	public Response getSlidesForDeckIdFromDeckservice(String deckId){
 		
-		String URL = "https://deckservice.experimental.slidewiki.org/deck/" + deckId + "/slides";
+		String URL = serviceURL + "/deck/" + deckId + "/slides";
 		Response response = client.target(URL)
         .request(MediaType.APPLICATION_JSON).get();
 		

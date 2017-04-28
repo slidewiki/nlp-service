@@ -18,12 +18,12 @@ import services.util.Timer;
 
 public class DocFrequencyCreatorForDecks {
 	
-	public static DocFrequencyProviderViaMap[] createDocFrequencyProvidersFromDecksOfDeckservice(int maxDeckId, NLPComponent nlpComponent, double spotlightConfidence){
+	public static DocFrequencyProviderViaMap[] createDocFrequencyProvidersFromDecksOfDeckservice(String deckserviceURL, int maxDeckId, NLPComponent nlpComponent, double spotlightConfidence){
 		
 		DocFrequencyProviderViaMap docFrequencyProviderPerLanguage = new DocFrequencyProviderViaMap();
 		DocFrequencyProviderViaMap docFrequencyProviderOneForAllLanguages = new DocFrequencyProviderViaMap();
 		
-		DeckServiceUtil deckServiceUtil = new DeckServiceUtil();
+		DeckServiceUtil deckServiceUtil = new DeckServiceUtil(deckserviceURL);
 		for (int deckId = 0; deckId <= maxDeckId; deckId++) {
 			
 			Logger.info(Timer.getDateAndTime() + "\tprocessing: " + deckId);

@@ -11,6 +11,9 @@ import services.nlp.microserviceutil.NLPStorageUtil;
 
 public class DocFrequencyProviderTypeDependentViaNLPResultStorageService implements IDocFrequencyProviderTypeDependent{
 
+	private Map<String,String>  mapSupportedTypesToPaths;
+	private NLPStorageUtil nlpStorageUtil;
+
 	public DocFrequencyProviderTypeDependentViaNLPResultStorageService(Map<String, String> mapSupportedTypesToPaths,
 			NLPStorageUtil nlpStorageUtil) {
 		super();
@@ -18,11 +21,9 @@ public class DocFrequencyProviderTypeDependentViaNLPResultStorageService impleme
 		this.nlpStorageUtil = nlpStorageUtil;
 	}
 
-	private Map<String,String>  mapSupportedTypesToPaths;
-	private NLPStorageUtil nlpStorageUtil;
 	
-	public DocFrequencyProviderTypeDependentViaNLPResultStorageService(){
-		this.nlpStorageUtil = new NLPStorageUtil();
+	public DocFrequencyProviderTypeDependentViaNLPResultStorageService(NLPStorageUtil nlpStorageUtil){
+		this.nlpStorageUtil = nlpStorageUtil;
 		initializeDefaultPaths();
 		
 	}

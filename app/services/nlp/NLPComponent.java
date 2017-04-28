@@ -26,6 +26,7 @@ import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.recommendation.ITagRecommender;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
@@ -45,32 +46,34 @@ public class NLPComponent {
 
 	public int maxEntriesForTFIDFResult = 10; //TODO: make this configurable?
 
+    private DeckServiceUtil deckServiceUtil;  
 	private IHtmlToText htmlToPlainText;
 	private ILanguageDetector languageDetector;
 	private ITokenizerLanguageDependent tokenizer;
-    private INERLanguageDependent ner;
     private IStopwordRemover stopwordRemover;
-    private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
-    private DeckServiceUtil deckServiceUtil;  
+    private INERLanguageDependent ner;
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
+    private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
     private NLPStorageUtil nlpStorageUtil;
-    
+    private ITagRecommender tagRecommender;
     private boolean typesToLowerCase = true;
 
     
 	@Inject
-	public NLPComponent(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil) {
+	public NLPComponent(DeckServiceUtil deckserviceUtil, IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender) {
 		super();
+		
+		this.deckServiceUtil = deckserviceUtil;
 		this.htmlToPlainText = htmlToText;
 		this.languageDetector = languageDetector;
 		this.tokenizer = tokenizer;
 		this.stopwordRemover = stopwordRemover;
 		this.ner = ner;
 		this.docFrequencyProvider = docFrequencyProvider;
-		this.deckServiceUtil = new DeckServiceUtil();
 		this.dbPediaSpotlightUtil = dbPediaSpotlightUtil;
 		this.nlpStorageUtil = nlpStorageUtil;
+		this.tagRecommender = tagRecommender;
 	}
 	
 	/**
@@ -130,15 +133,11 @@ public class NLPComponent {
 		return dbPediaSpotlightUtil.performDBPediaSpotlight(input, confidence);
 			
 	}
+
 	
-//	public ObjectNode performDBpediaSpotlight(String input, double dbpediaSpotlightConfidence, ObjectNode node){
-//		
-//		JsonNode resultNode = performDBpediaSpotlight(input, dbpediaSpotlightConfidence);
-//		node.set(propertyNameDBPediaSpotlight, resultNode);
-//		return node;
-//		
-//	}
-	
+	public List<NlpTag> getTagRecommendations(String deckId){
+		return this.tagRecommender.getTagRecommendations(deckId);
+	}
 
 	@Deprecated
 	public ObjectNode performNLP(String input, ObjectNode node, double dbpediaSpotlightConfidence){
@@ -385,8 +384,8 @@ public class NLPComponent {
 		// get deck title and description
 		String deckTitle = DeckServiceUtil.getDeckTitle(deckNode);
 		sbWholeDeckText.append(deckTitle);
-		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
-		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
+//		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
+//		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
 		
 //		List<String> tokensOfWholeDeckRetrievedPerSlide = new ArrayList<>(); // used for word frequencies and tfidf of tokens if thez are retrieved per slide
 //		tokensOfWholeDeckRetrievedPerSlide.addAll(Arrays.asList(tokensOfDecktitle)); 
@@ -617,7 +616,7 @@ public class NLPComponent {
 	
 	
 
-	public ObjectNode getTFIDF(String deckId){
+	public ObjectNode getTFIDFviaNLPResultViaNLPStoreService(String deckId){
 		Response response = this.nlpStorageUtil.getNLPResultForDeckId(deckId);
 		ObjectNode nlpResult = (ObjectNode) NLPStorageUtil.getJsonFromMessageBody(response);
 		ObjectNode result = Json.newObject();

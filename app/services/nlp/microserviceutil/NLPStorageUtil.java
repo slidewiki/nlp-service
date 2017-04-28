@@ -17,9 +17,10 @@ import play.libs.Json;
 public class NLPStorageUtil {
 
 	private Client client;
-	private String URL = "https://nlpstore.experimental.slidewiki.org";
+	private String URL;
 	
-	public NLPStorageUtil() {
+	public NLPStorageUtil(String baseURL) {
+		this.URL = baseURL;
 		this.client = ClientBuilder.newClient();
 	}
 	
@@ -54,8 +55,10 @@ public class NLPStorageUtil {
 		return response;
 	}
 	
+
 	public Response updateNLPStoreByRecalculatingNLPResult(String deckId){
 		
+		String URL = this.URL + "/init/";;
 		Form form = new Form();
         form.param("deckid", deckId);
         

@@ -25,16 +25,8 @@ import play.mvc.Result;
 import play.mvc.Results;
 import services.nlp.NLPComponent;
 import services.nlp.NlpTag;
-import services.nlp.html.IHtmlToText;
-import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
-import services.nlp.microserviceutil.NLPStorageUtil;
-import services.nlp.ner.INERLanguageDependent;
-import services.nlp.recommendation.ITagRecommender;
-import services.nlp.stopwords.IStopwordRemover;
-import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
-import services.nlp.tokenization.ITokenizerLanguageDependent;
 
 
 @Api(value="nlp")
@@ -56,22 +48,13 @@ public class NLPController extends Controller{
     
 	
     private NLPComponent nlpComponent;
-    private ITagRecommender recommender;
 
     
-    @Inject
-    public NLPController(IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender recommender) {
-		super();
-		this.nlpComponent = new NLPComponent(htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil);
-		this.recommender = recommender;
-	}
     
     @Inject
-    public NLPController(NLPComponent nlpComponent, ITagRecommender recommender) {
+    public NLPController(NLPComponent nlpComponent) {
 		super();
 		this.nlpComponent = nlpComponent;
-		this.recommender = recommender;
 	}
 
     @javax.ws.rs.Path(value = "/htmlToText")
@@ -179,7 +162,7 @@ public class NLPController extends Controller{
     	
     	try{
 
-        	List<NlpTag> tags = recommender.getTagRecommendations(deckId);
+        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 
