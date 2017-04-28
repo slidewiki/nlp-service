@@ -1,4 +1,4 @@
-package services.nlp.dbpediaspotlight;
+package services.nlp.microserviceutil;
 
 /**
  * Convenience class for fast creating a DBPedia Spotlight instance with url and fallback URL. Do just use for test cases!

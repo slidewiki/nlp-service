@@ -1,4 +1,4 @@
-package services.util;
+package services.nlp.microserviceutil;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

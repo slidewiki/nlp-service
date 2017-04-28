@@ -1,4 +1,4 @@
-package services.nlp.dbpediaspotlight;
+package services.nlp.microserviceutil;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;

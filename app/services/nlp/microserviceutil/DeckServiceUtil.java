@@ -1,4 +1,4 @@
-package services.util;
+package services.nlp.microserviceutil;
 
 import java.util.Collections;
 import java.util.Iterator;

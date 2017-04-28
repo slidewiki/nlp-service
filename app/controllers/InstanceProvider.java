@@ -11,16 +11,17 @@ import java.util.Set;
 import play.Configuration;
 import play.Logger;
 import services.nlp.NLPComponent;
-import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.HTMLJsoup;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.languagedetection.LanguageDetector_optimaize;
+import services.nlp.microserviceutil.DBPediaSpotlightUtil;
+import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INER;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
-import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.TagRecommenderTFIDF;
 import services.nlp.stopwords.IStopwordRemover;
@@ -34,7 +35,6 @@ import services.nlp.tokenization.ITokenizer;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.tokenization.TokenizerLanguageDependentViaMap;
 import services.nlp.tokenization.Tokenizer_OpenNLP;
-import services.util.NLPStorageUtil;
 
 public class InstanceProvider {
 

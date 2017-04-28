@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import play.Logger;
 import services.nlp.NLPComponent;
-import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
-import services.util.DeckServiceUtil;
+import services.nlp.microserviceutil.DBPediaSpotlightUtil;
+import services.nlp.microserviceutil.DeckServiceUtil;
 import services.util.Timer;
 
 public class DocFrequencyCreatorForDecks {

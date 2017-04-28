@@ -19,18 +19,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import play.libs.Json;
-import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.microserviceutil.DBPediaSpotlightUtil;
+import services.nlp.microserviceutil.DeckServiceUtil;
+import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
-import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
-import services.util.DeckServiceUtil;
-import services.util.NLPStorageUtil;
 import services.util.Sorter;
 
 //TODO: clean up

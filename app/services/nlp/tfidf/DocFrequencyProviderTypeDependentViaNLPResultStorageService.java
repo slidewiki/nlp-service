@@ -6,8 +6,8 @@ import java.util.Map;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import services.nlp.nlpresultstorage.NLPResultUtil;
-import services.util.NLPStorageUtil;
+import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.microserviceutil.NLPStorageUtil;
 
 public class DocFrequencyProviderTypeDependentViaNLPResultStorageService implements IDocFrequencyProviderTypeDependent{
 

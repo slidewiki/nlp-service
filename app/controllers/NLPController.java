@@ -25,16 +25,16 @@ import play.mvc.Result;
 import play.mvc.Results;
 import services.nlp.NLPComponent;
 import services.nlp.NlpTag;
-import services.nlp.dbpediaspotlight.DBPediaSpotlightUtil;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.microserviceutil.DBPediaSpotlightUtil;
+import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
-import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
-import services.util.NLPStorageUtil;
 
 
 @Api(value="nlp")

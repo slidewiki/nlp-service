@@ -1,4 +1,4 @@
-package services.nlp.nlpresultstorage;
+package services.nlp.microserviceutil;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -15,9 +15,9 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import services.nlp.NlpTag;
-import services.nlp.nlpresultstorage.NLPResultUtil;
+import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.microserviceutil.NLPStorageUtil;
 import services.util.MapCounting;
-import services.util.NLPStorageUtil;
 import services.util.Sorter;
 
 public class TagRecommenderTFIDF implements ITagRecommender {

@@ -8,8 +8,8 @@ import java.util.Map.Entry;
 import javax.inject.Inject;
 
 import services.nlp.languagedetection.ILanguageDetector;
+import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.ner.INERLanguageDependent;
-import services.nlp.nlpresultstorage.NLPResultUtil;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
