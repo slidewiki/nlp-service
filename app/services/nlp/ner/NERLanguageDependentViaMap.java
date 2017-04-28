@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 
 import opennlp.tools.util.Span;
-import services.nlp.NlpAnnotation;
 
 public class NERLanguageDependentViaMap implements INERLanguageDependent {
 
@@ -30,7 +29,7 @@ public class NERLanguageDependentViaMap implements INERLanguageDependent {
 
 
 	@Override
-	public List<NlpAnnotation> getNEs(String[] tokens, String language) {
+	public List<NerAnnotation> getNEs(String[] tokens, String language) {
 	  	
 		Set<INER> nersToUse;
 		if(useAllNERMethodsInMapRegardlessGivenLanguage){
@@ -45,10 +44,10 @@ public class NERLanguageDependentViaMap implements INERLanguageDependent {
     		nersToUse = mapLanguageToNERs.get(defaultLanguageToUseIfGivenLanguageNotAvailable);
     	}
     	
-		List<NlpAnnotation> nerResults = new ArrayList<>();
+		List<NerAnnotation> nerResults = new ArrayList<>();
     	for (INER ner : nersToUse) {
 			Span[] neSpans = ner.getNEs(tokens);
-			List<NlpAnnotation> listCurrentNER = NlpAnnotation.fromSpans(neSpans, tokens, ner.getName());
+			List<NerAnnotation> listCurrentNER = NerAnnotation.fromSpans(neSpans, tokens, ner.getName());
 			nerResults.addAll(listCurrentNER);
 		}
     	return nerResults;

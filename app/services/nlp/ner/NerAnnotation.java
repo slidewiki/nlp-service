@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.ner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,9 +7,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import opennlp.tools.util.Span;
-import services.nlp.ner.NER_OpenNLP;
 
-public class NlpAnnotation {
+public class NerAnnotation {
 	
 	private String name;
 	private String type;
@@ -31,7 +30,7 @@ public class NlpAnnotation {
 	 * @param link
 	 */
 	@JsonCreator
-	public NlpAnnotation(@JsonProperty("name") String name, @JsonProperty("type") String type, @JsonProperty("sourceName") String sourceName, @JsonProperty("probability") double probability, @JsonProperty("tokenSpanBegin") int tokenSpanBegin, @JsonProperty("tokenSpanEnd") int tokenSpanEnd, @JsonProperty("link") String link) {
+	public NerAnnotation(@JsonProperty("name") String name, @JsonProperty("type") String type, @JsonProperty("sourceName") String sourceName, @JsonProperty("probability") double probability, @JsonProperty("tokenSpanBegin") int tokenSpanBegin, @JsonProperty("tokenSpanEnd") int tokenSpanEnd, @JsonProperty("link") String link) {
 		super();
 		this.name = name;
 		this.type = type;
@@ -45,7 +44,7 @@ public class NlpAnnotation {
 
 	
 
-	public NlpAnnotation(Span span, String[] tokens, String sourceName){
+	public NerAnnotation(Span span, String[] tokens, String sourceName){
 		this.name = NER_OpenNLP.getTokenStringFromSpan(span, tokens);
 		this.type = span.getType();
 		this.probability = span.getProb();
@@ -55,10 +54,10 @@ public class NlpAnnotation {
 		this.link = "";
 	}
 	
-	public static List<NlpAnnotation> fromSpans(Span[] spans, String[] tokens, String sourceName){
-		List<NlpAnnotation> result = new ArrayList<>();
+	public static List<NerAnnotation> fromSpans(Span[] spans, String[] tokens, String sourceName){
+		List<NerAnnotation> result = new ArrayList<>();
 		for (Span span : spans) {
-			result.add(new NlpAnnotation(span, tokens, sourceName));
+			result.add(new NerAnnotation(span, tokens, sourceName));
 		}
 		return result;
 	}

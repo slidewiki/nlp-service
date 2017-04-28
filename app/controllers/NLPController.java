@@ -24,15 +24,15 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Results;
 import services.nlp.NLPComponent;
-import services.nlp.NlpTag;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
+import services.nlp.recommendation.NlpTag;
 
 
 @Api(value="nlp")
 @SwaggerDefinition(	
-        // Attention: info part below is currently not supported by swagger-play2 and will be ignored. Configure instead in apllication.conf under swagger.api.info
-        // but tags are not ignored
+        // Attention: "info"-part below is currently not supported by swagger-play2 and will be ignored. Configure instead in apllication.conf under swagger.api.info
+        // but "tags" are supported and not ignored
 		info = @Info(
         		description = "provides different nlp methods to be performed on decks.", 
         		title = "NLP service API", 

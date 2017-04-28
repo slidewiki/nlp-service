@@ -1,4 +1,4 @@
-package services.nlp;
+package services.nlp.recommendation;
 
 public class NlpTag {
 

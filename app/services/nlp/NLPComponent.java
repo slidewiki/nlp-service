@@ -26,7 +26,9 @@ import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
+import services.nlp.ner.NerAnnotation;
 import services.nlp.recommendation.ITagRecommender;
+import services.nlp.recommendation.NlpTag;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
@@ -116,12 +118,12 @@ public class NLPComponent {
     	return node;
 	}
 	
-	public List<NlpAnnotation> performNER(String[] tokens, String language){
+	public List<NerAnnotation> performNER(String[] tokens, String language){
     	return this.ner.getNEs(tokens, language);	
 	}
 	
 	public ObjectNode performNER(String[] tokens, String language, ObjectNode node){
-    	List<NlpAnnotation> ners = this.ner.getNEs(tokens, language);	
+    	List<NerAnnotation> ners = this.ner.getNEs(tokens, language);	
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(NLPResultUtil.propertyNameNER, nerNode);
     	return node;
@@ -153,7 +155,7 @@ public class NLPComponent {
     	JsonNode tokenNode = Json.toJson(tokens);
     	node.set(NLPResultUtil.propertyNameTokens, tokenNode);
 
-    	List<NlpAnnotation> ners = this.ner.getNEs(tokens, detectedLanguage);	
+    	List<NerAnnotation> ners = this.ner.getNEs(tokens, detectedLanguage);	
     	JsonNode nerNode = Json.toJson(ners);
     	node.set(NLPResultUtil.propertyNameNER, nerNode);
 
