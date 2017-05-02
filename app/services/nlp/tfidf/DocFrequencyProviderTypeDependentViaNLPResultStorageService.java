@@ -81,4 +81,10 @@ public class DocFrequencyProviderTypeDependentViaNLPResultStorageService impleme
 		return result;
 	}
 
+
+	public Map<String, String> getMapSupportedTypesToPaths() {
+		return mapSupportedTypesToPaths;
+	}
+
+
 }

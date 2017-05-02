@@ -1,12 +1,13 @@
 package services.nlp.tfidf;
 
 import java.util.Map;
+import java.util.Set;
 
 public class DocFrequencyProviderTypeDependentViaMap implements IDocFrequencyProviderTypeDependent {
 
-	Map<String,IDocFrequencyProvider> mapTypeToDocFrequencyProvider;
+	Map<String,DocFrequencyProviderViaMap> mapTypeToDocFrequencyProvider;
 
-	public DocFrequencyProviderTypeDependentViaMap(Map<String, IDocFrequencyProvider> mapTypeToDocFrequencyProvider) {
+	public DocFrequencyProviderTypeDependentViaMap(Map<String, DocFrequencyProviderViaMap> mapTypeToDocFrequencyProvider) {
 		super();
 		this.mapTypeToDocFrequencyProvider = mapTypeToDocFrequencyProvider;
 	}
@@ -34,5 +35,13 @@ public class DocFrequencyProviderTypeDependentViaMap implements IDocFrequencyPro
 		
 	}
 
+	public void add(String type, String language, Set<String> terms){
+		if(!supportsType(type)){
+			return;
+		}
+		DocFrequencyProviderViaMap docFreqProviderForGivenType = this.mapTypeToDocFrequencyProvider.get(type);
+		docFreqProviderForGivenType.addDocument(terms, language);
+		
+	}
 	
 }

@@ -158,7 +158,7 @@ public class InstanceProvider {
     
     @Deprecated
     public static DocFrequencyProviderTypeDependentViaMap provideDocFrequencyProviderSerializedFiles(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException {
-    	Map<String,IDocFrequencyProvider> map = new HashMap<>();
+    	Map<String,DocFrequencyProviderViaMap> map = new HashMap<>();
     	//
     	String filepath;
   

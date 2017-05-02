@@ -25,8 +25,7 @@ libraryDependencies ++= Seq(
   "com.optimaize.languagedetector" % "language-detector" % "0.6",
   "org.jsoup" % "jsoup" % "1.10.2",
   "org.glassfish.jersey.core" % "jersey-client" % "2.26-b02"
-
-)
+ )
 
 fork in run := true
 

@@ -61,13 +61,42 @@ public class NLPResultUtil {
 		return frequencyOfMostFrequentWord;
 	}
 	
+	public static Set<String> getDistinctEntriesFromFrequencies(ObjectNode nlpResult, String propertyName, String nameForWord, String nameForFrequency){
+		
+		Set<String> entries = new HashSet();
+		
+		JsonNode node = nlpResult.get(propertyName);
+		if(node==null){
+			return entries;
+		}
+		if(!node.isArray()){
+			return entries;
+		}
+		ArrayNode wordFrequencyArray = (ArrayNode) node;
+		Iterator<JsonNode> iteratorWordFrequencyArray= wordFrequencyArray.iterator();
+		while(iteratorWordFrequencyArray.hasNext()){
+			JsonNode entry = iteratorWordFrequencyArray.next();
+			String word = entry.get(nameForWord).asText();
+			entries.add(word);
+		}
+		
+		return entries;
+	}
 	
 	
 	public static Map<String,Integer> getFrequenciesStoredInNLPResult(ObjectNode nlpResult, String propertyName, String nameForWord, String nameForFrequency){
 		
-		ArrayNode wordFrequencyArray = (ArrayNode) nlpResult.get(propertyName);
-		Iterator<JsonNode> iteratorWordFrequencyArray= wordFrequencyArray.iterator();
 		Map<String,Integer> mapWordFrequencies = new HashMap<>();
+
+		JsonNode node = nlpResult.get(propertyName);
+		if(node==null){
+			return mapWordFrequencies;
+		}
+		if(!node.isArray()){
+			return mapWordFrequencies;
+		}
+		ArrayNode wordFrequencyArray = (ArrayNode) node;
+		Iterator<JsonNode> iteratorWordFrequencyArray= wordFrequencyArray.iterator();
 		while(iteratorWordFrequencyArray.hasNext()){
 			JsonNode entry = iteratorWordFrequencyArray.next();
 			String word = entry.get(nameForWord).asText();

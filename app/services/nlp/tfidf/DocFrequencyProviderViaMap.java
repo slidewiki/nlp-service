@@ -23,7 +23,7 @@ public class DocFrequencyProviderViaMap implements IDocFrequencyProvider, Serial
 	 * 
 	 */
 	private static final long serialVersionUID = 6555208226879791393L;
-	private static String specialNameForLanguageIndependent = "ALL";
+	public static String specialNameForLanguageIndependent = "ALL";
 	
 	private Map<String,DocFrequencyStoreViaMap> mapLanguageToDocFreqStore;
 	
