@@ -131,9 +131,9 @@ public class NLPComponent {
 	}
 	
 	
-	public Response performDBpediaSpotlight(String input, double confidence){
+	public Response performDBpediaSpotlight(String input, double confidence, String types){
 		
-		return dbPediaSpotlightUtil.performDBPediaSpotlight(input, confidence);
+		return dbPediaSpotlightUtil.performDBPediaSpotlight(input, confidence, types);
 			
 	}
 
@@ -179,7 +179,7 @@ public class NLPComponent {
 	    	TFIDFResultNode.set(NLPResultUtil.propertyNameTFIDF + "_tokens", tfidfNode);
 		}
 		// dbpediaspotlight
-		Response response = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence);
+		Response response = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence, null);
 		if(response.getStatus()!=200){
 			throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + plainText + "\"", response);
 		}
@@ -295,7 +295,7 @@ public class NLPComponent {
 			// dbpedia spotlight per slide
 			if(performDBPediaSpotlightPerSlide){
 	
-				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide, null);
 				if(response.getStatus()!=200){
 					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
 				}
@@ -344,7 +344,7 @@ public class NLPComponent {
 		
 		// dbpedia spotlight per deck 
 		if(performDBPediaSpotlightPerDeck && deckText.length()>0){
-			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck, null);
 			if(response.getStatus()!=200){
 				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
 			}
@@ -435,7 +435,7 @@ public class NLPComponent {
 			// dbpedia spotlight per slide
 			if(performDBPediaSpotlightPerSlide){
 	
-				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide);
+				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide, null);
 				if(response.getStatus()!=200){
 					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
 				}
@@ -489,7 +489,7 @@ public class NLPComponent {
 		performNER(tokenArrayOfDeck, languageWholeDeck, result);
 		
 		if(performDBPediaSpotlightPerDeck){
-			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck);
+			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck, null);
 			if(response.getStatus()!=200){
 				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
 			}

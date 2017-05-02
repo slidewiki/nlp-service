@@ -17,7 +17,7 @@ import play.libs.Json;
 public class DBPediaSpotlightUtil {
 
 	
-	
+	public static final String nameForNoTypeRestriction = "ALL";
 	private Client client;
 	private String URL;												
 	private String[] fallbackURLs;
@@ -64,7 +64,7 @@ public class DBPediaSpotlightUtil {
 	 * @return
 	 * @throws ProcessingException if Spotlight service returns server error (5xx) or {@link ProcessingException}. Tries first URL and then fallbackURLs.
 	 */
-	public Response performDBPediaSpotlight(String input, double confidence) throws ProcessingException{
+	public Response performDBPediaSpotlight(String input, double confidence, String types) throws ProcessingException{
 		
 		input = removeSpecialChars(input);
 		Logger.info("call DBPedia Spotlight via URL " + URL + "...");
@@ -73,7 +73,7 @@ public class DBPediaSpotlightUtil {
 		
 		Response response;
 		try{		
-			response = getSpotlightResponse(input, confidence, URL);
+			response = getSpotlightResponse(input, confidence, types, URL);
 			int status = response.getStatus();	 
 			if(status/100 == 5){
 	    		String message = "DBPediaSpotlight: Server error occured while calling DBPedia spotlight via main URL " + URL + ". Returned status " + status +".";
@@ -102,7 +102,7 @@ public class DBPediaSpotlightUtil {
 					Logger.warn(messageFallback);
 
 					try{
-						Response response2 = getSpotlightResponse(input, confidence, fallbackURL);
+						Response response2 = getSpotlightResponse(input, confidence, types, fallbackURL);
 				        int status2 = response2.getStatus();
 				        if(status2/100==5){
 				    		String messageFallbackServerError = "DBPediaSpotlight: Server error occured when calling DBPedia spotlight via fallback URL " + fallbackURL + ". Returned status " + status2 +". (" + response2.getStatusInfo() + ")";
@@ -142,20 +142,27 @@ public class DBPediaSpotlightUtil {
         
 	}
 	
+	
 	/**
 	 * 
 	 * @param input
 	 * @param confidence
 	 * @param url
+	 * @param types
 	 * @return
 	 * @throws ResponseProcessingException - in case processing of a received HTTP response fails (e.g. in a filter or during conversion of the response entity data to an instance of a particular Java type).
 	 * @throws ProcessingException - in case the request processing or subsequent I/O operation fails
 	*/
-	private Response getSpotlightResponse(String input, double confidence, String url) throws ResponseProcessingException, ProcessingException {
+	private Response getSpotlightResponse(String input, double confidence, String types, String url) throws ResponseProcessingException, ProcessingException {
 		Form form = new Form();
         form.param("confidence", String.valueOf(confidence));
         form.param("text", input);
         
+        
+        if(types!=null && types.trim().length()>0 && !types.equals(DBPediaSpotlightUtil.nameForNoTypeRestriction)){
+            form.param("types", types);
+        }
+                
 	    Response response =  client.target(url)
 	                .request()
 	                .accept(MediaType.APPLICATION_JSON)

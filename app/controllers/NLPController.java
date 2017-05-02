@@ -198,16 +198,19 @@ public class NLPController extends Controller{
     		)
     public Result dbpediaSpotlight(
     		@ApiParam(required = true, value = "input text") String inputText,
-    		@ApiParam(required = true, defaultValue = "0.6", value = "confidence (in range of 0 to 1, e.g. 0.6)") double confidence) {
+    		@ApiParam(required = true, defaultValue = "0.6", value = "confidence (in range of 0 to 1, e.g. 0.6)") double confidence,
+    		@ApiParam(required = true, defaultValue = DBPediaSpotlightUtil.nameForNoTypeRestriction, value = "the types to restrict for. Use \"ALL\" for no restrictions on types") String types
+    		) {
     	
     	Logger.debug("confidence set to " + confidence);
+    	Logger.info("types set to\"" + types+"");
     	if(confidence>1 || confidence < 0 ){
     		return badRequest("Please provide a confidence value in the range of 0 to 1");
     	}
     	
     	Response response;
     	try{
-    		response = nlpComponent.performDBpediaSpotlight(inputText, confidence);
+    		response = nlpComponent.performDBpediaSpotlight(inputText, confidence, types);
     		if(response.getStatus()!=200){
         		
         		return createResultForResponseObject(response, "Problem occured during calling spotlight service. For more information see details provided.");
