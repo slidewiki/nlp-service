@@ -24,6 +24,16 @@ public class DeckServiceUtil {
 		this.client = ClientBuilder.newClient();
 	}
 	
+	
+	public Response getLatestDeckId(){
+		
+		String URL = serviceURL + "/allrecent/1/0";
+		Response response = client.target(URL)
+        .request(MediaType.APPLICATION_JSON).get();
+		
+		return response;
+	}
+	
 	public Response getSlidesForDeckIdFromDeckservice(String deckId){
 		
 		String URL = serviceURL + "/deck/" + deckId + "/slides";

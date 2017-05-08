@@ -180,7 +180,26 @@ public class NLPController extends Controller{
        
     }
     
-    
+    @javax.ws.rs.Path(value = "/reinitdocfreqProviderFromNlpStore")
+    @ApiOperation(
+    		tags = "deck",
+    		value = "re-initializes doc frequency provider ", // displayed next to path
+    		notes = "re-initializes doc frequency provider (should be done before tag recommendation when many platform changes happened). The re-initialization may take some minutes.",// displayed under "Implementation notes"
+    	    nickname = "initdocfreqprovider",
+    	    httpMethod = "GET"
+    	    )
+    public Result reinitdocfreqProviderFromNlpStore(){
+    	try{
+	    	nlpComponent.reloadDocFrequencyProviderFromNlpStore();
+	    	ObjectNode resultNode = Json.newObject();
+	    	resultNode.put("result", "re-initialization successful");
+	    	Result r = Results.ok(resultNode);        	
+	        return r;
+    	}catch (WebApplicationException e) {
+
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}
+    }
     
 
     @javax.ws.rs.Path(value = "/dbpediaspotlight")

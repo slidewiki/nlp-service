@@ -37,7 +37,14 @@ public class NLPResultUtil {
 	public static String propertyNameTFIDFResultArrayName = "results";
 	public static String propertyNameTFIDFEntityName = "entry";
 	public static String propertyNameTFIDFValueName = "value";
+	public static String propertyNameTFIDFToken = propertyNameTFIDF + propertyNameTokens;
+	public static String propertyNameTFIDFNER = propertyNameTFIDF + propertyNameNER;
+	public static String propertyNameTFIDFDBPediaSpotlightURIs = propertyNameTFIDF + propertyNameDBPediaSpotlight + "_URI";
+	public static String propertyNameTFIDFDBPediaSpotlightSurfaceForm = propertyNameTFIDF + propertyNameDBPediaSpotlight + "_SurfaceForm";
+	
 
+
+	
 	// key names for specific document frequency providers
 	public static String propertyNameDocFreqProvider_Tokens = "docFreqProvider_Tokens";
 	public static String propertyNameDocFreqProvider_NamedEntities = "docFreqProvider_NamedEntities";
@@ -63,7 +70,7 @@ public class NLPResultUtil {
 	
 	public static Set<String> getDistinctEntriesFromFrequencies(ObjectNode nlpResult, String propertyName, String nameForWord, String nameForFrequency){
 		
-		Set<String> entries = new HashSet();
+		Set<String> entries = new HashSet<String>();
 		
 		JsonNode node = nlpResult.get(propertyName);
 		if(node==null){
@@ -229,4 +236,6 @@ public class NLPResultUtil {
 		
 		return mapProviderNameToTFIDFMap;
 	}
+	
+	
 }

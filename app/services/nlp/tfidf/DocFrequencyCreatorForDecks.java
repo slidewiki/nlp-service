@@ -7,22 +7,39 @@ import java.util.Set;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import play.Logger;
+import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 
 public class DocFrequencyCreatorForDecks {
 	
-	public static IDocFrequencyProviderTypeDependent createDocFrequencyProviderViaMapByRetrievingAllDataFromNLPStoreFirst(NLPStorageUtil nlpStorageUtil, int minDeckId, int maxDeckId){
+	public static IDocFrequencyProviderTypeDependent createDocFrequencyProviderViaMapByRetrievingAllDataFromNLPStoreFirst(DeckServiceUtil deckserviceUtil, NLPStorageUtil nlpStorageUtil){
+		
+		Response responseLatestDeck = deckserviceUtil.getLatestDeckId();
+		int statusLatestDeck = responseLatestDeck.getStatus();
+		if(statusLatestDeck!=200){
+			throw new WebApplicationException("Problem while latest deck id via deck service. See deck service response for details.", responseLatestDeck);
+		}
+		JsonNode node = ((ArrayNode) DeckServiceUtil.getJsonFromMessageBody(responseLatestDeck)).get(0);
+		Integer latestDeckId = node.get("_id").asInt();
 		
 		
-		Map<String,String> mapSupportedTypeToJsonKeyname = initializeSupportedTypesMap();
-		Set<String> supportedTypes = mapSupportedTypeToJsonKeyname.keySet();
+		Logger.info("Creating DocFrequencyProvider. Latest deck id " + latestDeckId);
+		
+		Map<String,String> mapSupportedTypeToJsonKeynameForFrequencyEntries = initializeSupportedTypesMap();
+		Set<String> supportedTypes = mapSupportedTypeToJsonKeynameForFrequencyEntries.keySet();
 		DocFrequencyProviderTypeDependentViaMap docFrequencyProvider = initializEmptyDocFreqencyProviderWithSupportedTypes(supportedTypes);
 
-		for (int deckId = minDeckId; deckId <= maxDeckId; deckId++) {
+		for (int deckId = 0; deckId <= latestDeckId; deckId++) {
 			
+			if(deckId % 100==0){
+				Logger.info("... reading deck id " + deckId);
+			}
 			Response response = nlpStorageUtil.getNLPResultForDeckId(deckId+"");
 			
 			int status = response.getStatus();
@@ -38,7 +55,7 @@ public class DocFrequencyCreatorForDecks {
 				
 				for (String supportedType : supportedTypes) {
 					
-					String jsonKeynameForFrequencyEntries = mapSupportedTypeToJsonKeyname.get(supportedType);
+					String jsonKeynameForFrequencyEntries = mapSupportedTypeToJsonKeynameForFrequencyEntries.get(supportedType);
 					Set<String> entries = NLPResultUtil.getDistinctEntriesFromFrequencies(nlpResultNode, jsonKeynameForFrequencyEntries, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
 					
 					// add entries for language dependent

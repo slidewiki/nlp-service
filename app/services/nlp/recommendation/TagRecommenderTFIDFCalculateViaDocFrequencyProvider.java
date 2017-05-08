@@ -5,54 +5,66 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
+import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
+import services.nlp.tfidf.TFIDF;
 import services.util.MapCounting;
 import services.util.Sorter;
 
-public class TagRecommenderTFIDF implements ITagRecommender {
+public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITagRecommender{
 
 	private NLPStorageUtil nlpStorageUtil;
-
+	private IDocFrequencyProviderTypeDependent docFrequencyProvider;
+	private int minDocsToPerformLanguageDependent;
+	private int maxEntriesToReturnForTFIDF;
 	private boolean tagsToLowerCase;
-	private int minCharLengthForTag;
 	private int maxNumberOfWordsForNEsWhenNoLinkAvailable;
+	private int minCharLengthForTag;
 	
 	
 	
-	public TagRecommenderTFIDF(NLPStorageUtil nlpStorageUtil, boolean tagsToLowerCase, int minCharLengthForTag,
-			int maxNumberOfWordsForNEsWhenNoLinkAvailable) {
+	
+	public TagRecommenderTFIDFCalculateViaDocFrequencyProvider(NLPStorageUtil nlpStorageUtil,
+			IDocFrequencyProviderTypeDependent docFrequencyProvider, int minDocsToPerformLanguageDependent,
+			int maxEntriesToReturnForTFIDF, boolean tagsToLowerCase, int maxNumberOfWordsForNEsWhenNoLinkAvailable,
+			int minCharLengthForTag) {
 		super();
 		this.nlpStorageUtil = nlpStorageUtil;
+		this.docFrequencyProvider = docFrequencyProvider;
+		this.minDocsToPerformLanguageDependent = minDocsToPerformLanguageDependent;
+		this.maxEntriesToReturnForTFIDF = maxEntriesToReturnForTFIDF;
 		this.tagsToLowerCase = tagsToLowerCase;
-		this.minCharLengthForTag = minCharLengthForTag;
 		this.maxNumberOfWordsForNEsWhenNoLinkAvailable = maxNumberOfWordsForNEsWhenNoLinkAvailable;
+		this.minCharLengthForTag = minCharLengthForTag;
 	}
-
-	
 
 	@Override
 	public List<NlpTag> getTagRecommendations(String deckId) {
 		
+		// get nlp result for deck id
 		Response response = nlpStorageUtil.getNLPResultForDeckId(deckId);
 		int status = response.getStatus();
 		if(status != 200){
 			throw new WebApplicationException("Problem while getting nlp result via nlp store service for deck id " + deckId + ". The nlp store service responded with status " + status + " (" + response.getStatusInfo() + ")", response);
 
 		}
-		JsonNode nlpResult = NLPStorageUtil.getJsonFromMessageBody(response);
+		ObjectNode nlpResult = (ObjectNode) NLPStorageUtil.getJsonFromMessageBody(response);
 		
 		
-		Map<String,Map<String,Double>> mapProviderNameToTFIDFEnntries = NLPResultUtil.getTFIDFEntries(nlpResult);
+		// calc tfidf
+		ObjectNode tfidf = TFIDF.getTFIDF(nlpResult, docFrequencyProvider, minDocsToPerformLanguageDependent, maxEntriesToReturnForTFIDF);
+		Map<String, Map<String, Double>> mapProviderNameToTFIDFEnntries = NLPResultUtil.getTFIDFEntries(tfidf);
+		
 		
 		if(mapProviderNameToTFIDFEnntries == null){
 			throw new ProcessingException("No TFIDF results could be retrieved for deck id " + deckId + " from nlp result. Either tfidf wasn't performed or deck has no content. You can recheck via nlp store service.");
@@ -72,7 +84,7 @@ public class TagRecommenderTFIDF implements ITagRecommender {
 			
 			boolean isSpotlightURIProvider = false;
 			// specific treatment of spotlight
-			if(provider.contains("Spotlight") && provider.contains("URI")){
+			if(provider.contains(NLPResultUtil.propertyNameTFIDFDBPediaSpotlightURIs)){
 				isSpotlightURIProvider = true;
 			}
 			
@@ -137,5 +149,4 @@ public class TagRecommenderTFIDF implements ITagRecommender {
 		}
 		return name;
 	}
-	
 }
