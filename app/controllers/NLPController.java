@@ -129,7 +129,7 @@ public class NLPController extends Controller{
     	
     	
     	try{
-        	ObjectNode resultNode = nlpComponent.processDeck(deckId, dbpediaSpotlightConfidenceForSlide, dbpediaSpotlightConfidenceForDeck);
+        	ObjectNode resultNode = nlpComponent.processDeck(deckId, dbpediaSpotlightConfidenceForSlide, dbpediaSpotlightConfidenceForDeck, false);
         	Result r = Results.ok(resultNode);        	
             return r;
     	}catch (WebApplicationException e) {
