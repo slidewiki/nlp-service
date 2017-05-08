@@ -1,7 +1,6 @@
 package services.nlp;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -237,129 +236,7 @@ public class NLPComponent {
 
 	}
 	
-	/**
-	/**
-	 * without tfidf
-	 * @param slidesIterator
-	 * @param minConfidenceDBPediaSpotlightPerSlide
-	 * @param minConfidenceDBPediaSpotlightPerDeck
-	 * @return
-	 * @throws WebApplicationException if dbpedia spotlight service doesn't return status code 200
-	 */
-	@Deprecated
-	public ObjectNode processNLPForDeckWithoutTFIDF(String deckId, Iterator<JsonNode> slidesIterator, double minConfidenceDBPediaSpotlightPerSlide, double minConfidenceDBPediaSpotlightPerDeck) throws WebApplicationException{
-		
-		boolean performDBPediaSpotlightPerSlide = true;
-		if(minConfidenceDBPediaSpotlightPerSlide>1){
-			performDBPediaSpotlightPerSlide = false;
-		}
-		boolean performDBPediaSpotlightPerDeck = true;
-		if(minConfidenceDBPediaSpotlightPerDeck>1){
-			performDBPediaSpotlightPerDeck = false;
-		}
-		
-		ObjectNode result = Json.newObject();
-		result.put("deckId", deckId);
-		ArrayNode slideArrayNode = Json.newArray();
 
-		List<String> tokensOfWholeDeck = new ArrayList<>(); // used for tfidf of tokens
-		StringBuilder sbWholeDeckText = new StringBuilder();
-
-		while (slidesIterator.hasNext()){
-			
-			ObjectNode slide = (ObjectNode) slidesIterator.next();
-			ObjectNode resultsForSlide = Json.newObject();
-			resultsForSlide.put("slideId", slide.get("id").textValue());
-
-			String slideTitleAndText = SlideContentUtil.retrieveSlideTitleAndTextWithoutHTML(htmlToPlainText, slide, " \n ");
-			resultsForSlide.put(NLPResultUtil.propertyNameSlideTitleAndText, slideTitleAndText);
-
-			if(slideTitleAndText.length()==0){
-				// no text content for slide
-				slideArrayNode.add(resultsForSlide);
-				continue;
-			}
-
-			sbWholeDeckText.append("\n" + slideTitleAndText);
-
-			// language
-			String languageOfSlide = detectLanguage(slideTitleAndText);
-			resultsForSlide.put(NLPResultUtil.propertyNameLanguage, languageOfSlide);
-
-			// tokens
-			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
-			tokensOfWholeDeck.addAll(Arrays.asList(tokenArrayOfSlide)); 
-			resultsForSlide.set(NLPResultUtil.propertyNameTokens, Json.toJson(tokenArrayOfSlide));
-			
-			// NER
-			performNER(tokenArrayOfSlide, languageOfSlide, resultsForSlide);
-			
-			// dbpedia spotlight per slide
-			if(performDBPediaSpotlightPerSlide){
-	
-				Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(slideTitleAndText, minConfidenceDBPediaSpotlightPerSlide, null);
-				if(response.getStatus()!=200){
-					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
-				}
-				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
-
-				resultsForSlide.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
-			}
-
-			slideArrayNode.add(resultsForSlide);
-		}
-		
-		// add single slide results
-		result.set("children", slideArrayNode);
-
-				
-		String deckText = sbWholeDeckText.toString();
-		if(deckText.length()==0){
-			result.put("info", "Deck contains no text. No NLP processing prossible.");
-			return result;
-		}
-				
-		// language detection for whole deck
-		String languageWholeDeck = detectLanguage(deckText);
-		result.put("languageDetectedWholeDeck", languageWholeDeck);
-
-		// further processing of tokens (frequencies, stop word removal)
-			
-		// type frequencies
-		Map<String,Integer> typeCountings = TypeCounter.getTypeCountings(tokensOfWholeDeck, typesToLowerCase);
-		List<Entry<String,Integer>> typeCountingsSortedAsList = Sorter.sortByValueAndReturnAsList(typeCountings, true);
-		int frequencyOfMostFrequentType = typeCountingsSortedAsList.get(0).getValue();
-		result.put(NLPResultUtil.propertyNameFrequencyOfMostFrequentWord, frequencyOfMostFrequentType);
-
-		// types stop words removed
-		Map<String,Integer> typeCountingsStopWordsRemoved = new HashMap<>(typeCountings);
-		stopwordRemover.removeStopwords(typeCountingsStopWordsRemoved, languageWholeDeck);
-		
-		if(typeCountingsStopWordsRemoved.size()>0){
-			// output types without stopwords sorted by frequency
-			List<Entry<String,Integer>> typeCountingsSortedStopWordsRemoved=  Sorter.sortByValueAndReturnAsList(typeCountingsStopWordsRemoved, true);
-			JsonNode wordTypeCountingsStopWordsRemoved = NodeUtil.createArrayNodeFromStringIntegerEntryList(typeCountingsSortedStopWordsRemoved, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
-			result.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords, wordTypeCountingsStopWordsRemoved);
-
-		}
-
-		
-		// dbpedia spotlight per deck 
-		if(performDBPediaSpotlightPerDeck && deckText.length()>0){
-			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck, null);
-			if(response.getStatus()!=200){
-				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
-			}
-			JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
-			result.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
-			
-		}
-
-		
-		return result;
-
-		
-	}
 	
 	/**
 	 * performs nlp for slides of deck incl. frequencies
@@ -392,8 +269,6 @@ public class NLPComponent {
 //		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
 //		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
 		
-//		List<String> tokensOfWholeDeckRetrievedPerSlide = new ArrayList<>(); // used for word frequencies and tfidf of tokens if thez are retrieved per slide
-//		tokensOfWholeDeckRetrievedPerSlide.addAll(Arrays.asList(tokensOfDecktitle)); 
 
 		// TODO: also add deck description to deck text (=sbWholeDeckText)(deck description needs to be retrieved via deck service method GET /deck/{id} -> "description"
 
