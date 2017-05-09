@@ -490,8 +490,9 @@ public class NLPComponent {
 //			}
 //		}
 		
-
-		result.set(NLPResultUtil.propertyNameTFIDF, tfidfResultArrayNode);
+		if(performTfidf){
+			result.set(NLPResultUtil.propertyNameTFIDF, tfidfResultArrayNode);
+		}
 		
 		return result;
 	}
