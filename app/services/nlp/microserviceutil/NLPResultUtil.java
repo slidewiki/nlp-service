@@ -172,7 +172,7 @@ public class NLPResultUtil {
 	 * @param nlpResult
 	 * @return
 	 */
-	public static Map<String,Integer> getNERFrequenciesByAnalyzingNEs(ObjectNode nlpResult){
+	public static Map<String,Integer> getNERFrequenciesByAnalyzingNEs(ObjectNode nlpResult, boolean toLowerCase){
 		
 		Map<String,Integer> result = new HashMap<>(); 
 		
@@ -191,6 +191,9 @@ public class NLPResultUtil {
 				}
 				tokenSpans.add(tokenSpan);
 				String ne = neEntry.get("name").textValue();
+				if(toLowerCase){
+					ne = ne.toLowerCase();
+				}
 				MapCounting.addToCountingMap(result, ne);				
 			}
 			

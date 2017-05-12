@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import play.Logger;
 import play.libs.Json;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.util.MapCounting;
@@ -164,6 +165,7 @@ public class TFIDF {
 			Integer freqWordTypeInDoc = wordCountings.get(word);
 			Integer numberOfDocsContainingTerm = docFrequencyProvider.getDocFrequency(entityTypeForDocFrequencyProvider, word, language);
 			double tfIdfCurrentTerm = calcTFIDF(freqWordTypeInDoc, frequencyOfMostFrequentWordType, numberOfDocsContainingTerm, numberOfAllDocuments);
+//			Logger.info(numberOfAllDocuments + "\t" + word + "\t" + freqWordTypeInDoc + "\t" + numberOfDocsContainingTerm + "\t" + tfIdfCurrentTerm);
 			tfidfResult.put(word, new Double(tfIdfCurrentTerm));
 		}		
 		return tfidfResult;	

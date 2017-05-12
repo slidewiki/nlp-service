@@ -12,6 +12,8 @@ import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import services.nlp.microserviceutil.NLPResultUtil;
@@ -105,6 +107,9 @@ public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITag
 				}
 				
 				if(keyToUse.length()<minCharLengthForTag){
+					continue;
+				}
+				if(StringUtils.isNumeric(keyToUse)){
 					continue;
 				}
 				

@@ -12,6 +12,8 @@ import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -282,7 +284,7 @@ public class NLPComponent {
 			ObjectNode resultsForSlide = Json.newObject();
 			resultsForSlide.put("slideId", slide.get("id").textValue());
 
-			String slideTitleAndText = SlideContentUtil.retrieveSlideTitleAndTextWithoutHTML(htmlToPlainText, slide, "\n");
+			String slideTitleAndText = SlideContentUtil.retrieveSlideTitleAndTextWithoutHTML(htmlToPlainText, slide, " \n ");
 			resultsForSlide.put(NLPResultUtil.propertyNameSlideTitleAndText, slideTitleAndText);
 
 			if(slideTitleAndText.length()==0){
@@ -389,7 +391,16 @@ public class NLPComponent {
 
 		// types stop words removed
 		Map<String,Integer> wordCountingsStopWordsRemoved = new HashMap<>(wordCountings);
-		stopwordRemover.removeStopwords(wordCountingsStopWordsRemoved, languageWholeDeck);
+		stopwordRemover.removeStopwords(wordCountingsStopWordsRemoved, languageWholeDeck); // might also include removal of special chars when stopword remover wortschatz is used 
+		
+		// remove numbers
+		Iterator<Map.Entry<String,Integer>> iter = wordCountingsStopWordsRemoved.entrySet().iterator();
+		while (iter.hasNext()) {
+		    Map.Entry<String,Integer> entry = iter.next();
+		    if(StringUtils.isNumeric(entry.getKey())){
+		        iter.remove();
+		    }
+		}
 		
 		// add to nlp result: words without stopwords sorted by frequency
 		if(wordCountingsStopWordsRemoved.size()>0){
@@ -423,7 +434,7 @@ public class NLPComponent {
 		//###############################	
 		
 		// frequencies
-		Map<String,Integer> neFrequencies = NLPResultUtil.getNERFrequenciesByAnalyzingNEs(result);
+		Map<String,Integer> neFrequencies = NLPResultUtil.getNERFrequenciesByAnalyzingNEs(result, true);
 		List<Entry<String,Integer>> neFrequenciesSortedList=  Sorter.sortByValueAndReturnAsList(neFrequencies, true);
 		JsonNode neFrequenciesNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(neFrequenciesSortedList, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
 		result.set(NLPResultUtil.propertyNameNERFrequencies, neFrequenciesNode);
