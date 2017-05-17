@@ -9,12 +9,12 @@ import javax.ws.rs.core.Response;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 
-public class DocFrequencyProviderTypeDependentViaNLPResultStorageService implements IDocFrequencyProviderTypeDependent{
+public class DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics implements IDocFrequencyProviderTypeDependent{
 
 	private Map<String,String>  mapSupportedTypesToPaths;
 	private NLPStorageUtil nlpStorageUtil;
 
-	public DocFrequencyProviderTypeDependentViaNLPResultStorageService(Map<String, String> mapSupportedTypesToPaths,
+	public DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics(Map<String, String> mapSupportedTypesToPaths,
 			NLPStorageUtil nlpStorageUtil) {
 		super();
 		this.mapSupportedTypesToPaths = mapSupportedTypesToPaths;
@@ -22,7 +22,7 @@ public class DocFrequencyProviderTypeDependentViaNLPResultStorageService impleme
 	}
 
 	
-	public DocFrequencyProviderTypeDependentViaNLPResultStorageService(NLPStorageUtil nlpStorageUtil){
+	public DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics(NLPStorageUtil nlpStorageUtil){
 		this.nlpStorageUtil = nlpStorageUtil;
 		initializeDefaultPaths();
 		

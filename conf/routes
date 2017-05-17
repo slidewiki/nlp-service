@@ -16,6 +16,7 @@ GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(inp
 GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpediaSpotlight(input: String, confidence: Double, types: String)
 GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: String, dbpediaSpotlightConfidenceForSlide: Double, dbpediaSpotlightConfidenceForDeck: Double)
 GET     /nlp/tagRecommendations/:deckId              controllers.NLPController.tagRecommendations(deckId: String)
+GET     /nlp/tagRecommendationsAlternative/:deckId              controllers.NLPController.tagRecommendationsAlternative(deckId: String)
 GET		/nlp/reinitdocfreqprovider/			controllers.NLPController.reinitdocfreqProviderFromNlpStore()
 
 

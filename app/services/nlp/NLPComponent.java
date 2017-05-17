@@ -37,6 +37,7 @@ import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
+import services.util.MapCounting;
 import services.util.NodeUtil;
 import services.util.Sorter;
 
@@ -62,12 +63,13 @@ public class NLPComponent {
     private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
     private NLPStorageUtil nlpStorageUtil;
     private ITagRecommender tagRecommender;
+    private ITagRecommender tagRecommenderAlternative;
     private boolean typesToLowerCase = true;
 
     
 	@Inject
 	public NLPComponent(DeckServiceUtil deckserviceUtil, IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender, ITagRecommender tagRecommenderAlternative) {
 		super();
 		
 		this.deckServiceUtil = deckserviceUtil;
@@ -80,6 +82,7 @@ public class NLPComponent {
 		this.dbPediaSpotlightUtil = dbPediaSpotlightUtil;
 		this.nlpStorageUtil = nlpStorageUtil;
 		this.tagRecommender = tagRecommender;
+		this.tagRecommenderAlternative = tagRecommenderAlternative;
 	}
 	
 	/**
@@ -144,6 +147,12 @@ public class NLPComponent {
 	public List<NlpTag> getTagRecommendations(String deckId){
 		return this.tagRecommender.getTagRecommendations(deckId);
 	}
+	
+	public List<NlpTag> getTagRecommendationsAlternative(String deckId){
+		return this.tagRecommenderAlternative.getTagRecommendations(deckId);
+	}
+	
+	
 
 	@Deprecated
 	public ObjectNode performNLP(String input, ObjectNode node, double dbpediaSpotlightConfidence){
@@ -270,11 +279,13 @@ public class NLPComponent {
 		sbWholeDeckText.append(deckTitle);
 //		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
 //		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
+		// TODO: deckTitle: add deckTitle (tokens & NER, spotlight results) to nlpResult and to frequencies results (how? extra)
+		// maybe tokenize when whole deck language known
 		
-
 		// TODO: also add deck description to deck text (=sbWholeDeckText)(deck description needs to be retrieved via deck service method GET /deck/{id} -> "description"
 
 		ArrayNode slideArrayNode = Json.newArray();
+		int numberOfSlides = slideArrayNode.size();
 		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorFromDeckserviceJsonResult(deckNode);
 		List<String> spotlightResourceURIsOfDeckRetrievedPerSlide = new ArrayList<>();
 
@@ -504,6 +515,28 @@ public class NLPComponent {
 		if(performTfidf){
 			result.set(NLPResultUtil.propertyNameTFIDF, tfidfResultArrayNode);
 		}
+		
+		//============================================
+		// special frequency boosting of deck title
+		//============================================
+		String[] tokensDeckTitle = tokenizer.tokenize(deckTitle, languageWholeDeck);
+		Map<String,Integer> wordCountingsDeckTitle = TypeCounter.getTypeCountings(tokensDeckTitle, typesToLowerCase);
+		stopwordRemover.removeStopwords(wordCountingsDeckTitle, languageWholeDeck); // might also include removal of special chars when stopword remover wortschatz is used 
+		Iterator<Map.Entry<String,Integer>> iterDeckTitle = wordCountingsDeckTitle.entrySet().iterator();
+		while (iterDeckTitle.hasNext()) {
+		    Map.Entry<String,Integer> entry = iterDeckTitle.next();
+		    if(StringUtils.isNumeric(entry.getKey())){
+		        iter.remove();
+		    }
+		}
+		int factorToUseForBoost = numberOfSlides;
+		
+		// TODO: attention: original map with word countings will get overwritten here. check if this causes any problems
+		MapCounting.addToCountingMapAddingIntegerValuesWithFactor(wordCountingsStopWordsRemoved, wordCountingsDeckTitle, factorToUseForBoost);
+		List<Entry<String,Integer>> wordCountingsTitleBoostedSorted=  Sorter.sortByValueAndReturnAsList(wordCountingsStopWordsRemoved, true);
+		JsonNode wordCountingsWithTitleBoost = NodeUtil.createArrayNodeFromStringIntegerEntryList(wordCountingsTitleBoostedSorted, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
+		result.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords + "_TITLEBOOST", wordCountingsWithTitleBoost);
+
 		
 		return result;
 	}

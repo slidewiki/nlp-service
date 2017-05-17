@@ -97,7 +97,7 @@ public class TagRecommenderTFIDFStoredInNLPResult implements ITagRecommender {
 					continue;
 				}
 				
-				MapCounting.addToCountingMapAddingValue(mapSummedTFIDF, keyToUse , entry.getValue());
+				MapCounting.addToCountingMapAddingDoubleValue(mapSummedTFIDF, keyToUse , entry.getValue());
 			}
 		}
 		

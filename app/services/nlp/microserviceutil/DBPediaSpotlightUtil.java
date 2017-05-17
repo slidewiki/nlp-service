@@ -187,7 +187,15 @@ public class DBPediaSpotlightUtil {
 		return input;
 	}
 	
-
+	public static String getSpotlightNameFromURI(String URI){
+		String urlSequenceToRemove = "http://dbpedia.org/resource/";
+		int lengthOfUrlSequenceToRemove = urlSequenceToRemove.length();
+		String name = URI.substring(lengthOfUrlSequenceToRemove);
+		if(name.contains("_")){
+			name = name.replace("_", " ");
+		}
+		return name;
+	}
 	
 	public void close(){
 		this.client.close();

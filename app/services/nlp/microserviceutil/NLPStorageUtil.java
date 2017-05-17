@@ -54,10 +54,21 @@ public class NLPStorageUtil {
 		return response;
 	}
 	
-
+	public Response getStatisticsDeckFrequencies(String deckId){
+		
+               
+        String URL = this.URL + "/statistics/termFrequencies/" + deckId;
+		Response response = client.target(URL)
+					.request().
+					get();
+		
+		return response;
+	}
+	
+	 
 	public Response updateNLPStoreByRecalculatingNLPResult(String deckId){
 		
-		String URL = this.URL + "/init/";;
+		String URL = this.URL + "/init/";
 		Form form = new Form();
         form.param("deckid", deckId);
         
@@ -91,4 +102,6 @@ public class NLPStorageUtil {
 		return result;
 			
 	}
+	
+	
 }

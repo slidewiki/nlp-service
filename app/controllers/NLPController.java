@@ -48,7 +48,7 @@ public class NLPController extends Controller{
     
 	
     private NLPComponent nlpComponent;
-
+    
     
     
     @Inject
@@ -148,7 +148,7 @@ public class NLPController extends Controller{
     @ApiOperation(
     		tags = "deck",
     		value = "retrieves tag recommendations for a given deck id", 
-    		notes = "retrieves tag recommendations for a given deck id using tfidf from stored nlp results")
+    		notes = "retrieves tag recommendations for a given deck id by calculating tfidf using frequency information stored nlp results of nlp store - loaded via DocFrequencyProvide")
     @ApiResponses(
     		value = {
     				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
@@ -163,6 +163,42 @@ public class NLPController extends Controller{
     	try{
 
         	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId);
+        	JsonNode tagNode = Json.toJson(tags);
+        	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
+
+        	Result r = Results.ok(resultNode);        	
+            return r;
+    	}catch (WebApplicationException e) {
+
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}catch(ProcessingException f){
+    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
+    		
+    		return createResultForProcessingException(500, f, message);
+    	}
+    	
+       
+    }
+    
+    @javax.ws.rs.Path(value = "/tagRecommendationsAlternative")
+    @ApiOperation(
+    		tags = "deck",
+    		value = "retrieves tag recommendations for a given deck id", 
+    		notes = "retrieves tag recommendations for a given deck id by calculating tfidf using frequency information stored nlp results of nlp store - alternative: via frequencies statistics of nlp store")
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
+    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
+    				})
+
+    public Result tagRecommendationsAlternative(
+    		@ApiParam(required = true, value = "deckId") String deckId) {
+    	
+   	 	ObjectNode resultNode = Json.newObject();
+    	
+    	try{
+
+        	List<NlpTag> tags = nlpComponent.getTagRecommendationsAlternative(deckId);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 

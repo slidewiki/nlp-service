@@ -11,7 +11,6 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import play.Logger;
 import play.libs.Json;
 
 public class DeckServiceUtil {
@@ -40,7 +39,7 @@ public class DeckServiceUtil {
 		Response response = client.target(URL)
         .request(MediaType.APPLICATION_JSON).get();
 		
-		Logger.info("Response status for deck id " + deckId + ": " + response.getStatus());
+//		Logger.debug("Response status for deck id " + deckId + ": " + response.getStatus());
 
 		return response;
 	}
