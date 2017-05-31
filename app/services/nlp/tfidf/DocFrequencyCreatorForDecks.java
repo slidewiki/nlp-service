@@ -80,6 +80,7 @@ public class DocFrequencyCreatorForDecks {
 	private static Map<String,String> initializeSupportedTypesMap(){
 		Map<String,String> map = new HashMap<>();
 		map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens, NLPResultUtil.propertyNameWordFrequenciesExclStopwords); 
+		map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_TITLEBOOST", NLPResultUtil.propertyNameWordFrequenciesExclStopwords + "_TITLEBOOST"); 
 		map.put(NLPResultUtil.propertyNameDocFreqProvider_NamedEntities, NLPResultUtil.propertyNameNERFrequencies); 
 		map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI, NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies);
 //		map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightSurfaceForm, NLPResultUtil.propertyNameDBPediaSpotlight);

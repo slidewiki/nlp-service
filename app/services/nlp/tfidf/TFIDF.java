@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,20 +24,24 @@ import services.util.Sorter;
 
 public class TFIDF {
 	
-
-	public static Map<String,Map<String,Double>> getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent){
+	/**
+	 * 
+	 * @param nlpStorageUtil
+	 * @param deckId
+	 * @param minDocsToPerformLanguageDependent
+	 * @param titleBoostSettings for no title boosting set to null, for details of title boosting see {@link TitleBoostSettings}
+	 * @return
+	 */
+	public static Map<String,Map<String,Double>> getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings){
 		
 
 		// get frequencies data from nlp store
 		Response responseFrequencies = nlpStorageUtil.getStatisticsDeckFrequencies(deckId);
 		JsonNode nlpStoreFrequencyNode = NLPStorageUtil.getJsonFromMessageBody(responseFrequencies);
 		
-		String language = FrequencyResultUtil.getLanguage(nlpStoreFrequencyNode);
 		int frequencyOfMostFrequentWord = FrequencyResultUtil.getfrequencyOfMostFrequentWord(nlpStoreFrequencyNode);
 		int numberOfDocsForGivenLanguage = FrequencyResultUtil.getNumberOfDocsForLanguage(nlpStoreFrequencyNode);
-		int numberOfDocsOverall = FrequencyResultUtil.getNumberOfDocsTotal(nlpStoreFrequencyNode);
-
-
+		int numberOfDocsOverall = FrequencyResultUtil.getNumberOfDocsTotal(nlpStoreFrequencyNode);		
 				
 		//====================================
 		boolean performLanguageDependent = true;
@@ -46,8 +49,7 @@ public class TFIDF {
 		if(numberOfDocsForGivenLanguage < minDocsToPerformLanguageDependent){
 			performLanguageDependent = false;
 		}
-		
-		
+				
 		String propertyNameForFrequencyEntries;
 		String tfidfproviderName;
 		
@@ -61,7 +63,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfTokens = calcTFIDFViaNLPStoreFrequencyNode(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent);
+		Map<String,Double> tfidfTokens = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfTokens);
 		
 		// NER
@@ -72,7 +74,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfNER = calcTFIDFViaNLPStoreFrequencyNode(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent);
+		Map<String,Double> tfidfNER = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfNER);
 
 		// Spotlight
@@ -83,7 +85,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfSpotlight = calcTFIDFViaNLPStoreFrequencyNode(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent);
+		Map<String,Double> tfidfSpotlight = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfSpotlight);
 
 		
@@ -106,6 +108,56 @@ public class TFIDF {
 			}
 			
 			double tfidf = calcTFIDF(frequencyTerm, frequencyOfMostFrequentWord, numberOfDocsContainingTerm, numberOfDocs);
+			tfidfResult.put(entry, new Double(tfidf));
+
+		}
+		
+		return tfidfResult;
+	}
+	
+	public static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent, TitleBoostSettings titleBoostSettings){
+		
+		List<TermFrequency> termFrequencyData = FrequencyResultUtil.getTermFrequenciesFromFrequencyResultNode(nlpStoreFrequencyNode, keynameFrequencies);
+		int numberOfSlidesWithText = FrequencyResultUtil.getNumberOfSlidesWithText(nlpStoreFrequencyNode);
+		
+		Map<String,Double> tfidfResult = new HashMap<>();
+		boolean performTitleBoost = false;
+		if(titleBoostSettings !=null && titleBoostSettings.isPerformTitleBoost()){
+			performTitleBoost = true;
+		}
+		for (TermFrequency termFrequency : termFrequencyData) {
+			String entry = termFrequency.getEntry();
+			int frequencyTerm = termFrequency.getFrequency();
+			int frequencyToUseForTerm = frequencyTerm;
+			if(performTitleBoost){
+				int frequencyTermInTitle = termFrequency.getFrequencyInTitle();
+				if(frequencyTermInTitle > 0){
+					
+					int factorToUse = 1;
+					if(numberOfSlidesWithText>0){
+						factorToUse = numberOfSlidesWithText;
+					}
+					if(titleBoostSettings.getTitleBoostWithFixedFactor()>0){
+						factorToUse = titleBoostSettings.getTitleBoostWithFixedFactor();
+					}
+					
+					frequencyToUseForTerm = (frequencyTerm-frequencyTermInTitle) + (frequencyTermInTitle * factorToUse);
+					
+					if(titleBoostSettings.isLimitTitleBoostToFrequencyOfMostFrequentWord() && frequencyToUseForTerm > frequencyOfMostFrequentWord){
+						frequencyToUseForTerm = frequencyOfMostFrequentWord;
+					}
+				}
+				
+				
+			}
+			int numberOfDocsContainingTerm = termFrequency.getFrequencyOtherDecksWithLanguageRestriction();
+			int numberOfDocs = numberOfAllDocsLanguageDependent;
+			if(!performLanguageDependent){
+				numberOfDocsContainingTerm = termFrequency.getFrequencyOtherDecks();
+				numberOfDocs = numberOfAllDocsNotLanguageDependent;
+			}
+			
+			double tfidf = calcTFIDF(frequencyToUseForTerm, frequencyOfMostFrequentWord, numberOfDocsContainingTerm, numberOfDocs);
 			tfidfResult.put(entry, new Double(tfidf));
 
 		}
@@ -151,6 +203,7 @@ public class TFIDF {
 		JsonNode tfidfTokens = getTFIDFAsNodeCalculatedBasedOnFrequenciesStoredInNLPResult(nlpResult, docFrequencyProvider, docFrequencyProviderType, propertyNameForFrequencyEntries, tfidfproviderName, languageToUse, frequencyOfMostFrequentWord, propertyNameInFrequencyEntriesForWord, propertyNameInFrequencyEntriesForFrequency, maxEntriesToReturn);
 		tfidfResultArrayNode.add(tfidfTokens);
 		
+	
 		// NER
 		docFrequencyProviderType = NLPResultUtil.propertyNameDocFreqProvider_NamedEntities;
 		propertyNameForFrequencyEntries = NLPResultUtil.propertyNameNERFrequencies;

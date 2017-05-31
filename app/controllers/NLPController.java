@@ -27,6 +27,8 @@ import services.nlp.NLPComponent;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.recommendation.NlpTag;
+import services.nlp.recommendation.TagRecommendationFilterSettings;
+import services.nlp.tfidf.TitleBoostSettings;
 
 
 @Api(value="nlp")
@@ -144,7 +146,7 @@ public class NLPController extends Controller{
        
     }
     
-    @javax.ws.rs.Path(value = "/tagRecommendations")
+    @javax.ws.rs.Path(value = "/tagRecommendationsOlderVersion")
     @ApiOperation(
     		tags = "deck",
     		value = "retrieves tag recommendations for a given deck id", 
@@ -155,14 +157,23 @@ public class NLPController extends Controller{
     				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
     				})
 
-    public Result tagRecommendations(
-    		@ApiParam(required = true, value = "deckId") String deckId) {
+    public Result tagRecommendationsOlderVersion(
+    		@ApiParam(required = true, value = "deckId") String deckId,
+       		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
+    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: title frequencies are multiplied with fixed factor. If <=0, title boost is performed with factor equal to number of slides with text") int titleBoostWithFixedFactor, 
+    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
+    		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
+    		@ApiParam(required = true, defaultValue = "4", value = "maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWordsForNEsWhenNoLinkAvailable, 
+    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
+    	
+    	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
+    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
     	
    	 	ObjectNode resultNode = Json.newObject();
     	
     	try{
 
-        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId);
+        	List<NlpTag> tags = nlpComponent.getTagRecommendationsOlderVersion(deckId, titleBoostSettings, tagRecommendationFilterSettings);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 
@@ -180,7 +191,7 @@ public class NLPController extends Controller{
        
     }
     
-    @javax.ws.rs.Path(value = "/tagRecommendationsAlternative")
+    @javax.ws.rs.Path(value = "/tagRecommendations")
     @ApiOperation(
     		tags = "deck",
     		value = "retrieves tag recommendations for a given deck id", 
@@ -191,14 +202,23 @@ public class NLPController extends Controller{
     				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
     				})
 
-    public Result tagRecommendationsAlternative(
-    		@ApiParam(required = true, value = "deckId") String deckId) {
+    public Result tagRecommendations(
+    		@ApiParam(required = true, value = "deckId") String deckId, 
+    		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
+    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: title frequencies are multiplied with fixed factor. If <=0, title boost is performed with factor equal to number of slides with text") int titleBoostWithFixedFactor, 
+    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
+    		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
+    		@ApiParam(required = true, defaultValue = "4", value = "maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWordsForNEsWhenNoLinkAvailable, 
+    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
     	
-   	 	ObjectNode resultNode = Json.newObject();
+    	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
+    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
+   	 	
+    	ObjectNode resultNode = Json.newObject();
     	
     	try{
 
-        	List<NlpTag> tags = nlpComponent.getTagRecommendationsAlternative(deckId);
+        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 
@@ -220,7 +240,7 @@ public class NLPController extends Controller{
     @ApiOperation(
     		tags = "deck",
     		value = "re-initializes doc frequency provider ", // displayed next to path
-    		notes = "re-initializes doc frequency provider (should be done before tag recommendation when many platform changes happened). The re-initialization may take some minutes.",// displayed under "Implementation notes"
+    		notes = "re-initializes doc frequency provider (should be done before tag recommendation with older version when many platform changes happened). The re-initialization may take some minutes.",// displayed under "Implementation notes"
     	    nickname = "initdocfreqprovider",
     	    httpMethod = "GET"
     	    )

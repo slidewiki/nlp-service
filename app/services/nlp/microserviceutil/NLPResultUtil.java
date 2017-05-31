@@ -11,13 +11,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
-import services.nlp.ner.NerAnnotation;
-import services.util.MapCounting;
 
 public class NLPResultUtil {
 	
 	public static String propertyNameOriginalInput = "input";
 	public static String propertyNameHtmlToPlainText = "htmlToPlainText";
+	public static String propertyNameDeckId = "deckId";
+	public static String propertyNameDeckTitle = "deckTitle";
+	public static String propertyNameNumberOfSlides = "numberOfSlides";
+	public static String propertyNameNumberOfSlidesWithText = "numberOfSlidesWithText";
+
 	public static String propertyNameSlideTitleAndText = "slideTitleAndText";
 	public static String propertyNameLanguage = "detectedLanguage";
 	public static String propertyNameTokens = "tokens";
@@ -31,7 +34,8 @@ public class NLPResultUtil {
 
 	public static String propertyNameInFrequencyEntriesForWord = "entry";
 	public static String propertyNameInFrequencyEntriesForFrequency = "frequency";
-	
+	public static String propertyNameInFrequencyEntriesForDeckTitleFrequency = "frequencyInDeckTitle";
+
 	public static String propertyNameTFIDF = "TFIDF";
 	public static String propertyNameTFIDFProviderName = "providerName";
 	public static String propertyNameTFIDFResultArrayName = "results";
@@ -114,93 +118,45 @@ public class NLPResultUtil {
 		return mapWordFrequencies;
 	}
 	
-	public static Map<String,Integer> getSpotlightFrequenciesForURIsByAnalyzingSpotlightResults(ObjectNode nlpResult){
-		return getSpotlightFrequenciesByAnalyzingSpotlightResults(nlpResult, "@URI");
-	}
-
-	public static Map<String,Integer> getSpotlightFrequenciesForSurfaceFormsByAnalyzingSpotlightResults(ObjectNode nlpResult){
-		return getSpotlightFrequenciesByAnalyzingSpotlightResults(nlpResult, "@surfaceForm");
-	}
-	
 	/**
-	 * Returns spotlight frequencies retrieved from spotlight resources per deck
-	 * @param nlpResult
-	 * @param keyname e.g. "@URI" for the URI or "surfaceForm" for the actual form used in text
+	 * puts an extra field for title frequencies to the given frequencies.
+	 * @param frequencyNode
+	 * @param titleFrequencies
 	 * @return
 	 */
-	public static Map<String,Integer> getSpotlightFrequenciesByAnalyzingSpotlightResults(ObjectNode nlpResult, String keyname){
+	public static JsonNode putTitleFrequenciesToFrequencyNode(JsonNode frequencyNode, Map<String,Integer> titleFrequencies){
 		
-		Map<String,Integer> result = new HashMap<>();
-		ArrayNode spotlightResources = getSpotlightResources(nlpResult);
-		if(spotlightResources==null){
-			return result;
+		ArrayNode resultNode = Json.newArray();
+		
+		if(titleFrequencies.size()==0){
+			return resultNode;
 		}
-		for (int i = 0; i < spotlightResources.size(); i++) {
-			JsonNode resourceNode = spotlightResources.get(i);
-			String URI = resourceNode.get(keyname).textValue();
-			MapCounting.addToCountingMap(result, URI);
+		if(frequencyNode==null || frequencyNode.size()==0 || !frequencyNode.isArray()){
+			return resultNode;
 		}
 		
-		return result;
-	
-	}
-	
-	
-	private static ArrayNode getSpotlightResources(ObjectNode nlpResult){
-		
-		if(!nlpResult.has(propertyNameDBPediaSpotlight)){
-			return null;
-		}
-		JsonNode spotlight= nlpResult.get(NLPResultUtil.propertyNameDBPediaSpotlight);
-		if(!spotlight.has("Resources")){
-			return null;
-		}
-		JsonNode spotlightResourcesNode = spotlight.get("Resources");
-		if(spotlightResourcesNode==null || spotlightResourcesNode.isNull()){
-			return null;
-		}
-		
-		ArrayNode resources = (ArrayNode) spotlightResourcesNode;
-		return resources;
-	}
-	
-
-	/**
-	 * Retrieves the Named Entity frequencies.
-	 * If several NER methods were used, the same entity might be recognized more than once.
-	 * To count these entities only once, the process includes identity check via spans. If the same span was already counted, it will be skipped.
-	 * @param nlpResult
-	 * @return
-	 */
-	public static Map<String,Integer> getNERFrequenciesByAnalyzingNEs(ObjectNode nlpResult, boolean toLowerCase){
-		
-		Map<String,Integer> result = new HashMap<>(); 
-		
-		ArrayNode namedEntityArray = (ArrayNode) nlpResult.get(NLPResultUtil.propertyNameNER);
-		Iterator<JsonNode> iterator = namedEntityArray.iterator();
-		Set<String> tokenSpans= new HashSet<>(); // tracks tokenSpans (as String begin_end for counting NEs detected by several sources only once (identity is defined here by the token spans))
-		while(iterator.hasNext()){
-			JsonNode neEntry = iterator.next();
-			NerAnnotation nerEntity = Json.fromJson(neEntry, NerAnnotation.class);
-			int tokenspanBegin = nerEntity.getTokenSpanBegin();
-			if(tokenspanBegin>=0){// only do tracking if token spans available
-				int tokenSpanEnd = nerEntity.getTokenSpanEnd();
-				String tokenSpan = tokenspanBegin + "_" + tokenSpanEnd;
-				if(tokenSpans.contains(tokenSpan)){
-					continue;
-				}
-				tokenSpans.add(tokenSpan);
-				String ne = neEntry.get("name").textValue();
-				if(toLowerCase){
-					ne = ne.toLowerCase();
-				}
-				MapCounting.addToCountingMap(result, ne);				
-			}
+		ArrayNode wordFrequencyArray = (ArrayNode) frequencyNode;
+		Iterator<JsonNode> iteratorWordFrequencyArray= wordFrequencyArray.iterator();
+		while(iteratorWordFrequencyArray.hasNext()){
 			
+			JsonNode frequencyEntry = iteratorWordFrequencyArray.next();
+			String word = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForWord).asText();
+			if(titleFrequencies.containsKey(word)){
+				ObjectNode node = Json.newObject();
+				Integer frequency = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency).asInt();
+				Integer frequencyDeckTitle = titleFrequencies.get(word);
+				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForWord, word);
+				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency, frequency);
+				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForDeckTitleFrequency, frequencyDeckTitle);
+				resultNode.add(node);
+			}else{
+				// add it to result as is
+				resultNode.add(frequencyEntry);
+			}
 		}
-		return result;
+		return resultNode;
+		
 	}
-	
 	
 	public static ArrayNode getTFIDFArrayNode(JsonNode nlpResult){
 		if(!nlpResult.has(NLPResultUtil.propertyNameTFIDF)){

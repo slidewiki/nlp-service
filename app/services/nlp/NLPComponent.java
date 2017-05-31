@@ -30,14 +30,15 @@ import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NerAnnotation;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.NlpTag;
+import services.nlp.recommendation.TagRecommendationFilterSettings;
 import services.nlp.slidecontentutil.SlideContentUtil;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.DocFrequencyCreatorForDecks;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.TFIDF;
+import services.nlp.tfidf.TitleBoostSettings;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
-import services.util.MapCounting;
 import services.util.NodeUtil;
 import services.util.Sorter;
 
@@ -62,14 +63,14 @@ public class NLPComponent {
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
     private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
     private NLPStorageUtil nlpStorageUtil;
+    private ITagRecommender tagRecommenderOlderVersion;
     private ITagRecommender tagRecommender;
-    private ITagRecommender tagRecommenderAlternative;
     private boolean typesToLowerCase = true;
 
     
 	@Inject
 	public NLPComponent(DeckServiceUtil deckserviceUtil, IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender, ITagRecommender tagRecommenderAlternative) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender, ITagRecommender tagRecommenderOlderVersion) {
 		super();
 		
 		this.deckServiceUtil = deckserviceUtil;
@@ -82,7 +83,8 @@ public class NLPComponent {
 		this.dbPediaSpotlightUtil = dbPediaSpotlightUtil;
 		this.nlpStorageUtil = nlpStorageUtil;
 		this.tagRecommender = tagRecommender;
-		this.tagRecommenderAlternative = tagRecommenderAlternative;
+		this.tagRecommenderOlderVersion = tagRecommenderOlderVersion;
+
 	}
 	
 	/**
@@ -144,12 +146,12 @@ public class NLPComponent {
 	}
 
 	
-	public List<NlpTag> getTagRecommendations(String deckId){
-		return this.tagRecommender.getTagRecommendations(deckId);
+	public List<NlpTag> getTagRecommendationsOlderVersion(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
+		return this.tagRecommenderOlderVersion.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
 	}
 	
-	public List<NlpTag> getTagRecommendationsAlternative(String deckId){
-		return this.tagRecommenderAlternative.getTagRecommendations(deckId);
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
+		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
 	}
 	
 	
@@ -176,7 +178,7 @@ public class NLPComponent {
 		// type frequencies
 		Map<String,Integer> typeCountings = TypeCounter.getTypeCountings(tokens, typesToLowerCase);
 		Map<String,Integer> typeCountingsSorted = Sorter.sortByValue(typeCountings, true);
-		int frequencyOfMostFrequentType = typeCountingsSorted.entrySet().iterator().next().getValue(); // needed for tfidf
+		int frequencyOfMostFrequentType = typeCountingsSorted.entrySet().iterator().next().getValue(); // needed for tfidf later, stored in nlp result
 		
 		// types stop words removed
 		Map<String,Integer> typeCountingsSortedStopWordsRemoved = new LinkedHashMap<>(typeCountingsSorted);
@@ -270,12 +272,14 @@ public class NLPComponent {
 		}
 		
 		ObjectNode result = Json.newObject();
-		result.put("deckId", deckId);
+		result.put(NLPResultUtil.propertyNameDeckId, deckId);
 
 		StringBuilder sbWholeDeckText = new StringBuilder();
 
 		// get deck title and description
 		String deckTitle = DeckServiceUtil.getDeckTitle(deckNode);
+		result.put(NLPResultUtil.propertyNameDeckTitle, deckTitle);
+
 		sbWholeDeckText.append(deckTitle);
 //		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
 //		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
@@ -285,12 +289,13 @@ public class NLPComponent {
 		// TODO: also add deck description to deck text (=sbWholeDeckText)(deck description needs to be retrieved via deck service method GET /deck/{id} -> "description"
 
 		ArrayNode slideArrayNode = Json.newArray();
-		int numberOfSlides = slideArrayNode.size();
+		int numberOfSlides = 0; // used for title boost factor
+		int numberOfSlidesWithText = 0; // used for title boost factor
 		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorFromDeckserviceJsonResult(deckNode);
 		List<String> spotlightResourceURIsOfDeckRetrievedPerSlide = new ArrayList<>();
-
+		
 		while (slidesIterator.hasNext()){
-			
+			numberOfSlides++;
 			ObjectNode slide = (ObjectNode) slidesIterator.next();
 			ObjectNode resultsForSlide = Json.newObject();
 			resultsForSlide.put("slideId", slide.get("id").textValue());
@@ -304,7 +309,9 @@ public class NLPComponent {
 				continue;
 			}
 
-			sbWholeDeckText.append("\n" + slideTitleAndText);
+			numberOfSlidesWithText++;
+
+			sbWholeDeckText.append(" \n " + slideTitleAndText);
 
 			//+++++++++++++++++++++++++++++++++
 			// processing for single slide (slide title and content)
@@ -330,7 +337,7 @@ public class NLPComponent {
 					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
 				}
 				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
-
+				
 				resultsForSlide.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
 
 				// track all resources of deck to analyze them later for tfidf
@@ -355,6 +362,9 @@ public class NLPComponent {
 		// add single slide results
 		result.set("children", slideArrayNode);
 
+		result.put(NLPResultUtil.propertyNameNumberOfSlides, numberOfSlides);
+		result.put(NLPResultUtil.propertyNameNumberOfSlidesWithText, numberOfSlidesWithText);
+		
 		//+++++++++++++++++++++++++++++++++
 		// processing for whole deck (deck title (maybe also deck description in future) and all slide contents)
 		//+++++++++++++++++++++++++++++++++
@@ -376,15 +386,19 @@ public class NLPComponent {
 //		result.set(NLPResultUtil.propertyNameTokens, Json.toJson(tokenArrayOfDeck)); // TODO: un-comment this if all tokens of text should be included in nlp result.
 		
 		// NER
-		performNER(tokenArrayOfDeck, languageWholeDeck, result);
+		List<NerAnnotation> nesOfWholeDeck = this.ner.getNEs(tokenArrayOfDeck, languageWholeDeck);	
+    	JsonNode nerNode = Json.toJson(nesOfWholeDeck);
+    	result.set(NLPResultUtil.propertyNameNER, nerNode);
 		
-		if(performDBPediaSpotlightPerDeck){
+		// DBPedia Spotlight
+    	JsonNode spotlightresultWholeDeck = null;
+		if(performDBPediaSpotlightPerDeck){		
 			Response response = dbPediaSpotlightUtil.performDBPediaSpotlight(deckText, minConfidenceDBPediaSpotlightPerDeck, null);
 			if(response.getStatus()!=200){
 				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
 			}
-			JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
-			result.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
+			spotlightresultWholeDeck = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
+			result.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresultWholeDeck);
 		}
 		
 		
@@ -414,10 +428,11 @@ public class NLPComponent {
 		}
 		
 		// add to nlp result: words without stopwords sorted by frequency
+		JsonNode wordCountingsStopWordsRemovedNode = null;
 		if(wordCountingsStopWordsRemoved.size()>0){
 			// output types without stopwords sorted by frequency
 			List<Entry<String,Integer>> wordCountingsSortedStopWordsRemoved=  Sorter.sortByValueAndReturnAsList(wordCountingsStopWordsRemoved, true);
-			JsonNode wordCountingsStopWordsRemovedNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(wordCountingsSortedStopWordsRemoved, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
+			wordCountingsStopWordsRemovedNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(wordCountingsSortedStopWordsRemoved, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
 			result.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords, wordCountingsStopWordsRemovedNode);
 		}
 		
@@ -445,7 +460,7 @@ public class NLPComponent {
 		//###############################	
 		
 		// frequencies
-		Map<String,Integer> neFrequencies = NLPResultUtil.getNERFrequenciesByAnalyzingNEs(result, true);
+		Map<String,Integer> neFrequencies = NerAnnotation.getNERFrequenciesByAnalyzingNEs(nesOfWholeDeck, true);
 		List<Entry<String,Integer>> neFrequenciesSortedList=  Sorter.sortByValueAndReturnAsList(neFrequencies, true);
 		JsonNode neFrequenciesNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(neFrequenciesSortedList, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
 		result.set(NLPResultUtil.propertyNameNERFrequencies, neFrequenciesNode);
@@ -475,12 +490,13 @@ public class NLPComponent {
 		//###############################	
 
 		// dbpedia spotlight per deck (frequencies, tfidf)
+		JsonNode spotlightURIFrequenciesNode= null;
 		if(performDBPediaSpotlightPerDeck){ //only makes sense if spotlight was performed
 			
 			// frequencies
-			Map<String,Integer> spotlightURIFrequencies = NLPResultUtil.getSpotlightFrequenciesForURIsByAnalyzingSpotlightResults(result);
+			Map<String,Integer> spotlightURIFrequencies = DBPediaSpotlightUtil.getSpotlightFrequenciesForURIsByAnalyzingSpotlightResults(spotlightresultWholeDeck);
 			List<Entry<String,Integer>> spotlightURIFrequenciesSortedList=  Sorter.sortByValueAndReturnAsList(spotlightURIFrequencies, true);
-			JsonNode spotlightURIFrequenciesNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(spotlightURIFrequenciesSortedList, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
+			spotlightURIFrequenciesNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(spotlightURIFrequenciesSortedList, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
 			result.set(NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies, spotlightURIFrequenciesNode);
 
 			
@@ -517,8 +533,9 @@ public class NLPComponent {
 		}
 		
 		//============================================
-		// special frequency boosting of deck title
+		// special processing of deck title: include frequencies of deck title as extra field in frequencies (can be used for title boost for tfidf)
 		//============================================
+		// tokens
 		String[] tokensDeckTitle = tokenizer.tokenize(deckTitle, languageWholeDeck);
 		Map<String,Integer> wordCountingsDeckTitle = TypeCounter.getTypeCountings(tokensDeckTitle, typesToLowerCase);
 		stopwordRemover.removeStopwords(wordCountingsDeckTitle, languageWholeDeck); // might also include removal of special chars when stopword remover wortschatz is used 
@@ -529,14 +546,31 @@ public class NLPComponent {
 		        iter.remove();
 		    }
 		}
-		int factorToUseForBoost = numberOfSlides;
-		
-		// TODO: attention: original map with word countings will get overwritten here. check if this causes any problems
-		MapCounting.addToCountingMapAddingIntegerValuesWithFactor(wordCountingsStopWordsRemoved, wordCountingsDeckTitle, factorToUseForBoost);
-		List<Entry<String,Integer>> wordCountingsTitleBoostedSorted=  Sorter.sortByValueAndReturnAsList(wordCountingsStopWordsRemoved, true);
-		JsonNode wordCountingsWithTitleBoost = NodeUtil.createArrayNodeFromStringIntegerEntryList(wordCountingsTitleBoostedSorted, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
-		result.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords + "_TITLEBOOST", wordCountingsWithTitleBoost);
+		JsonNode tokenFreqNodeInclTitleFreqs = NLPResultUtil.putTitleFrequenciesToFrequencyNode(wordCountingsStopWordsRemovedNode, wordCountingsDeckTitle);
+		result.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords, tokenFreqNodeInclTitleFreqs);
 
+				
+		// NER
+		List<NerAnnotation> nesOfTitle = NerAnnotation.filterForNERsWithGivenTokenSpans(nesOfWholeDeck, 0, tokensDeckTitle.length-1);
+		Map<String,Integer> neFrequenciesOfTitle = NerAnnotation.getNERFrequenciesByAnalyzingNEs(nesOfTitle, true);
+		JsonNode neFreqNodeInclTitleFreqs = NLPResultUtil.putTitleFrequenciesToFrequencyNode(neFrequenciesNode, neFrequenciesOfTitle);
+		result.set(NLPResultUtil.propertyNameNERFrequencies, neFreqNodeInclTitleFreqs);
+
+		// DBPedia Spotlight
+		if(performDBPediaSpotlightPerDeck){
+			// get spotlight entities for title from spotlight entities of whole deck
+			ArrayNode spotlightResourcesWholeDeck = DBPediaSpotlightUtil.getSpotlightResources(spotlightresultWholeDeck);
+			ArrayNode spotlightResourcesTitle = DBPediaSpotlightUtil.filterResourcesForTextSpan(spotlightResourcesWholeDeck, 0, deckTitle.length()-1);
+			Map<String,Integer> spotlightFrequenciesTitle = DBPediaSpotlightUtil.getSpotlightURIFrequenciesByAnalyzingSpotlightResources(spotlightResourcesTitle);
+			JsonNode spotligthFreqNodeInclTitleFreqs = NLPResultUtil.putTitleFrequenciesToFrequencyNode(spotlightURIFrequenciesNode, spotlightFrequenciesTitle);
+			result.set(NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies, spotligthFreqNodeInclTitleFreqs);
+
+		}
+
+		
+		//============================================
+		// return nlp result
+		//============================================
 		
 		return result;
 	}

@@ -54,4 +54,16 @@ public class FrequencyResultUtil {
 	public static int getNumberOfDocsForLanguage(JsonNode node){
 		return node.get(propertyNameDocsForLanguage).asInt();
 	}
+	
+	public static int getNumberOfSlides(JsonNode node){
+		return node.get(NLPResultUtil.propertyNameNumberOfSlides).asInt();
+	}
+	
+	public static int getNumberOfSlidesWithText(JsonNode node){
+		if(node.has(NLPResultUtil.propertyNameNumberOfSlidesWithText)){
+			return node.get(NLPResultUtil.propertyNameNumberOfSlidesWithText).asInt();
+		}
+		return 0;
+	}
+	
 }

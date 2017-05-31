@@ -34,6 +34,9 @@ import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaMap;
 import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics;
 import services.nlp.tfidf.DocFrequencyProviderViaMap;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
+import services.nlp.tfidf.ITFIDFMerger;
+import services.nlp.tfidf.TFIDFMerger;
+import services.nlp.tfidf.TitleBoostSettings;
 import services.nlp.tokenization.ITokenizer;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.tokenization.TokenizerLanguageDependentViaMap;
@@ -62,9 +65,9 @@ public class InstanceProvider {
 //		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService(nlpStorageUtil);
 		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaMapInitializedWithDataFromNLPResultStorageService(deckServiceUtil, nlpStorageUtil);
 //		ITagRecommender tagRecommender = provideTagRecommenderTFIDFStoredInNLPResult(configuration, nlpStorageUtil);
-		ITagRecommender tagRecommender = provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(configuration, nlpStorageUtil, docFrequencyProvider);
-		ITagRecommender tagRecommenderAlternative = provideTagRecommenderTFIDFViaNLStoreFrequencies(configuration, nlpStorageUtil);
-		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, tagRecommender, tagRecommenderAlternative);
+		ITagRecommender tagRecommender = provideTagRecommenderTFIDFViaNLPStoreFrequencies(configuration, nlpStorageUtil);
+		ITagRecommender tagRecommenderOlderVersion = provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(configuration, nlpStorageUtil, docFrequencyProvider);
+		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, tagRecommender, tagRecommenderOlderVersion);
 	}
 	
 	public static DeckServiceUtil provideDeckServiceUtil(Configuration configuration){
@@ -157,37 +160,34 @@ public class InstanceProvider {
     	return DocFrequencyCreatorForDecks.createDocFrequencyProviderViaMapByRetrievingAllDataFromNLPStoreFirst(deckserviceUtil, nlpStorageUtil);
     }
     
-    public static ITagRecommender provideTagRecommenderTFIDFStoredInNLPResult(Configuration configuration, NLPStorageUtil nlpStorageUtil){
-    	boolean tagsToLowerCase = configuration.getBoolean("tagrecommendation.tagsToLowerCase");
-    	int minCharLengthForTag = configuration.getInt("tagrecommendation.minCharLengthForTag");
-    	int maxNumberOfWordsForNEsWhenNoLinkAvailable = configuration.getInt("tagrecommendation.maxNumberOfWordsForNEsWhenNoLinkAvailable");  	
-
-    	return new TagRecommenderTFIDFStoredInNLPResult(nlpStorageUtil, tagsToLowerCase, minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable);
-    }
+   
     
     public static ITagRecommender provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(Configuration configuration, NLPStorageUtil nlpStorageUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider){
     	
-    	boolean tagsToLowerCase = configuration.getBoolean("tagrecommendation.tagsToLowerCase");
-    	int minCharLengthForTag = configuration.getInt("tagrecommendation.minCharLengthForTag");
-    	int maxNumberOfWordsForNEsWhenNoLinkAvailable = configuration.getInt("tagrecommendation.maxNumberOfWordsForNEsWhenNoLinkAvailable");  	
-
+ 
     	int minDocsToPerformLanguageDependent = configuration.getInt("tagrecommendation.TFIDF.minDocsToPerformLanguageDependent");
-		int maxEntriesToReturnTFIDF = configuration.getInt("tagrecommendation.TFIDF.maxEntriesToReturn");
-		int maxEntriesToReturn = configuration.getInt("tagrecommendation.maxEntriesToReturn");
-		return new TagRecommenderTFIDFCalculateViaDocFrequencyProvider(nlpStorageUtil, docFrequencyProvider, minDocsToPerformLanguageDependent, maxEntriesToReturnTFIDF, maxEntriesToReturn, tagsToLowerCase, maxNumberOfWordsForNEsWhenNoLinkAvailable, minCharLengthForTag);
+		int maxEntriesToReturnForTFIDF = configuration.getInt("tagrecommendation.TFIDF.maxEntriesToReturn");
+		ITFIDFMerger tfidfMerger = provideTFIDFMerger();
+
+		return new TagRecommenderTFIDFCalculateViaDocFrequencyProvider(nlpStorageUtil, docFrequencyProvider, minDocsToPerformLanguageDependent, maxEntriesToReturnForTFIDF, tfidfMerger);
+		
     }
     
-    public static ITagRecommender provideTagRecommenderTFIDFViaNLStoreFrequencies(Configuration configuration, NLPStorageUtil nlpStorageUtil){
+    public static TagRecommenderTFIDFViaNLStoreFrequencies provideTagRecommenderTFIDFViaNLPStoreFrequencies(Configuration configuration, NLPStorageUtil nlpStorageUtil){
     	
-    	boolean tagsToLowerCase = configuration.getBoolean("tagrecommendation.tagsToLowerCase");
-    	int minCharLengthForTag = configuration.getInt("tagrecommendation.minCharLengthForTag");
-    	int maxNumberOfWordsForNEsWhenNoLinkAvailable = configuration.getInt("tagrecommendation.maxNumberOfWordsForNEsWhenNoLinkAvailable");  	
-
+  
     	int minDocsToPerformLanguageDependent = configuration.getInt("tagrecommendation.TFIDF.minDocsToPerformLanguageDependent");
-		int maxEntriesToReturn = configuration.getInt("tagrecommendation.maxEntriesToReturn");
-		return new TagRecommenderTFIDFViaNLStoreFrequencies(nlpStorageUtil, minDocsToPerformLanguageDependent, tagsToLowerCase, minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturn);
+		ITFIDFMerger tfidfMerger = provideTFIDFMerger();
+		return new TagRecommenderTFIDFViaNLStoreFrequencies(nlpStorageUtil, minDocsToPerformLanguageDependent, tfidfMerger);
     }
     
+    public static TitleBoostSettings provideTitleBoostSettingDefault(){
+    	return new TitleBoostSettings(false, -1, true); // no title boost
+    }
+    
+    public static ITFIDFMerger provideTFIDFMerger(){
+    	return new TFIDFMerger(true);
+    }
     
     @Deprecated
     public static DocFrequencyProviderTypeDependentViaMap provideDocFrequencyProviderSerializedFiles(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException {

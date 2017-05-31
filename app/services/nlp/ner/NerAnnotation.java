@@ -1,12 +1,17 @@
 package services.nlp.ner;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import opennlp.tools.util.Span;
+import services.util.MapCounting;
 
 public class NerAnnotation {
 	
@@ -62,6 +67,55 @@ public class NerAnnotation {
 		return result;
 	}
 
+	public static List<NerAnnotation> filterForNERsWithGivenTokenSpans(List<NerAnnotation> listToFilter, int minTokenSpan, int maxTokenSpan){
+		List<NerAnnotation> result = new ArrayList<>();
+		
+		for (NerAnnotation ne : listToFilter) {
+			if(ne.getTokenSpanBegin() < minTokenSpan){
+				continue;
+			}
+			if(ne.getTokenSpanEnd()> maxTokenSpan){
+				continue;
+			}
+			result.add(ne);
+		}
+		
+		return result;
+	}
+
+	/**
+	 * Retrieves the Named Entity frequencies.
+	 * If several NER methods were used, the same entity might be recognized more than once.
+	 * To count these entities only once, the process includes identity check via spans. If the same span was already counted, it will be skipped.
+	 * @param nes the list of named entities to analyze
+	 * @param toLowerCase if true, the named entities are {@link Transformed} to lower case for counting
+	 * @return
+	 */
+	public static Map<String,Integer> getNERFrequenciesByAnalyzingNEs(List<NerAnnotation> nes, boolean toLowerCase){
+		
+		Map<String,Integer> result = new HashMap<>(); 
+		Set<String> tokenSpans= new HashSet<>(); // tracks tokenSpans (as String begin_end for counting NEs detected by several sources only once (identity is defined here by the token spans))
+
+		for (NerAnnotation nerEntity : nes) {
+			
+			int tokenspanBegin = nerEntity.getTokenSpanBegin();
+			if(tokenspanBegin>=0){// only do tracking if token spans available
+				int tokenSpanEnd = nerEntity.getTokenSpanEnd();
+				String tokenSpan = tokenspanBegin + "_" + tokenSpanEnd;
+				if(tokenSpans.contains(tokenSpan)){
+					continue;
+				}
+				tokenSpans.add(tokenSpan);
+				String ne = nerEntity.getName();
+				if(toLowerCase){
+					ne = ne.toLowerCase();
+				}
+				MapCounting.addToCountingMap(result, ne);				
+			}
+			
+		}
+		return result;
+	}
 
 
 	public String getName() {

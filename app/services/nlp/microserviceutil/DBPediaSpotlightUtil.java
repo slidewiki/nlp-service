@@ -1,5 +1,9 @@
 package services.nlp.microserviceutil;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -10,9 +14,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import play.libs.Json;
+import services.util.MapCounting;
 
 public class DBPediaSpotlightUtil {
 
@@ -195,6 +202,92 @@ public class DBPediaSpotlightUtil {
 			name = name.replace("_", " ");
 		}
 		return name;
+	}
+	
+	public static ArrayNode getSpotlightResources(JsonNode spotlightNode){
+				
+		if(!spotlightNode.has("Resources")){
+			return null;
+		}
+		JsonNode spotlightResourcesNode = spotlightNode.get("Resources");
+		if(spotlightResourcesNode==null || spotlightResourcesNode.isNull()){
+			return null;
+		}
+		
+		ArrayNode resources = (ArrayNode) spotlightResourcesNode;
+		return resources;
+	}
+	
+	public static Map<String,Integer> getSpotlightFrequenciesForURIsByAnalyzingSpotlightResults(JsonNode spotlightNode){
+		return getSpotlightFrequenciesByAnalyzingSpotlightResults(spotlightNode, "@URI");
+	}
+
+	public static Map<String,Integer> getSpotlightFrequenciesForSurfaceFormsByAnalyzingSpotlightResults(JsonNode spotlightNode){
+		return getSpotlightFrequenciesByAnalyzingSpotlightResults(spotlightNode, "@surfaceForm");
+	}
+
+	
+	/**
+	 * Returns spotlight frequencies retrieved from spotlight resources per deck
+	 * @param nlpResult
+	 * @param keyname e.g. "@URI" for the URI or "@surfaceForm" for the actual form used in text
+	 * @return
+	 */
+	public static Map<String,Integer> getSpotlightFrequenciesByAnalyzingSpotlightResults(JsonNode spotlightNode, String keyname){
+		
+		ArrayNode spotlightResources = getSpotlightResources(spotlightNode);		
+		return getSpotlightFrequenciesByAnalyzingSpotlightResources(spotlightResources, keyname);
+	
+	}
+
+	public static Map<String,Integer> getSpotlightURIFrequenciesByAnalyzingSpotlightResources(ArrayNode spotlightResources){
+		return getSpotlightFrequenciesByAnalyzingSpotlightResources(spotlightResources, "@URI");
+	}
+	
+	public static Map<String,Integer> getSpotlightSurfaceformFrequenciesByAnalyzingSpotlightResources(ArrayNode spotlightResources){
+		return getSpotlightFrequenciesByAnalyzingSpotlightResources(spotlightResources, "@surfaceForm");
+	}
+	/**
+	 * Returns spotlight frequencies retrieved from spotlight resources per deck
+	 * @param nlpResult
+	 * @param keyname e.g. "@URI" for the URI or "@surfaceForm" for the actual form used in text
+	 * @return
+	 */
+	public static Map<String,Integer> getSpotlightFrequenciesByAnalyzingSpotlightResources(ArrayNode spotlightResources, String keyname){
+		Map<String,Integer> result = new HashMap<>();
+		if(spotlightResources==null){
+			return result;
+		}
+		for (int i = 0; i < spotlightResources.size(); i++) {
+			JsonNode resourceNode = spotlightResources.get(i);
+			String value = resourceNode.get(keyname).textValue();
+			MapCounting.addToCountingMap(result, value);
+		}
+		return result;
+	}
+	
+	public static ArrayNode filterResourcesForTextSpan(ArrayNode spotlightResources, int minTextSpan, int maxTextSpan){
+		ArrayNode resultArrayNode = Json.newArray();
+		if(spotlightResources == null){
+			return resultArrayNode;
+		}
+		Iterator<JsonNode> iteratorResources = spotlightResources.iterator();
+		while(iteratorResources.hasNext()){
+			JsonNode spotlightResourceNode = iteratorResources.next();
+			int begin = spotlightResourceNode.get("@offset").asInt();
+			String surfaceForm = spotlightResourceNode.get("@surfaceForm").asText();
+			int end = begin + surfaceForm.length()-1;
+			
+			if(begin < minTextSpan){
+				continue;
+			}
+			if(end > maxTextSpan){
+				continue;
+			}
+		
+			resultArrayNode.add(spotlightResourceNode);
+		}
+		return resultArrayNode;
 	}
 	
 	public void close(){
