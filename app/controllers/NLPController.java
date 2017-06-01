@@ -159,7 +159,7 @@ public class NLPController extends Controller{
 
     public Result tagRecommendationsOlderVersion(
     		@ApiParam(required = true, value = "deckId") String deckId,
-       		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
+       		@ApiParam(required = true, defaultValue = "false", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: title frequencies are multiplied with fixed factor. If <=0, title boost is performed with factor equal to number of slides with text") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
