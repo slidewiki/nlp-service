@@ -1,5 +1,5 @@
 nlpservice:
-  image: slidewiki/nlpservice
+  image: slidewiki/nlpservice:latest-dev
   restart: on-failure:5
   expose:
     - "9000"
