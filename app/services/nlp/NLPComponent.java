@@ -63,14 +63,13 @@ public class NLPComponent {
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
     private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
     private NLPStorageUtil nlpStorageUtil;
-    private ITagRecommender tagRecommenderOlderVersion;
     private ITagRecommender tagRecommender;
     private boolean typesToLowerCase = true;
 
     
 	@Inject
 	public NLPComponent(DeckServiceUtil deckserviceUtil, IHtmlToText htmlToText, ILanguageDetector languageDetector, ITokenizerLanguageDependent tokenizer, IStopwordRemover stopwordRemover,
-			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender, ITagRecommender tagRecommenderOlderVersion) {
+			INERLanguageDependent ner, DBPediaSpotlightUtil dbPediaSpotlightUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider, NLPStorageUtil nlpStorageUtil, ITagRecommender tagRecommender) {
 		super();
 		
 		this.deckServiceUtil = deckserviceUtil;
@@ -83,7 +82,6 @@ public class NLPComponent {
 		this.dbPediaSpotlightUtil = dbPediaSpotlightUtil;
 		this.nlpStorageUtil = nlpStorageUtil;
 		this.tagRecommender = tagRecommender;
-		this.tagRecommenderOlderVersion = tagRecommenderOlderVersion;
 
 	}
 	
@@ -145,10 +143,6 @@ public class NLPComponent {
 			
 	}
 
-	
-	public List<NlpTag> getTagRecommendationsOlderVersion(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
-		return this.tagRecommenderOlderVersion.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
-	}
 	
 	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
 		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
@@ -281,10 +275,6 @@ public class NLPComponent {
 		result.put(NLPResultUtil.propertyNameDeckTitle, deckTitle);
 
 		sbWholeDeckText.append(deckTitle);
-//		String languageOfDecktitle = languageDetector.getLanguage(deckTitle);
-//		String[] tokensOfDecktitle = tokenizer.tokenize(deckTitle, languageOfDecktitle);
-		// TODO: deckTitle: add deckTitle (tokens & NER, spotlight results) to nlpResult and to frequencies results (how? extra)
-		// maybe tokenize when whole deck language known
 		
 		// TODO: also add deck description to deck text (=sbWholeDeckText)(deck description needs to be retrieved via deck service method GET /deck/{id} -> "description"
 

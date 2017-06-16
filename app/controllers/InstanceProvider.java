@@ -25,7 +25,6 @@ import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.TagRecommenderTFIDFCalculateViaDocFrequencyProvider;
-import services.nlp.recommendation.TagRecommenderTFIDFStoredInNLPResult;
 import services.nlp.recommendation.TagRecommenderTFIDFViaNLStoreFrequencies;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.stopwords.StopwordRemoverFactory;
@@ -62,12 +61,15 @@ public class InstanceProvider {
 		INERLanguageDependent ner = provideNERLanguageDependentViaMap(configuration);
 		DBPediaSpotlightUtil dbPediaSpotlightUtil = provideDBPediaSpotlightUtil(configuration);
 		NLPStorageUtil nlpStorageUtil = provideNLPStorageUtil(configuration);
+		
+		
 //		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService(nlpStorageUtil);
 		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaMapInitializedWithDataFromNLPResultStorageService(deckServiceUtil, nlpStorageUtil);
 //		ITagRecommender tagRecommender = provideTagRecommenderTFIDFStoredInNLPResult(configuration, nlpStorageUtil);
+//		ITagRecommender tagRecommenderOlderVersion = provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(configuration, nlpStorageUtil, docFrequencyProvider);
+
 		ITagRecommender tagRecommender = provideTagRecommenderTFIDFViaNLPStoreFrequencies(configuration, nlpStorageUtil);
-		ITagRecommender tagRecommenderOlderVersion = provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(configuration, nlpStorageUtil, docFrequencyProvider);
-		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, tagRecommender, tagRecommenderOlderVersion);
+		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, tagRecommender);
 	}
 	
 	public static DeckServiceUtil provideDeckServiceUtil(Configuration configuration){
@@ -156,12 +158,29 @@ public class InstanceProvider {
     	return new DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics(nlpStorageUtil);
     }
 
+    /**
+     * @deprecated
+     * Provides a {@link IDocFrequencyProviderTypeDependent} by first reading all frequencies of all decks via nlpstore service.
+     * Needs to be reloaded / reperformed from time to time if platform content changed. This was a work-around and is now deprecated. Use now nlpstore service GET /statistics/termFrequencies/{deckId} which includes frequencies.
+     * @param deckserviceUtil
+     * @param nlpStorageUtil
+     * @return
+     * @throws FileNotFoundException
+     * @throws ClassNotFoundException
+     * @throws IOException
+     */
     public static IDocFrequencyProviderTypeDependent provideDocFrequencyProviderTypeDependentViaMapInitializedWithDataFromNLPResultStorageService(DeckServiceUtil deckserviceUtil, NLPStorageUtil nlpStorageUtil) throws FileNotFoundException, ClassNotFoundException, IOException {
     	return DocFrequencyCreatorForDecks.createDocFrequencyProviderViaMapByRetrievingAllDataFromNLPStoreFirst(deckserviceUtil, nlpStorageUtil);
     }
     
    
-    
+    /**
+     * @deprecated Use {@link TagRecommenderTFIDFViaNLStoreFrequencies} instead.
+     * @param configuration
+     * @param nlpStorageUtil
+     * @param docFrequencyProvider
+     * @return
+     */
     public static ITagRecommender provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(Configuration configuration, NLPStorageUtil nlpStorageUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider){
     	
  
@@ -190,6 +209,14 @@ public class InstanceProvider {
     }
     
     @Deprecated
+    /**
+     * @deprecated Use {@link TagRecommenderTFIDFViaNLStoreFrequencies} instead.
+     * @param configuration
+     * @return
+     * @throws FileNotFoundException
+     * @throws ClassNotFoundException
+     * @throws IOException
+     */
     public static DocFrequencyProviderTypeDependentViaMap provideDocFrequencyProviderSerializedFiles(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException {
     	Map<String,DocFrequencyProviderViaMap> map = new HashMap<>();
     	//

@@ -146,50 +146,6 @@ public class NLPController extends Controller{
        
     }
     
-    @javax.ws.rs.Path(value = "/tagRecommendationsOlderVersion")
-    @ApiOperation(
-    		tags = "deck",
-    		value = "retrieves tag recommendations for a given deck id", 
-    		notes = "retrieves tag recommendations for a given deck id by calculating tfidf using frequency information stored nlp results of nlp store - loaded via DocFrequencyProvide")
-    @ApiResponses(
-    		value = {
-    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
-    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
-    				})
-
-    public Result tagRecommendationsOlderVersion(
-    		@ApiParam(required = true, value = "deckId") String deckId,
-       		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
-    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
-    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
-    		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
-    		@ApiParam(required = true, defaultValue = "4", value = "maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWordsForNEsWhenNoLinkAvailable, 
-    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
-    	
-    	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
-    	
-   	 	ObjectNode resultNode = Json.newObject();
-    	
-    	try{
-
-        	List<NlpTag> tags = nlpComponent.getTagRecommendationsOlderVersion(deckId, titleBoostSettings, tagRecommendationFilterSettings);
-        	JsonNode tagNode = Json.toJson(tags);
-        	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
-
-        	Result r = Results.ok(resultNode);        	
-            return r;
-    	}catch (WebApplicationException e) {
-
-    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
-    	}catch(ProcessingException f){
-    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
-    		
-    		return createResultForProcessingException(500, f, message);
-    	}
-    	
-       
-    }
     
     @javax.ws.rs.Path(value = "/tagRecommendations")
     @ApiOperation(
@@ -236,6 +192,12 @@ public class NLPController extends Controller{
        
     }
     
+    @Deprecated
+    /**
+     * Deprecated.
+     * If for tag recommendation 
+     * @return
+     */
     @javax.ws.rs.Path(value = "/reinitdocfreqProviderFromNlpStore")
     @ApiOperation(
     		tags = "deck",
