@@ -391,13 +391,15 @@ public class TFIDF {
 	}
 	
 	private static double calcTermFrequency_logarithm(Integer frequencyOfTermInDoc){
-		
+		if(frequencyOfTermInDoc==0){
+			return 0;
+		}
 		double result = 1 + Math.log(frequencyOfTermInDoc);
 		return result;
 	}
 	
 	private static double calcInverseDocumentFrequency(Integer numberOfDocsContainingTerm, double numberOfAllDocuments){
-		return Math.log((numberOfAllDocuments/numberOfDocsContainingTerm));
+		return Math.log((numberOfAllDocuments/new Double(numberOfDocsContainingTerm).doubleValue()));
 	}
 	
 	

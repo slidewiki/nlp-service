@@ -17,23 +17,16 @@ import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.languagedetection.LanguageDetector_optimaize;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.DeckServiceUtil;
-import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INER;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NERLanguageDependentViaMap;
 import services.nlp.ner.NER_OpenNLP;
 import services.nlp.recommendation.ITagRecommender;
-import services.nlp.recommendation.TagRecommenderTFIDFCalculateViaDocFrequencyProvider;
-import services.nlp.recommendation.TagRecommenderTFIDFStoredInNLPResult;
 import services.nlp.recommendation.TagRecommenderTFIDFViaNLStoreFrequencies;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.stopwords.StopwordRemoverFactory;
-import services.nlp.tfidf.DocFrequencyCreatorForDecks;
-import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaMap;
 import services.nlp.tfidf.DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics;
-import services.nlp.tfidf.DocFrequencyProviderViaMap;
-import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
 import services.nlp.tfidf.ITFIDFMerger;
 import services.nlp.tfidf.TFIDFMerger;
 import services.nlp.tfidf.TitleBoostSettings;
@@ -44,7 +37,6 @@ import services.nlp.tokenization.Tokenizer_OpenNLP;
 
 public class InstanceProvider {
 
-	
 	
 	public static NLPController provideNLPController(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException{
 		
@@ -62,12 +54,9 @@ public class InstanceProvider {
 		INERLanguageDependent ner = provideNERLanguageDependentViaMap(configuration);
 		DBPediaSpotlightUtil dbPediaSpotlightUtil = provideDBPediaSpotlightUtil(configuration);
 		NLPStorageUtil nlpStorageUtil = provideNLPStorageUtil(configuration);
-//		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaNLPResultStorageService(nlpStorageUtil);
-		IDocFrequencyProviderTypeDependent docFrequencyProvider = provideDocFrequencyProviderTypeDependentViaMapInitializedWithDataFromNLPResultStorageService(deckServiceUtil, nlpStorageUtil);
-//		ITagRecommender tagRecommender = provideTagRecommenderTFIDFStoredInNLPResult(configuration, nlpStorageUtil);
+		
 		ITagRecommender tagRecommender = provideTagRecommenderTFIDFViaNLPStoreFrequencies(configuration, nlpStorageUtil);
-		ITagRecommender tagRecommenderOlderVersion = provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(configuration, nlpStorageUtil, docFrequencyProvider);
-		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, docFrequencyProvider, nlpStorageUtil, tagRecommender, tagRecommenderOlderVersion);
+		return new NLPComponent(deckServiceUtil, htmlToText, languageDetector, tokenizer, stopwordRemover, ner, dbPediaSpotlightUtil, nlpStorageUtil, tagRecommender);
 	}
 	
 	public static DeckServiceUtil provideDeckServiceUtil(Configuration configuration){
@@ -156,23 +145,7 @@ public class InstanceProvider {
     	return new DocFrequencyProviderTypeDependentViaNLPResultStorageServiceStatistics(nlpStorageUtil);
     }
 
-    public static IDocFrequencyProviderTypeDependent provideDocFrequencyProviderTypeDependentViaMapInitializedWithDataFromNLPResultStorageService(DeckServiceUtil deckserviceUtil, NLPStorageUtil nlpStorageUtil) throws FileNotFoundException, ClassNotFoundException, IOException {
-    	return DocFrequencyCreatorForDecks.createDocFrequencyProviderViaMapByRetrievingAllDataFromNLPStoreFirst(deckserviceUtil, nlpStorageUtil);
-    }
-    
    
-    
-    public static ITagRecommender provideTagRecommenderTFIDFCalculateViaDocFrequencyProvider(Configuration configuration, NLPStorageUtil nlpStorageUtil, IDocFrequencyProviderTypeDependent docFrequencyProvider){
-    	
- 
-    	int minDocsToPerformLanguageDependent = configuration.getInt("tagrecommendation.TFIDF.minDocsToPerformLanguageDependent");
-		int maxEntriesToReturnForTFIDF = configuration.getInt("tagrecommendation.TFIDF.maxEntriesToReturn");
-		ITFIDFMerger tfidfMerger = provideTFIDFMerger();
-
-		return new TagRecommenderTFIDFCalculateViaDocFrequencyProvider(nlpStorageUtil, docFrequencyProvider, minDocsToPerformLanguageDependent, maxEntriesToReturnForTFIDF, tfidfMerger);
-		
-    }
-    
     public static TagRecommenderTFIDFViaNLStoreFrequencies provideTagRecommenderTFIDFViaNLPStoreFrequencies(Configuration configuration, NLPStorageUtil nlpStorageUtil){
     	
   
@@ -188,44 +161,7 @@ public class InstanceProvider {
     public static ITFIDFMerger provideTFIDFMerger(){
     	return new TFIDFMerger(true);
     }
-    
-    @Deprecated
-    public static DocFrequencyProviderTypeDependentViaMap provideDocFrequencyProviderSerializedFiles(Configuration configuration) throws FileNotFoundException, ClassNotFoundException, IOException {
-    	Map<String,DocFrequencyProviderViaMap> map = new HashMap<>();
-    	//
-    	String filepath;
-  
-      	//=================
-    	// new platform (slidewiki2)
-    	// ================
-    	// tokens language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_languageDependent");
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_languageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// tokens not language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_notlanguageDependent");
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_Tokens + "_notlanguageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// dbpedia spotlight language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_languageDependent");
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_languageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}
-    	// dbpedia spotlight not language dependent
-    	filepath = configuration.getString(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_notlanguageDependent");
-    	Logger.info("loading " + filepath);
-    	if(filepath !=null && filepath.trim().length()>0){
-        	map.put(NLPResultUtil.propertyNameDocFreqProvider_SpotlightURI + "_notlanguageDependent", DocFrequencyProviderViaMap.deserializeFromFile(filepath));
-    	}    	
-    	
-    	return new DocFrequencyProviderTypeDependentViaMap(map);
-    }
-    
+        
     
 
 	

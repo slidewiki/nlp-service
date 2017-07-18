@@ -16,8 +16,6 @@ GET     /nlp/tokenize/:input              controllers.NLPController.tokenize(inp
 GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpediaSpotlight(input: String, confidence: Double, types: String)
 GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: String, dbpediaSpotlightConfidenceForSlide: Double, dbpediaSpotlightConfidenceForDeck: Double)
 GET     /nlp/tagRecommendations/:deckId              controllers.NLPController.tagRecommendations(deckId: String, performTitleBoost: Boolean, titleBoostWithFixedFactor: Integer, titleBoostlimitToFrequencyOfMostFrequentWord: Boolean, minCharLengthForTag: Integer, maxNumberOfWordsForNEsWhenNoLinkAvailable: Integer, maxEntriesToReturnTagRecommendation: Integer )
-GET     /nlp/tagRecommendationsOlderVersion/:deckId              controllers.NLPController.tagRecommendationsOlderVersion(deckId: String, performTitleBoost: Boolean, titleBoostWithFixedFactor: Integer, titleBoostlimitToFrequencyOfMostFrequentWord: Boolean, minCharLengthForTag: Integer, maxNumberOfWordsForNEsWhenNoLinkAvailable: Integer, maxEntriesToReturnTagRecommendation: Integer )
-GET		/nlp/reinitdocfreqprovider/			controllers.NLPController.reinitdocfreqProviderFromNlpStore()
 
 
 # Map static resources from the /public folder to the /assets URL path
