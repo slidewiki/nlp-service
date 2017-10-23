@@ -21,7 +21,10 @@ EXPOSE 9000
 #   Cleanup   #
 # ----------- #
 
-RUN apt-get autoremove -y && apt-get -y clean && \
+RUN apt-get update && \
+    apt-get install -y gettext && \
+		apt-get autoremove -y && \
+		apt-get -y clean && \
 		rm -rf /var/lib/apt/lists/*
 
 # -------- #
