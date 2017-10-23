@@ -8,7 +8,8 @@ WORKDIR /opt/docker
 # ---------------- #
 
 ADD stage/opt /opt
-RUN echo '\nplay.crypto.secret=${?APPLICATION_SECRET}' >> conf/application.conf
+# can now be done with envsubst in entrypoint.sh:
+# RUN echo '\nplay.crypto.secret=${?APPLICATION_SECRET}' >> conf/application.conf
 
 # ----------------- #
 #   Configuration   #
@@ -27,5 +28,5 @@ RUN apt-get autoremove -y && apt-get -y clean && \
 #   Run!   #
 # -------- #
 
-ENTRYPOINT []
-CMD ["bin/nlp-services"]
+ENTRYPOINT ["entrypoint.sh"]
+# CMD ["bin/nlp-services"]
