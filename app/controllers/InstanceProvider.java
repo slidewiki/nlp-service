@@ -15,6 +15,7 @@ import services.nlp.html.HTMLJsoup;
 import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.languagedetection.LanguageDetector_optimaize;
+import services.nlp.microserviceutil.ActivitiesServiceUtil;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
@@ -63,6 +64,11 @@ public class InstanceProvider {
 	    	String deckserviceUrl = configuration.getString("deckservice.baseurl");
 	    	return new DeckServiceUtil(deckserviceUrl);
 	}
+	
+	public static ActivitiesServiceUtil provideActivitiesServiceUtil(Configuration configuration){
+    	String deckserviceUrl = configuration.getString("activitiesservice.baseurl");
+    	return new ActivitiesServiceUtil(deckserviceUrl);
+}
 	
 	public static IHtmlToText provideHtmlToTextVisJSoup(Configuration configuration){
 		return new HTMLJsoup();
