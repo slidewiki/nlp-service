@@ -28,7 +28,7 @@ after_success:
 - cp Dockerfile target/docker/
 - cd target/docker
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ../../travis_scripts/dockerhub.sh ; fi
-- if [ "$TRAVIS_TAG" =~ ^[0-9]+(\.[0-9]+)+$ ] ; then ../../travis_scripts/dockerhub.sh ; fi
+- if [[ "$TRAVIS_TAG" =~ ^[0-9]+(\.[0-9]+)+$ ]] ; then ../../travis_scripts/dockerhub.sh ; fi
 - cd ../../
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/deploy.sh ; fi
 after_script:
