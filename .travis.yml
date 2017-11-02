@@ -8,7 +8,7 @@ branches:
   only:
   - "/^(?i:SWIK)-.*$/"
   - master
-  - "/^[0-9]+(\.[0-9]+)+$/"
+  - "/^\d+(\.\d+)+$/"
 cache:
   directories:
   - "$HOME/.sbt"
