@@ -33,6 +33,15 @@ public class DeckServiceUtil {
 		return response;
 	}
 	
+	public Response getDeck(String deckId){
+		
+		String URL = serviceURL + "/deck/" + deckId;
+		Response response = client.target(URL)
+        .request(MediaType.APPLICATION_JSON).get();
+		
+		return response;
+	}
+	
 	public Response getSlidesForDeckIdFromDeckservice(String deckId){
 		
 		String URL = serviceURL + "/deck/" + deckId + "/slides";
