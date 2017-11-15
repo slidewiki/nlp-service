@@ -1,6 +1,5 @@
 package services.nlp;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -277,13 +276,12 @@ public class NLPComponent {
 		int numberOfSlides = 0; // used for title boost factor
 		int numberOfSlidesWithText = 0; // used for title boost factor
 		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorFromDeckserviceJsonResult(deckNode);
-		List<String> spotlightResourceURIsOfDeckRetrievedPerSlide = new ArrayList<>();
 		
 		while (slidesIterator.hasNext()){
 			numberOfSlides++;
 			ObjectNode slide = (ObjectNode) slidesIterator.next();
 			ObjectNode resultsForSlide = Json.newObject();
-			resultsForSlide.put("slideId", slide.get("id").textValue());
+			resultsForSlide.put(NLPResultUtil.propertyNameSlideId, slide.get("id").textValue());
 
 			String slideTitleAndText = SlideContentUtil.retrieveSlideTitleAndTextWithoutHTML(htmlToPlainText, slide, " \n ");
 			resultsForSlide.put(NLPResultUtil.propertyNameSlideTitleAndText, slideTitleAndText);
@@ -325,19 +323,6 @@ public class NLPComponent {
 				
 				resultsForSlide.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
 
-				// track all resources of deck to analyze them later for tfidf
-				JsonNode resourcesNode = spotlightresult.get("Resources");
-				if(resourcesNode!=null && !resourcesNode.isNull()){
-					ArrayNode resources = (ArrayNode) resourcesNode;
-					for (int i = 0; i < resources.size(); i++) {
-						JsonNode resourceNode = resources.get(i);
-						String URI = resourceNode.get("@URI").textValue();
-						spotlightResourceURIsOfDeckRetrievedPerSlide.add(URI);
-					}
-				}
-
-				
-
 			}
 
 	
@@ -345,7 +330,7 @@ public class NLPComponent {
 		}
 		
 		// add single slide results
-		result.set("children", slideArrayNode);
+		result.set(NLPResultUtil.propertyNameSlidesNode, slideArrayNode);
 
 		result.put(NLPResultUtil.propertyNameNumberOfSlides, numberOfSlides);
 		result.put(NLPResultUtil.propertyNameNumberOfSlidesWithText, numberOfSlidesWithText);
