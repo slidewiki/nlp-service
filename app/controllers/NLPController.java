@@ -169,7 +169,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
     	
     	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation, minFrequencyOfTermOrEntityToBeConsidered);
+    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minFrequencyOfTermOrEntityToBeConsidered, minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
    	 	
     	ObjectNode resultNode = Json.newObject();
     	
