@@ -1,8 +1,10 @@
 package services.nlp.microserviceutil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +23,8 @@ public class NLPResultUtil {
 	public static String propertyNameNumberOfSlides = "numberOfSlides";
 	public static String propertyNameNumberOfSlidesWithText = "numberOfSlidesWithText";
 
+	public static String propertyNameSlidesNode = "children";
+	public static String propertyNameSlideId = "slideId";
 	public static String propertyNameSlideTitleAndText = "slideTitleAndText";
 	public static String propertyNameLanguage = "detectedLanguage";
 	public static String propertyNameTokens = "tokens";
@@ -197,4 +201,52 @@ public class NLPResultUtil {
 	}
 	
 	
+	public static ArrayNode getSlidesNode(JsonNode nlpResult){
+		
+		if(nlpResult.has(NLPResultUtil.propertyNameSlidesNode)){
+			ArrayNode slidesNode = (ArrayNode) nlpResult.get(NLPResultUtil.propertyNameSlidesNode);
+			return slidesNode;
+		}
+		else{
+			return Json.newArray();
+		}
+	}
+	
+	public static String getSlideTitleAndTextFromSlideNode(JsonNode slideNode){
+		return slideNode.get(NLPResultUtil.propertyNameSlideTitleAndText).asText();
+	}
+	
+	public static List<String> getSlidesText(JsonNode nlpResult){
+	
+		List<String> result = new ArrayList<>();
+		ArrayNode slidesNode = NLPResultUtil.getSlidesNode(nlpResult);
+		Iterator<JsonNode> iterator = slidesNode.iterator();
+		while(iterator.hasNext()){
+			JsonNode slideNode = iterator.next();
+			String slideText = NLPResultUtil.getSlideTitleAndTextFromSlideNode(slideNode);
+			result.add(slideText);
+		}
+		return result;
+	}
+	
+	public static String geSlidesTextAsOneString(JsonNode nlpResult, String separatorToUseBetweenSlides, boolean skipSlidesWithoutText){
+		
+		ArrayNode slidesNode = NLPResultUtil.getSlidesNode(nlpResult);
+		Iterator<JsonNode> iterator = slidesNode.iterator();
+		StringBuilder sb = new StringBuilder();
+		boolean firstSlideText = true;
+		while(iterator.hasNext()){
+			JsonNode slideNode = iterator.next();
+			String slideText = NLPResultUtil.getSlideTitleAndTextFromSlideNode(slideNode);
+			if(skipSlidesWithoutText && slideText.isEmpty()){
+				continue;
+			}
+			if(!firstSlideText){
+				sb.append(separatorToUseBetweenSlides);
+			}
+			sb.append(slideText);
+			firstSlideText = false;
+		}
+		return sb.toString();
+	}
 }
