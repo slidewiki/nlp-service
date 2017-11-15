@@ -22,6 +22,7 @@ import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.DeckServiceUtil;
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
@@ -174,7 +175,7 @@ public class NLPComponent {
 		if(response.getStatus()!=200){
 			throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + plainText + "\"", response);
 		}
-		JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+		JsonNode spotlightresult = MicroserviceUtil.getJsonFromMessageBody(response);
 		node.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
 
 		
@@ -226,7 +227,7 @@ public class NLPComponent {
 		Response response = this.deckServiceUtil.getSlidesForDeckIdFromDeckservice(deckId);
 		int status = response.getStatus();
 		if(status == 200){
-			JsonNode deckNode = DeckServiceUtil.getJsonFromMessageBody(response);
+			JsonNode deckNode = MicroserviceUtil.getJsonFromMessageBody(response);
 			ObjectNode result = processNLPForDeck(deckId, deckNode, minConfidenceDBPediaSpotlightPerSlide, minConfidenceDBPediaSpotlightPerDeck);
 			return result;
 
@@ -319,7 +320,7 @@ public class NLPComponent {
 				if(response.getStatus()!=200){
 					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
 				}
-				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+				JsonNode spotlightresult = MicroserviceUtil.getJsonFromMessageBody(response);
 				
 				resultsForSlide.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
 
@@ -367,7 +368,7 @@ public class NLPComponent {
 			if(response.getStatus()!=200){
 				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
 			}
-			spotlightresultWholeDeck = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
+			spotlightresultWholeDeck = MicroserviceUtil.getJsonFromMessageBody(response);			
 			result.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresultWholeDeck);
 		}
 		

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.Logger;
 import services.nlp.microserviceutil.DeckServiceUtil;
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 
@@ -25,7 +26,7 @@ public class DocFrequencyCreatorForDecks {
 		if(statusLatestDeck!=200){
 			throw new WebApplicationException("Problem while latest deck id via deck service. See deck service response for details.", responseLatestDeck);
 		}
-		JsonNode node = ((ArrayNode) DeckServiceUtil.getJsonFromMessageBody(responseLatestDeck)).get(0);
+		JsonNode node = ((ArrayNode) MicroserviceUtil.getJsonFromMessageBody(responseLatestDeck)).get(0);
 		Integer latestDeckId = node.get("_id").asInt();
 		
 		
@@ -49,7 +50,7 @@ public class DocFrequencyCreatorForDecks {
 			}
 			else if(status == 200){
 				
-				ObjectNode nlpResultNode = (ObjectNode) NLPStorageUtil.getJsonFromMessageBody(response);
+				ObjectNode nlpResultNode = (ObjectNode) MicroserviceUtil.getJsonFromMessageBody(response);
 				
 				String language = NLPResultUtil.getLanguage(nlpResultNode);
 				

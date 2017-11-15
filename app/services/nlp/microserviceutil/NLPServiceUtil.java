@@ -51,13 +51,6 @@ public class NLPServiceUtil {
 		
 	}
 
-	public static JsonNode getJsonFromMessageBody(Response response) {
-
-		String result = response.readEntity(String.class);
-		JsonNode resultNode = Json.parse(result);
-		return resultNode;
-			
-	}
 	
 	public static List<NlpTag> getTagRecommendations(JsonNode recommendationsNode){
 		

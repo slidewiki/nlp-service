@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
 import services.nlp.microserviceutil.FrequencyResultUtil;
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.util.MapCounting;
@@ -37,7 +38,7 @@ public class TFIDF {
 
 		// get frequencies data from nlp store
 		Response responseFrequencies = nlpStorageUtil.getStatisticsDeckFrequencies(deckId);
-		JsonNode nlpStoreFrequencyNode = NLPStorageUtil.getJsonFromMessageBody(responseFrequencies);
+		JsonNode nlpStoreFrequencyNode = MicroserviceUtil.getJsonFromMessageBody(responseFrequencies);
 		
 		int frequencyOfMostFrequentWord = FrequencyResultUtil.getfrequencyOfMostFrequentWord(nlpStoreFrequencyNode);
 		int numberOfDocsForGivenLanguage = FrequencyResultUtil.getNumberOfDocsForLanguage(nlpStoreFrequencyNode);
