@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
+import services.util.Sorter;
 
 public class NLPResultUtil {
 	
@@ -123,42 +125,111 @@ public class NLPResultUtil {
 	}
 	
 	/**
-	 * puts an extra field for title frequencies to the given frequencies.
+	 * puts an extra field for title frequencies to the given frequencies. adds title frequencies to "normal" frequency
 	 * @param frequencyNode
 	 * @param titleFrequencies
 	 * @return
 	 */
 	public static JsonNode putTitleFrequenciesToFrequencyNode(JsonNode frequencyNode, Map<String,Integer> titleFrequencies){
-		
-		ArrayNode resultNode = Json.newArray();
-		
+
+		// no title frequencies
 		if(titleFrequencies.size()==0){
-			return resultNode;
+			// return frequencyNode as it was before
+			return frequencyNode;
 		}
+		
+		// no general frequencies but title frequencies
 		if(frequencyNode==null || frequencyNode.size()==0 || !frequencyNode.isArray()){
+			
+			ArrayNode resultNode = Json.newArray();
+			// create new entries with titleFrequencies and frequencies=titleFrequencies
+			// first sort them reverse by frequency
+			List<Entry<String,Integer>> frequenciesSortedList=  Sorter.sortByValueAndReturnAsList(titleFrequencies, true);
+
+			for (Entry<String, Integer> entry : frequenciesSortedList) {
+				String name = entry.getKey();
+				Integer frequencyInTitle = entry.getValue();
+				JsonNode node = createFrequencyNode(name, frequencyInTitle, frequencyInTitle); // set node with frequency = frequencyInTitle
+				resultNode.add(node);
+			}
+		
 			return resultNode;
 		}
 		
-		ArrayNode wordFrequencyArray = (ArrayNode) frequencyNode;
-		Iterator<JsonNode> iteratorWordFrequencyArray= wordFrequencyArray.iterator();
-		while(iteratorWordFrequencyArray.hasNext()){
+		
+		// general & title frequencies are existent (might not fully overlap)
+		Map<String,Integer> mapWordToFrequency = createHashMapFromFrequencyNode(frequencyNode);
+		// step 1: add title frequency values to map with frequency values
+		Set<String> titleFrequencyWords = titleFrequencies.keySet();
+		for (String nameOftitleFrequency : titleFrequencyWords) {
 			
-			JsonNode frequencyEntry = iteratorWordFrequencyArray.next();
-			String word = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForWord).asText();
-			if(titleFrequencies.containsKey(word)){
-				ObjectNode node = Json.newObject();
-				Integer frequency = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency).asInt();
-				Integer frequencyDeckTitle = titleFrequencies.get(word);
-				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForWord, word);
-				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency, frequency);
-				node.put(NLPResultUtil.propertyNameInFrequencyEntriesForDeckTitleFrequency, frequencyDeckTitle);
+			// titlefrequency and frequency existent for this name
+			if(mapWordToFrequency.containsKey(nameOftitleFrequency)){
+				// add title frequency to normal frequency
+				Integer frequencyInMap = mapWordToFrequency.get(nameOftitleFrequency);
+				Integer frequencyOfTitle = titleFrequencies.get(nameOftitleFrequency);
+				Integer frequencyToSet = frequencyInMap + frequencyOfTitle;
+				mapWordToFrequency.put(nameOftitleFrequency, frequencyToSet);
+			}
+			else{// no frequency existent (word only appears in title)
+				// create a new entry with frequency=titleFrequency
+				Integer frequencyOfTitle = titleFrequencies.get(nameOftitleFrequency);
+				mapWordToFrequency.put(nameOftitleFrequency, frequencyOfTitle);
+			}
+		}
+		// step 2: sort reverse by frequency
+		List<Entry<String,Integer>> frequenciesSortedList=  Sorter.sortByValueAndReturnAsList(mapWordToFrequency, true);
+
+		// step 3: create a json array in same order like sorted list containing also title frequencies
+		ArrayNode resultNode = Json.newArray();
+		for (Entry<String, Integer> entry : frequenciesSortedList) {
+			String name = entry.getKey();
+			Integer frequency = entry.getValue();
+			if(titleFrequencies.containsKey(name)){
+				Integer titleFrequency = titleFrequencies.get(name);
+				JsonNode node = createFrequencyNode(name, frequency, titleFrequency);
 				resultNode.add(node);
 			}else{
-				// add it to result as is
-				resultNode.add(frequencyEntry);
+				JsonNode node = createFrequencyNode(name, frequency, 0);
+				resultNode.add(node);
 			}
 		}
 		return resultNode;
+		
+	
+	}
+	
+	/**
+	 * Creates a frequency node with entry for name, frequency and titlefrequency
+	 * If titleFrequency <=0, titleFrequency is not set
+	 * @param name
+	 * @param frequency
+	 * @param frequencyDeckTitle
+	 * @return
+	 */
+	private static JsonNode createFrequencyNode(String name, int frequency, int frequencyDeckTitle){
+		ObjectNode node = Json.newObject();
+		node.put(NLPResultUtil.propertyNameInFrequencyEntriesForWord, name);
+		node.put(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency, frequency);
+		if(frequencyDeckTitle>0){
+			node.put(NLPResultUtil.propertyNameInFrequencyEntriesForDeckTitleFrequency, frequencyDeckTitle);
+		}
+		return node;
+	}
+	
+	private static Map<String,Integer> createHashMapFromFrequencyNode(JsonNode frequencyNode){
+		
+		Map<String,Integer> result = new HashMap<>();
+		ArrayNode frequencyArray = (ArrayNode) frequencyNode;
+		Iterator<JsonNode> iteratorfrequency= frequencyArray.iterator();
+		while(iteratorfrequency.hasNext()){
+			
+			JsonNode frequencyEntry = iteratorfrequency.next();
+			String word = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForWord).asText();
+			int frequency = frequencyEntry.get(NLPResultUtil.propertyNameInFrequencyEntriesForFrequency).intValue();
+			result.put(word, frequency);
+		}
+		return result;
 		
 	}
 	
