@@ -301,12 +301,15 @@ public class NLPComponent {
 			// processing for single slide (slide title and content)
 			//+++++++++++++++++++++++++++++++++
 			
+			
 			// language
 			String languageOfSlide = detectLanguage(slideTitleAndText);
 			resultsForSlide.put(NLPResultUtil.propertyNameLanguage, languageOfSlide);
 
 			// tokens
-			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
+			//remove punctuation before tokenization (but keep it in general, so the original text is kept. Give this original text to spotlight, so returned spans will match
+			String slideTitleAndTextWithPunctuationRemoved = slideTitleAndText.replaceAll("\\W", "");
+			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndTextWithPunctuationRemoved, languageOfSlide);
 //			tokensOfWholeDeckRetrievedPerSlide.addAll(Arrays.asList(tokenArrayOfSlide)); 
 			resultsForSlide.set(NLPResultUtil.propertyNameTokens, Json.toJson(tokenArrayOfSlide));
 			
