@@ -130,9 +130,7 @@ public class TFIDF {
 			String entry = termFrequency.getEntry();
 			int frequencyTerm = termFrequency.getFrequency();
 			int frequencyToUseForTerm = frequencyTerm;
-			if(frequencyToUseForTerm<minFrequencyToBeConsidered){
-				continue;
-			}
+			
 			if(performTitleBoost){
 				int frequencyTermInTitle = termFrequency.getFrequencyInTitle();
 				if(frequencyTermInTitle > 0){
@@ -151,9 +149,12 @@ public class TFIDF {
 						frequencyToUseForTerm = frequencyOfMostFrequentWord;
 					}
 				}
-				
-				
 			}
+			
+			if(frequencyToUseForTerm<minFrequencyToBeConsidered){
+				continue;
+			}
+			
 			int numberOfDocsContainingTerm = termFrequency.getFrequencyOtherDecksWithLanguageRestriction();
 			int numberOfDocs = numberOfAllDocsLanguageDependent;
 			if(!performLanguageDependent){
