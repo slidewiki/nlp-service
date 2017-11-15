@@ -163,12 +163,13 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
+    		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
     		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
     		@ApiParam(required = true, defaultValue = "4", value = "maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWordsForNEsWhenNoLinkAvailable, 
     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
     	
     	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
+    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation, minFrequencyOfTermOrEntityToBeConsidered);
    	 	
     	ObjectNode resultNode = Json.newObject();
     	

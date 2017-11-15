@@ -32,7 +32,7 @@ public class TFIDF {
 	 * @param titleBoostSettings for no title boosting set to null, for details of title boosting see {@link TitleBoostSettings}
 	 * @return
 	 */
-	public static Map<String,Map<String,Double>> getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings){
+	public static Map<String,Map<String,Double>> getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered, TitleBoostSettings titleBoostSettings){
 		
 
 		// get frequencies data from nlp store
@@ -63,7 +63,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfTokens = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
+		Map<String,Double> tfidfTokens = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfTokens);
 		
 		// NER
@@ -74,7 +74,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfNER = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
+		Map<String,Double> tfidfNER = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfNER);
 
 		// Spotlight
@@ -85,7 +85,7 @@ public class TFIDF {
 		}else{
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
-		Map<String,Double> tfidfSpotlight = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings);
+		Map<String,Double> tfidfSpotlight = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
 		tfidfResult.put(tfidfproviderName, tfidfSpotlight);
 
 		
@@ -115,7 +115,7 @@ public class TFIDF {
 		return tfidfResult;
 	}
 	
-	public static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent, TitleBoostSettings titleBoostSettings){
+	public static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent, int minFrequencyToBeConsidered, TitleBoostSettings titleBoostSettings){
 		
 		List<TermFrequency> termFrequencyData = FrequencyResultUtil.getTermFrequenciesFromFrequencyResultNode(nlpStoreFrequencyNode, keynameFrequencies);
 		int numberOfSlidesWithText = FrequencyResultUtil.getNumberOfSlidesWithText(nlpStoreFrequencyNode);
@@ -129,6 +129,9 @@ public class TFIDF {
 			String entry = termFrequency.getEntry();
 			int frequencyTerm = termFrequency.getFrequency();
 			int frequencyToUseForTerm = frequencyTerm;
+			if(frequencyToUseForTerm<minFrequencyToBeConsidered){
+				continue;
+			}
 			if(performTitleBoost){
 				int frequencyTermInTitle = termFrequency.getFrequencyInTitle();
 				if(frequencyTermInTitle > 0){

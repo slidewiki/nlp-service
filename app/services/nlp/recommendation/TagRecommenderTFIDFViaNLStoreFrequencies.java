@@ -31,7 +31,7 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings) {
 		
 		// calculate tfidf for tokens, NER and Spotlight
-		Map<String,Map<String,Double>> tfidfMap = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings);
+		Map<String,Map<String,Double>> tfidfMap = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, tagRecommendationFilterSettings.getMinFrequencyOfTermOrEntityToBeConsidered(), titleBoostSettings);
 	
 		if(tfidfMap.size()==0){
 			return new ArrayList<NlpTag>();
@@ -45,8 +45,6 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 		
 		return result;
 		
-	
-
 	}
 
 	
