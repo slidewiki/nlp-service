@@ -308,7 +308,9 @@ public class NLPComponent {
 
 			// tokens
 			//remove punctuation before tokenization (but keep it in general, so the original text is kept. Give this original text to spotlight, so returned spans will match
-			String slideTitleAndTextWithPunctuationRemoved = slideTitleAndText.replaceAll("\\W", "");
+			String slideTitleAndTextWithPunctuationRemoved = slideTitleAndText.replaceAll("\\W", " ");
+			slideTitleAndTextWithPunctuationRemoved = slideTitleAndTextWithPunctuationRemoved.replaceAll("  ", " ");
+
 			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndTextWithPunctuationRemoved, languageOfSlide);
 //			tokensOfWholeDeckRetrievedPerSlide.addAll(Arrays.asList(tokenArrayOfSlide)); 
 			resultsForSlide.set(NLPResultUtil.propertyNameTokens, Json.toJson(tokenArrayOfSlide));
