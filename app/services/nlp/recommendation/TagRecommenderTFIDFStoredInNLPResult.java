@@ -10,6 +10,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.tfidf.ITFIDFMerger;
@@ -47,7 +48,7 @@ public class TagRecommenderTFIDFStoredInNLPResult implements ITagRecommender {
 			throw new WebApplicationException("Problem while getting nlp result via nlp store service for deck id " + deckId + ". The nlp store service responded with status " + status + " (" + response.getStatusInfo() + ")", response);
 
 		}
-		JsonNode nlpResult = NLPStorageUtil.getJsonFromMessageBody(response);
+		JsonNode nlpResult = MicroserviceUtil.getJsonFromMessageBody(response);
 		
 		
 		

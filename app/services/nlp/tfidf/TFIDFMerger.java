@@ -54,21 +54,24 @@ public class TFIDFMerger implements ITFIDFMerger {
 			
 			Set<Entry<String,Double>> entries =  mapProviderToTFIDFValues.get(provider).entrySet();
 			for (Entry<String, Double> entry : entries) {
-				String key = entry.getKey();
-				if(toLowerCase){
-					key = key.toLowerCase();
-				}
+				String entryKey = entry.getKey();
+				
 				
 				String keyToUse;
 				if(isSpotlightURIProvider){
-					String name = DBPediaSpotlightUtil.getSpotlightNameFromURI(key);
-					mapSpotlightNamesToSpotlightURIs.put(name, key);
-					keyToUse = name;
+					// here the entryKey is an URL instead of an entity name, need to extract entity name from URI first
+					String nameExtractedFromURI = DBPediaSpotlightUtil.getSpotlightNameFromURI(entryKey);
+					keyToUse = nameExtractedFromURI;
 				}else{
-					keyToUse = key;
+					keyToUse = entryKey;
 				}
 				
-				
+				if(toLowerCase){
+					keyToUse = keyToUse.toLowerCase();
+				}
+				if(isSpotlightURIProvider){
+					mapSpotlightNamesToSpotlightURIs.put(keyToUse, entryKey); // in case of isSpotlightURIProvider, the entryKey is an URI, thus, the extractedName (keyToUse, maybe toLowerCased) and the URI (entryKey) are added to the map
+				}
 				MapCounting.addToCountingMapAddingDoubleValue(mapSummedTFIDF, keyToUse , entry.getValue());
 			}
 		}

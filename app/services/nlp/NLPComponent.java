@@ -1,6 +1,5 @@
 package services.nlp;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +22,7 @@ import services.nlp.html.IHtmlToText;
 import services.nlp.languagedetection.ILanguageDetector;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.DeckServiceUtil;
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
@@ -175,7 +175,7 @@ public class NLPComponent {
 		if(response.getStatus()!=200){
 			throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + plainText + "\"", response);
 		}
-		JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+		JsonNode spotlightresult = MicroserviceUtil.getJsonFromMessageBody(response);
 		node.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
 
 		
@@ -227,7 +227,7 @@ public class NLPComponent {
 		Response response = this.deckServiceUtil.getSlidesForDeckIdFromDeckservice(deckId);
 		int status = response.getStatus();
 		if(status == 200){
-			JsonNode deckNode = DeckServiceUtil.getJsonFromMessageBody(response);
+			JsonNode deckNode = MicroserviceUtil.getJsonFromMessageBody(response);
 			ObjectNode result = processNLPForDeck(deckId, deckNode, minConfidenceDBPediaSpotlightPerSlide, minConfidenceDBPediaSpotlightPerDeck);
 			return result;
 
@@ -277,13 +277,12 @@ public class NLPComponent {
 		int numberOfSlides = 0; // used for title boost factor
 		int numberOfSlidesWithText = 0; // used for title boost factor
 		Iterator<JsonNode> slidesIterator = DeckServiceUtil.getSlidesIteratorFromDeckserviceJsonResult(deckNode);
-		List<String> spotlightResourceURIsOfDeckRetrievedPerSlide = new ArrayList<>();
 		
 		while (slidesIterator.hasNext()){
 			numberOfSlides++;
 			ObjectNode slide = (ObjectNode) slidesIterator.next();
 			ObjectNode resultsForSlide = Json.newObject();
-			resultsForSlide.put("slideId", slide.get("id").textValue());
+			resultsForSlide.put(NLPResultUtil.propertyNameSlideId, slide.get("id").textValue());
 
 			String slideTitleAndText = SlideContentUtil.retrieveSlideTitleAndTextWithoutHTML(htmlToPlainText, slide, " \n ");
 			resultsForSlide.put(NLPResultUtil.propertyNameSlideTitleAndText, slideTitleAndText);
@@ -302,12 +301,17 @@ public class NLPComponent {
 			// processing for single slide (slide title and content)
 			//+++++++++++++++++++++++++++++++++
 			
+			
 			// language
 			String languageOfSlide = detectLanguage(slideTitleAndText);
 			resultsForSlide.put(NLPResultUtil.propertyNameLanguage, languageOfSlide);
 
 			// tokens
-			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndText, languageOfSlide);
+			//remove punctuation before tokenization (but keep it in general, so the original text is kept. Give this original text to spotlight, so returned spans will match
+			String slideTitleAndTextWithPunctuationRemoved = slideTitleAndText.replaceAll("\\W", " ");
+			slideTitleAndTextWithPunctuationRemoved = slideTitleAndTextWithPunctuationRemoved.replaceAll("  ", " ");
+
+			String[] tokenArrayOfSlide = tokenizer.tokenize(slideTitleAndTextWithPunctuationRemoved, languageOfSlide);
 //			tokensOfWholeDeckRetrievedPerSlide.addAll(Arrays.asList(tokenArrayOfSlide)); 
 			resultsForSlide.set(NLPResultUtil.propertyNameTokens, Json.toJson(tokenArrayOfSlide));
 			
@@ -321,22 +325,9 @@ public class NLPComponent {
 				if(response.getStatus()!=200){
 					throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + slideTitleAndText + "\"", response);
 				}
-				JsonNode spotlightresult = DBPediaSpotlightUtil.getJsonFromMessageBody(response);
+				JsonNode spotlightresult = MicroserviceUtil.getJsonFromMessageBody(response);
 				
 				resultsForSlide.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
-
-				// track all resources of deck to analyze them later for tfidf
-				JsonNode resourcesNode = spotlightresult.get("Resources");
-				if(resourcesNode!=null && !resourcesNode.isNull()){
-					ArrayNode resources = (ArrayNode) resourcesNode;
-					for (int i = 0; i < resources.size(); i++) {
-						JsonNode resourceNode = resources.get(i);
-						String URI = resourceNode.get("@URI").textValue();
-						spotlightResourceURIsOfDeckRetrievedPerSlide.add(URI);
-					}
-				}
-
-				
 
 			}
 
@@ -345,7 +336,7 @@ public class NLPComponent {
 		}
 		
 		// add single slide results
-		result.set("children", slideArrayNode);
+		result.set(NLPResultUtil.propertyNameSlidesNode, slideArrayNode);
 
 		result.put(NLPResultUtil.propertyNameNumberOfSlides, numberOfSlides);
 		result.put(NLPResultUtil.propertyNameNumberOfSlidesWithText, numberOfSlidesWithText);
@@ -382,7 +373,7 @@ public class NLPComponent {
 			if(response.getStatus()!=200){
 				throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + deckText + "\"", response);
 			}
-			spotlightresultWholeDeck = DBPediaSpotlightUtil.getJsonFromMessageBody(response);			
+			spotlightresultWholeDeck = MicroserviceUtil.getJsonFromMessageBody(response);			
 			result.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresultWholeDeck);
 		}
 		

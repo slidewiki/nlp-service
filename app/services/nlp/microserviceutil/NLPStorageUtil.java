@@ -9,10 +9,6 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import play.libs.Json;
-
 public class NLPStorageUtil {
 
 	private Client client;
@@ -80,13 +76,6 @@ public class NLPStorageUtil {
 	        
 	}  
 
-	public static JsonNode getJsonFromMessageBody(Response response) {
-
-		String result = response.readEntity(String.class);
-		JsonNode resultNode = Json.parse(result);
-		return resultNode;
-			
-	}
 	
 	public static String getStringFromMessageBody(Response response) {
 
@@ -102,6 +91,5 @@ public class NLPStorageUtil {
 		return result;
 			
 	}
-	
 	
 }

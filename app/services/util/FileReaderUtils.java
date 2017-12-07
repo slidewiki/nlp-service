@@ -22,6 +22,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
@@ -217,7 +218,14 @@ public class FileReaderUtils {
 		File currentFile = new File(filepath);
 	    InputStream inputStream;
 	    String path = currentFile.getAbsolutePath();
-		if(path.endsWith(".gz")){
+	    if(path.endsWith("tar.gz")){
+	    	    	
+	    	TarArchiveInputStream tarInput = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(path)));
+			TarArchiveEntry currentEntry = tarInput.getNextTarEntry();
+			reader =  new BufferedReader(new InputStreamReader(tarInput));
+
+	    }
+	    else if(path.endsWith(".gz")){
 		    	inputStream = new GZIPInputStream(new FileInputStream(currentFile));
 		    	reader = new BufferedReader(new InputStreamReader(inputStream));
 		 }else if(path.endsWith(".tgz")){
