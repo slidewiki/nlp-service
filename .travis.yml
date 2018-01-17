@@ -22,7 +22,7 @@ script:
 - activator compile
 - activator test
 after_success:
-- openssl aes-256-cbc -K $encrypted_194a5f03fdee_key -iv $encrypted_194a5f03fdee_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
+- openssl aes-256-cbc -K $encrypted_5ed05c44ff65_key -iv $encrypted_5ed05c44ff65_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
 - activator clean docker:stage
 - cp Dockerfile target/docker/
 - cd target/docker

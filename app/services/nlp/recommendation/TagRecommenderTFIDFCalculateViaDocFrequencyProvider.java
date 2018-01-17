@@ -10,6 +10,7 @@ import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.tfidf.IDocFrequencyProviderTypeDependent;
@@ -58,7 +59,7 @@ public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITag
 			throw new WebApplicationException("Problem while getting nlp result via nlp store service for deck id " + deckId + ". The nlp store service responded with status " + status + " (" + response.getStatusInfo() + ")", response);
 
 		}
-		ObjectNode nlpResult = (ObjectNode) NLPStorageUtil.getJsonFromMessageBody(response);
+		ObjectNode nlpResult = (ObjectNode) MicroserviceUtil.getJsonFromMessageBody(response);
 		
 		
 		// calc tfidf

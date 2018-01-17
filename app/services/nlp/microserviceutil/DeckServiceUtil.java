@@ -11,8 +11,6 @@ import javax.ws.rs.core.Response;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-import play.libs.Json;
-
 public class DeckServiceUtil {
 	
 	private Client client;
@@ -34,14 +32,13 @@ public class DeckServiceUtil {
 	}
 	
 	public Response getDeck(String deckId){
+		
 		String URL = serviceURL + "/deck/" + deckId;
 		Response response = client.target(URL)
         .request(MediaType.APPLICATION_JSON).get();
 		
 		return response;
-	}
-	
-	public Response getSlidesForDeckIdFromDeckservice(String deckId){
+	}	public Response getSlidesForDeckIdFromDeckservice(String deckId){
 		
 		String URL = serviceURL + "/deck/" + deckId + "/slides";
 		Response response = client.target(URL)
@@ -58,19 +55,12 @@ public class DeckServiceUtil {
 	 * @return
 	 */
 	public static Iterator<JsonNode> getSlidesIteratorFromDeckserviceResponse(Response response){
-		JsonNode jsonNode = getJsonFromMessageBody(response);
+
+		JsonNode jsonNode = MicroserviceUtil.getJsonFromMessageBody(response);
 		Iterator<JsonNode> iterator = getSlidesIteratorFromDeckserviceJsonResult(jsonNode);
 		return iterator;
 	}
 
-	
-	public static JsonNode getJsonFromMessageBody(Response response) {
-
-		String result = response.readEntity(String.class);
-		JsonNode resultNode = Json.parse(result);
-		return resultNode;
-			
-	}
 
 	public static Iterator<JsonNode> getSlidesIteratorFromDeckserviceJsonResult(JsonNode deckserviceResult){
 		Iterator<JsonNode> slidesIterator = Collections.<JsonNode>emptyList().iterator();
