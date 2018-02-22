@@ -5,6 +5,7 @@ public class TitleBoostSettings {
 	private boolean performTitleBoost;
 	private int titleBoostWithFixedFactor;
 	private boolean limitTitleBoostToFrequencyOfMostFrequentWord;
+	
 	public TitleBoostSettings(boolean performTitleBoost, int titleBoostWithFixedFactor, boolean limitTitleBoostToFrequencyOfMostFrequentWord) {
 		super();
 		this.performTitleBoost = performTitleBoost;
@@ -18,6 +19,7 @@ public class TitleBoostSettings {
 	public int getTitleBoostWithFixedFactor() {
 		return titleBoostWithFixedFactor;
 	}
+	
 	public boolean isLimitTitleBoostToFrequencyOfMostFrequentWord() {
 		return limitTitleBoostToFrequencyOfMostFrequentWord;
 	}

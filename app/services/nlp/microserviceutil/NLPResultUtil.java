@@ -47,9 +47,9 @@ public class NLPResultUtil {
 	public static String propertyNameTFIDFResultArrayName = "results";
 	public static String propertyNameTFIDFEntityName = "entry";
 	public static String propertyNameTFIDFValueName = "value";
-	public static String propertyNameTFIDFToken = propertyNameTFIDF + propertyNameTokens;
-	public static String propertyNameTFIDFNER = propertyNameTFIDF + propertyNameNER;
-	public static String propertyNameTFIDFDBPediaSpotlightURIs = propertyNameTFIDF + propertyNameDBPediaSpotlight + "_URI";
+	public static String propertyNameTFIDFToken = propertyNameTFIDF + "_"+ propertyNameTokens;
+	public static String propertyNameTFIDFNER = propertyNameTFIDF + "_"+ propertyNameNER;
+	public static String propertyNameTFIDFDBPediaSpotlightURIs = propertyNameTFIDF + "_"+ propertyNameDBPediaSpotlight + "_URI";
 	public static String propertyNameTFIDFDBPediaSpotlightSurfaceForm = propertyNameTFIDF + propertyNameDBPediaSpotlight + "_SurfaceForm";
 	
 

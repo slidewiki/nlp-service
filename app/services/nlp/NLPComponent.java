@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -27,11 +28,13 @@ import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NerAnnotation;
+import services.nlp.recommendation.DeckRecommendation;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.NlpTag;
 import services.nlp.recommendation.TagRecommendationFilterSettings;
 import services.nlp.slidecontentutil.SlideContentUtil;
 import services.nlp.stopwords.IStopwordRemover;
+import services.nlp.tfidf.TFIDF;
 import services.nlp.tfidf.TitleBoostSettings;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
@@ -141,6 +144,10 @@ public class NLPComponent {
 	
 	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
 		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
+	}
+	
+	public Map<String,Map<String,Double>> getTfidfMap(String deckId, int tfidfMinDocsToPerformLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered){
+		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, new TitleBoostSettings(false, -1, false));
 	}
 	
 	
@@ -484,6 +491,24 @@ public class NLPComponent {
 	}
 	
 	
+	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int minFrequencyOfTermOrEntityToBeConsidered, int tfidfMinDocsToPerformLanguageDependent, int maxTermsToReturn){
+		
+		ObjectNode result = Json.newObject();
+		
+		Map<String,Map<String,Double>> tfidfmap = getTfidfMap(deckId, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered);
+		
+		Set<String> providers= tfidfmap.keySet();
+
+		for (String provider : providers) {
+			
+			Map<String,Double> tfidfMap = tfidfmap.get(provider);
+			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToReturn);
+			
+			result.set(provider, nodeForProvider);
+		}
+		
+		return result;
+	}
 	
 
 	public ILanguageDetector getLanguageDetector() {

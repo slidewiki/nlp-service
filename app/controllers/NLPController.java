@@ -194,6 +194,43 @@ public class NLPController extends Controller{
     }
     
 
+    @javax.ws.rs.Path(value = "/deckRecommendationBackgroundInfo")
+    @ApiOperation(
+    		tags = "deck",
+    		value = "retrieves deck recommendation background infos for a given deck id", 
+    		notes = "retrieves deck recommendation background infos for a given deck id by calculating tfidf using frequency information stored nlp results of nlp store")
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
+    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
+    				})
+
+    public Result deckRecommendationBackgroundInfo(
+    		@ApiParam(required = true, value = "deckId") String deckId, 
+     		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return. Returns the top x.") int maxResultsToReturn,
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent 
+    		) {
+    	
+   	 	
+    	
+    	try{
+
+        	ObjectNode resultNode = nlpComponent.getDeckRecommendationBackgroundInfo(deckId, minFrequencyOfTermOrEntityToBeConsidered, tfidfMinDocsToPerformLanguageDependent, maxResultsToReturn);
+        
+        	Result r = Results.ok(resultNode);        	
+            return r;
+    	}catch (WebApplicationException e) {
+
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}catch(ProcessingException f){
+    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
+    		
+    		return createResultForProcessingException(500, f, message);
+    	}
+    	
+       
+    }
     
 
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
