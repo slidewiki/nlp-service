@@ -385,7 +385,8 @@ public class TFIDF {
 	public static double calcTFIDF(Integer frequencyOfTermInDoc, double frequencyOfMostFrequentTermInDoc, Integer numberOfDocsContainingTerm, Integer numberOfAllDocuments){
 		double tf = calcTermFrequency_Augmented(frequencyOfTermInDoc, frequencyOfMostFrequentTermInDoc);
 		double idf = calcInverseDocumentFrequency(numberOfDocsContainingTerm, numberOfAllDocuments);
-		return tf * idf;
+		double tfidf = tf * idf;
+		return tfidf;
 	}
 
 	
@@ -404,7 +405,7 @@ public class TFIDF {
 	}
 	
 	private static double calcInverseDocumentFrequency(Integer numberOfDocsContainingTerm, double numberOfAllDocuments){
-		return Math.log((numberOfAllDocuments/new Double(numberOfDocsContainingTerm).doubleValue()));
+		return Math.log10((numberOfAllDocuments/new Double(numberOfDocsContainingTerm).doubleValue()));
 	}
 	
 	
