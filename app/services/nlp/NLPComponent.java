@@ -28,6 +28,7 @@ import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NerAnnotation;
+import services.nlp.recommendation.CosineSimilarity;
 import services.nlp.recommendation.DeckRecommendation;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.NlpTag;
@@ -502,6 +503,7 @@ public class NLPComponent {
 		for (String provider : providers) {
 			
 			Map<String,Double> tfidfMap = tfidfmap.get(provider);
+			
 			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToReturn);
 			
 			result.set(provider, nodeForProvider);
@@ -510,6 +512,40 @@ public class NLPComponent {
 		return result;
 	}
 	
+	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, int minDocsToPerformLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered, TitleBoostSettings titleBoostSettings){
+		
+		ObjectNode result = Json.newObject();
+
+		Map<String,Map<String,Double>> map1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
+		Map<String,Map<String,Double>> map2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
+		Set<String> providers= map1.keySet();
+		Map<String,Double> tfidfMapAsOneDeck1 = new HashMap<>();
+		Map<String,Double> tfidfMapAsOneDeck2 = new HashMap<>();
+		for (String provider : providers) {
+		
+			Map<String,Double> tfidfMapDeck1 = map1.get(provider);
+			Map<String,Double> tfidfMapDeck2 = map2.get(provider);
+			
+			Map<String,Double> tfidfMapDeck1OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck1, maxValuesToConsider);
+			Map<String,Double> tfidfMapDeck2OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck2, maxValuesToConsider);
+
+			tfidfMapAsOneDeck1.putAll(tfidfMapDeck1OnlyTopX);
+			tfidfMapAsOneDeck2.putAll(tfidfMapDeck2OnlyTopX);
+
+			double d = CosineSimilarity.getCosineSimilarity(tfidfMapDeck1OnlyTopX, tfidfMapDeck2OnlyTopX);
+			result.put("cosineSimilarity_" + provider, d);
+
+		}
+
+		// calculate cosine similarity as well for tokens, NEs, Spotlight entities as one
+		double d = CosineSimilarity.getCosineSimilarity(tfidfMapAsOneDeck1, tfidfMapAsOneDeck2);
+		result.put("cosineSimilarity_alltogether", d);
+
+		
+		return result;
+
+		
+	}
 
 	public ILanguageDetector getLanguageDetector() {
 		return languageDetector;

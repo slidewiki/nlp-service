@@ -2,6 +2,7 @@ package services.util;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -53,6 +54,22 @@ public class Sorter {
 		}
 
 		return list;
+	}
+	
+	public static <E,F> Map<E,F> keepOnlyTopXValues(Map<E,F> map, int maximumTopXValuesToKeep){
+		
+		Map<E,F> result = new HashMap<>();
+		List<Entry<E, F>> sortedList = sortByValueAndReturnAsList(map, true);
+		int counter = 0;
+		for (Entry<E, F> entry : sortedList) {
+			counter++;
+			if(counter>maximumTopXValuesToKeep){
+				break;
+			}
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
+		
 	}
 
 }
