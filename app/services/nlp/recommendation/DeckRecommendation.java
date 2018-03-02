@@ -20,6 +20,10 @@ public class DeckRecommendation {
 		
 		ObjectNode result = Json.newObject();
 		
+		if(map.isEmpty()){
+			return result;
+		}
+		
 		List<Entry<String, Double>> sorted = Sorter.sortByValueAndReturnAsList(map, true);
 		StringBuilder sbLuceneQuery = new StringBuilder();
 		Double highestValue = sorted.get(0).getValue();
