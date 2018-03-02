@@ -17,6 +17,7 @@ GET     /nlp/dbpediaspotlight/:input              controllers.NLPController.dbpe
 GET     /nlp/nlpForDeck/:deckId              controllers.NLPController.performNlpForDeck(deckId: String, dbpediaSpotlightConfidenceForSlide: Double, dbpediaSpotlightConfidenceForDeck: Double)
 GET     /nlp/tagRecommendations/:deckId              controllers.NLPController.tagRecommendations(deckId: String, performTitleBoost: Boolean, titleBoostWithFixedFactor: Integer, titleBoostlimitToFrequencyOfMostFrequentWord: Boolean, minFrequencyOfTermOrEntityToBeConsidered: Integer, minCharLengthForTag: Integer, maxNumberOfWordsForNEsWhenNoLinkAvailable: Integer, maxEntriesToReturnTagRecommendation: Integer )
 GET     /nlp/deckRecommendationBackgroundInfo/:deckId              controllers.NLPController.deckRecommendationBackgroundInfo(deckId: String, minFrequencyOfTermOrEntityToBeConsidered: Integer, maxResultsToReturn: Integer, tfidfMinDocsToPerformLanguageDependent: Integer)
+GET     /nlp/deckSimilarity/              controllers.NLPController.deckSimilarity(deckId1: String, deckId2: String, maxTermsToConsider: Integer, tfidfMinDocsToPerformLanguageDependent: Integer, minFrequencyOfTermOrEntityToBeConsidered: Integer)
 
 
 

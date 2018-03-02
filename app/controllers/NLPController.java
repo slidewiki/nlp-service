@@ -189,9 +189,9 @@ public class NLPController extends Controller{
     		
     		return createResultForProcessingException(500, f, message);
     	}
-    	
-       
+    	       
     }
+    
     
 
     @javax.ws.rs.Path(value = "/deckRecommendationBackgroundInfo")
@@ -208,14 +208,15 @@ public class NLPController extends Controller{
     public Result deckRecommendationBackgroundInfo(
     		@ApiParam(required = true, value = "deckId") String deckId, 
      		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
-     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return. Returns the top x.") int maxResultsToReturn,
-     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent 
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
+     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return. Returns the top x.") int maxResultsToReturn
     		) {
     	
    	 	
     	
     	try{
 
+    		
         	ObjectNode resultNode = nlpComponent.getDeckRecommendationBackgroundInfo(deckId, minFrequencyOfTermOrEntityToBeConsidered, tfidfMinDocsToPerformLanguageDependent, maxResultsToReturn);
         
         	Result r = Results.ok(resultNode);        	
@@ -232,7 +233,49 @@ public class NLPController extends Controller{
        
     }
     
+    @javax.ws.rs.Path(value = "/deckSimilarity")
+    @ApiOperation(
+    		tags = "deck",
+    		value = "calculates cosine similarity between 2 given decks based on the content", 
+    		notes = "calculates cosine similarity between 2 given decks based on the content by using max tfidf terms (tokens, named entities & spotlight entities) calculated using frequency information stored nlp results of nlp store")
+    @ApiResponses(
+    		value = {
+    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
+    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
+    				})
 
+    public Result deckSimilarity(
+    		@ApiParam(required = true, value = "deckId1") String deckId1, 
+    		@ApiParam(required = true, value = "deckId2") String deckId2,
+     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of top terms to consider. E.g. if set to 10, the top 10 tokens, top 10 named entities and top 10 spotlight resources are used") int maxTermsToConsider,
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
+     		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered
+    		) {
+    	
+   	 	
+    	
+    	try{
+
+    		boolean performTitleBoost = true;
+			int titleBoostWithFixedFactor = -1;
+			boolean limitTitleBoostToFrequencyOfMostFrequentWord = true;
+			TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, limitTitleBoostToFrequencyOfMostFrequentWord );
+        	ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
+        	Result r = Results.ok(resultNode);        	
+            return r;
+    	}catch (WebApplicationException e) {
+
+    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
+    	}catch(ProcessingException f){
+    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
+    		
+    		return createResultForProcessingException(500, f, message);
+    	}
+    	
+       
+    }
+
+    
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(
     		tags = "sub",
