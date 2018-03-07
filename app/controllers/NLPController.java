@@ -27,7 +27,7 @@ import services.nlp.NLPComponent;
 import services.nlp.microserviceutil.DBPediaSpotlightUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.recommendation.NlpTag;
-import services.nlp.recommendation.TagRecommendationFilterSettings;
+import services.nlp.recommendation.TermFilterSettings;
 import services.nlp.tfidf.TitleBoostSettings;
 
 
@@ -163,19 +163,19 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
-    		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
-    		@ApiParam(required = true, defaultValue = "3", value = "the minimum character length for a recommended tag.") int minCharLengthForTag, 
-    		@ApiParam(required = true, defaultValue = "4", value = "maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWordsForNEsWhenNoLinkAvailable, 
-    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturnTagRecommendation) {
+    		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length for a recommended tag.") int minCharLength, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWords, 
+    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturn) {
     	
     	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    	TagRecommendationFilterSettings tagRecommendationFilterSettings = new TagRecommendationFilterSettings(minFrequencyOfTermOrEntityToBeConsidered, minCharLengthForTag, maxNumberOfWordsForNEsWhenNoLinkAvailable, maxEntriesToReturnTagRecommendation);
+    	TermFilterSettings termFilterSettings = new TermFilterSettings(minFrequencyOfTermOrEntityToBeConsidered, minCharLength, maxNumberOfWords);
    	 	
     	ObjectNode resultNode = Json.newObject();
     	
     	try{
 
-        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
+        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 
@@ -207,17 +207,24 @@ public class NLPController extends Controller{
 
     public Result deckRecommendationBackgroundInfo(
     		@ApiParam(required = true, value = "deckId") String deckId, 
-     		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
-     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
-     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return. Returns the top x.") int maxResultsToReturn
+    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return") int maxTermsToConsider, 
+     		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
+    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
+    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
+    		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
+
     		) {
     	
    	 	
     	
     	try{
 
-    		
-        	ObjectNode resultNode = nlpComponent.getDeckRecommendationBackgroundInfo(deckId, minFrequencyOfTermOrEntityToBeConsidered, tfidfMinDocsToPerformLanguageDependent, maxResultsToReturn);
+    		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
+    		TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
+        	ObjectNode resultNode = nlpComponent.getDeckRecommendationBackgroundInfo(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings, maxTermsToConsider);
         
         	Result r = Results.ok(resultNode);        	
             return r;
@@ -237,7 +244,7 @@ public class NLPController extends Controller{
     @ApiOperation(
     		tags = "deck",
     		value = "calculates cosine similarity between 2 given decks based on the content", 
-    		notes = "calculates cosine similarity between 2 given decks based on the content by using max tfidf terms (tokens, named entities & spotlight entities) calculated using frequency information stored nlp results of nlp store")
+    		notes = "calculates cosine similarity between 2 given decks based on the content by using top x tfidf terms (tokens, named entities & spotlight entities) calculated using frequency information stored nlp results of nlp store")
     @ApiResponses(
     		value = {
     				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
@@ -248,19 +255,21 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, value = "deckId1") String deckId1, 
     		@ApiParam(required = true, value = "deckId2") String deckId2,
      		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of top terms to consider. E.g. if set to 10, the top 10 tokens, top 10 named entities and top 10 spotlight resources are used") int maxTermsToConsider,
-     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
-     		@ApiParam(required = true, defaultValue = "2", value = "the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered
+     		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
+    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
+    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
+    		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
     		) {
     	
    	 	
     	
     	try{
-
-    		boolean performTitleBoost = true;
-			int titleBoostWithFixedFactor = -1;
-			boolean limitTitleBoostToFrequencyOfMostFrequentWord = true;
-			TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, limitTitleBoostToFrequencyOfMostFrequentWord );
-        	ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
+    		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
+        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
+			ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent);
         	Result r = Results.ok(resultNode);        	
             return r;
     	}catch (WebApplicationException e) {

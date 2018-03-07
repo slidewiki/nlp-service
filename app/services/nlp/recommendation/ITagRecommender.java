@@ -6,7 +6,7 @@ import services.nlp.tfidf.TitleBoostSettings;
 
 public interface ITagRecommender {
 	
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings);
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn);
 	
 
 

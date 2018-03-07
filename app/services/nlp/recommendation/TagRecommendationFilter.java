@@ -7,30 +7,35 @@ import org.apache.commons.lang3.StringUtils;
 
 public class TagRecommendationFilter {
 
-	public static List<NlpTag> filter(List<NlpTag> inputList, TagRecommendationFilterSettings tagRecommendationSettings){
+	public static List<NlpTag> filter(List<NlpTag> inputList, TermFilterSettings termFilterSettings, boolean applyMaxWordsOnlyWhenNoLinkAvailable, int maxEntriesToReturn){
 		
 		List<NlpTag> result = new ArrayList<>();
 		int counterEntries = 0;
 		for (NlpTag nlpTag : inputList) {
 			String name = nlpTag.getName();
 			
-			if(name.length()<tagRecommendationSettings.getMinCharLengthForTag()){
+			if(name.length()<termFilterSettings.getMinCharLength()){
 				continue;
 			}
 			if(StringUtils.isNumeric(name)){
 				continue;
 			}
-			String link = nlpTag.getLink();
-			if(link==null){
-				// no link available: check length of name (NER tends to be greedy and creates long strange names)
-				// exclude these long names (but only if there is no dbpedia link
-				if(name.split(" ").length>tagRecommendationSettings.getMaxNumberOfWordsForNEsWhenNoLinkAvailable()){
+			boolean applyMaxWords = true;
+			if(applyMaxWordsOnlyWhenNoLinkAvailable){
+				String link = nlpTag.getLink();
+				if(link!=null){
+					applyMaxWords = false;
+				}
+			}
+			if(applyMaxWords){
+				// check length of name (NER tends to be greedy and creates long strange names)
+				if(name.split(" ").length>termFilterSettings.getMaxNumberOfWords()){
 					continue;
 				}
 			}
 			result.add(nlpTag);
 			counterEntries++;
-			if(tagRecommendationSettings.getMaxEntriesToReturnTagRecommendation()>-1 && counterEntries>=tagRecommendationSettings.getMaxEntriesToReturnTagRecommendation()){
+			if(maxEntriesToReturn>-1 && counterEntries>=maxEntriesToReturn){
 				break;
 			}
 		}

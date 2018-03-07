@@ -28,10 +28,10 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 
 
 	@Override
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings) {
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn) {
 		
 		// calculate tfidf for tokens, NER and Spotlight
-		Map<String,Map<String,Double>> tfidfMap = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, tagRecommendationFilterSettings.getMinFrequencyOfTermOrEntityToBeConsidered(), titleBoostSettings);
+		Map<String,Map<String,Double>> tfidfMap = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 	
 		if(tfidfMap.size()==0){
 			return new ArrayList<NlpTag>();
@@ -41,7 +41,7 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 		List<NlpTag> tfidfmerged = tfidfMerger.mergeTFIDFValuesOfDifferentProviders(tfidfMap);
 
 		// filter list
-		List<NlpTag> result = TagRecommendationFilter.filter(tfidfmerged, tagRecommendationFilterSettings);
+		List<NlpTag> result = TagRecommendationFilter.filter(tfidfmerged, termFilterSettings, true, maxEntriesToReturn);
 		
 		return result;
 		

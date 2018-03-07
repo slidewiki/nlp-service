@@ -32,7 +32,7 @@ import services.nlp.recommendation.CosineSimilarity;
 import services.nlp.recommendation.DeckRecommendation;
 import services.nlp.recommendation.ITagRecommender;
 import services.nlp.recommendation.NlpTag;
-import services.nlp.recommendation.TagRecommendationFilterSettings;
+import services.nlp.recommendation.TermFilterSettings;
 import services.nlp.slidecontentutil.SlideContentUtil;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.TFIDF;
@@ -143,12 +143,12 @@ public class NLPComponent {
 	}
 
 	
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings){
-		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, tagRecommendationFilterSettings);
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn){
+		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
 	}
 	
-	public Map<String,Map<String,Double>> getTfidfMap(String deckId, int tfidfMinDocsToPerformLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered){
-		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, new TitleBoostSettings(false, -1, false));
+	public Map<String,Map<String,Double>> getTfidfMap(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 	}
 	
 	
@@ -492,11 +492,11 @@ public class NLPComponent {
 	}
 	
 	
-	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int minFrequencyOfTermOrEntityToBeConsidered, int tfidfMinDocsToPerformLanguageDependent, int maxTermsToReturn){
+	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider){
 		
 		ObjectNode result = Json.newObject();
 		
-		Map<String,Map<String,Double>> tfidfmap = getTfidfMap(deckId, tfidfMinDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered);
+		Map<String,Map<String,Double>> tfidfmap = getTfidfMap(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 		
 		Set<String> providers= tfidfmap.keySet();
 
@@ -504,7 +504,7 @@ public class NLPComponent {
 			
 			Map<String,Double> tfidfMap = tfidfmap.get(provider);
 			
-			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToReturn);
+			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToConsider);
 			
 			result.set(provider, nodeForProvider);
 		}
@@ -512,12 +512,14 @@ public class NLPComponent {
 		return result;
 	}
 	
-	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, int minDocsToPerformLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered, TitleBoostSettings titleBoostSettings){
+	// TODO: add intersection (shared tokens/entities)
+	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
 		
 		ObjectNode result = Json.newObject();
 
-		Map<String,Map<String,Double>> map1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
-		Map<String,Map<String,Double>> map2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, minFrequencyOfTermOrEntityToBeConsidered, titleBoostSettings);
+		Map<String,Map<String,Double>> map1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		Map<String,Map<String,Double>> map2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		
 		Set<String> providers= map1.keySet();
 		Map<String,Double> tfidfMapAsOneDeck1 = new HashMap<>();
 		Map<String,Double> tfidfMapAsOneDeck2 = new HashMap<>();

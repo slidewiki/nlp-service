@@ -40,7 +40,7 @@ public class TagRecommenderTFIDFStoredInNLPResult implements ITagRecommender {
 	
 
 	@Override
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TagRecommendationFilterSettings tagRecommendationFilterSettings) {
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEmtriesToReturn) {
 		
 		Response response = nlpStorageUtil.getNLPResultForDeckId(deckId);
 		int status = response.getStatus();
@@ -68,7 +68,7 @@ public class TagRecommenderTFIDFStoredInNLPResult implements ITagRecommender {
 		List<NlpTag> tfidfmerged = tfidfMerger.mergeTFIDFValuesOfDifferentProviders(mapProviderNameToTFIDFEnntries);
 
 		
-		List<NlpTag> result = TagRecommendationFilter.filter(tfidfmerged, tagRecommendationFilterSettings);
+		List<NlpTag> result = TagRecommendationFilter.filter(tfidfmerged, termFilterSettings, true, maxEmtriesToReturn);
 		
 		return result;
 	}
