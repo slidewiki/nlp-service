@@ -506,14 +506,18 @@ public class NLPComponent {
 		Map<String,Map<String,Double>> tfidfmap = tfidfResult.getTfidfMap();
 		Set<String> providers= tfidfmap.keySet();
 
+		StringBuilder sb = new StringBuilder();
 		for (String provider : providers) {
 			
 			Map<String,Double> tfidfMap = tfidfmap.get(provider);
 			String keynameForSolr = NLPResultUtil.getSolrNameForProviderName(provider);
 			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToConsider, keynameForSolr);
+			String luceneQueryStringForProvider = nodeForProvider.get("luceneQuery").asText();
+			sb.append(luceneQueryStringForProvider);
 			
 			result.set(provider, nodeForProvider);
 		}
+		result.put("luceneQuery", sb.toString());
 		
 		return result;
 	}
