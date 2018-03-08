@@ -16,7 +16,7 @@ import services.util.Sorter;
 public class DeckRecommendation {
 
 
-	public static JsonNode createJsonNodeForResponseFromMap(Map<String,Double> map, int maxEntriesToUse){
+	public static JsonNode createJsonNodeForResponseFromMap(Map<String,Double> map, int maxEntriesToUse, String keynameForSolr){
 		
 		ObjectNode result = Json.newObject();
 		
@@ -51,7 +51,7 @@ public class DeckRecommendation {
 				valueForLuceneQuery = valueRounded.substring(1);
 			}
 			
-			sbLuceneQuery.append(" body:");
+			sbLuceneQuery.append(" " + keynameForSolr + ":");
 			sbLuceneQuery.append(key);
 			sbLuceneQuery.append("^");
 			sbLuceneQuery.append(valueForLuceneQuery);

@@ -52,8 +52,9 @@ public class NLPResultUtil {
 	public static String propertyNameTFIDFDBPediaSpotlightURIs = propertyNameTFIDF + "_"+ propertyNameDBPediaSpotlight + "_URI";
 	public static String propertyNameTFIDFDBPediaSpotlightSurfaceForm = propertyNameTFIDF + propertyNameDBPediaSpotlight + "_SurfaceForm";
 	
-
-
+	public static String propertyNameSolrToken = "token";
+	public static String propertyNameSolrNamedEntity = "namedentity";
+	public static String propertyNameSolrSpotlightEntity = "spotlightentity";
 	
 	// key names for specific document frequency providers
 	public static String propertyNameDocFreqProvider_Tokens = "docFreqProvider_Tokens";
@@ -319,5 +320,19 @@ public class NLPResultUtil {
 			firstSlideText = false;
 		}
 		return sb.toString();
+	}
+	
+	
+	public static String getSolrNameForProviderName(String providerName){
+		
+		if(providerName.startsWith(propertyNameTFIDFToken)){
+			return propertyNameSolrToken;
+		}else if(providerName.startsWith(propertyNameTFIDFNER)){
+			return propertyNameSolrNamedEntity;
+		}else if(providerName.startsWith(propertyNameTFIDFDBPediaSpotlightURIs)){
+			return propertyNameSolrSpotlightEntity;
+		}else{
+			return null;
+		}
 	}
 }
