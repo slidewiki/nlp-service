@@ -335,4 +335,19 @@ public class NLPResultUtil {
 			return null;
 		}
 	}
+	
+	public static String getShortName(String longName){
+		
+		if(longName.contains(propertyNameTokens)){
+			return propertyNameTokens;
+		}else if(longName.contains(propertyNameNER)){
+			return propertyNameNER;
+		}else if(longName.contains(propertyNameDBPediaSpotlight)){
+			return propertyNameDBPediaSpotlight;
+		}else{
+			return null;
+		}
+	}
+	
+	
 }

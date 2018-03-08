@@ -522,7 +522,6 @@ public class NLPComponent {
 		return result;
 	}
 	
-	// TODO: add intersection (shared tokens/entities)
 	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
 		
 		ObjectNode result = Json.newObject();
@@ -533,8 +532,10 @@ public class NLPComponent {
 		Map<String,Map<String,Double>> map2 = tfidfResult2.getTfidfMap();
 		
 		Set<String> providers= map1.keySet();
-		Map<String,Double> tfidfMapAsOneDeck1 = new HashMap<>();
-		Map<String,Double> tfidfMapAsOneDeck2 = new HashMap<>();
+		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck1 = new HashMap<>();
+		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck2 = new HashMap<>();
+		
+		ArrayNode detailsArrayNode = Json.newArray();
 		for (String provider : providers) {
 		
 			Map<String,Double> tfidfMapDeck1 = map1.get(provider);
@@ -543,17 +544,71 @@ public class NLPComponent {
 			Map<String,Double> tfidfMapDeck1OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck1, maxValuesToConsider);
 			Map<String,Double> tfidfMapDeck2OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck2, maxValuesToConsider);
 
-			tfidfMapAsOneDeck1.putAll(tfidfMapDeck1OnlyTopX);
-			tfidfMapAsOneDeck2.putAll(tfidfMapDeck2OnlyTopX);
+			tfidfMapForAllProvidersTogetherForDeck1.putAll(tfidfMapDeck1OnlyTopX);
+			tfidfMapForAllProvidersTogetherForDeck2.putAll(tfidfMapDeck2OnlyTopX);
 
 			double d = CosineSimilarity.getCosineSimilarity(tfidfMapDeck1OnlyTopX, tfidfMapDeck2OnlyTopX);
-			result.put("cosineSimilarity_" + provider, d);
+			
+			ObjectNode node = Json.newObject();
+			node.put("shortname", NLPResultUtil.getShortName(provider));
+			node.put("longname", provider);
+			node.put("cosinesimilarity", d);
+			detailsArrayNode.add(node);
+			
+		}
+
+		// calculate cosine similarity as well for tokens, NEs, Spotlight entities as one
+		double d = CosineSimilarity.getCosineSimilarity(tfidfMapForAllProvidersTogetherForDeck1, tfidfMapForAllProvidersTogetherForDeck2);
+		result.put("cosineSimilarity_alltogether", d);
+
+		result.set("details", detailsArrayNode);
+		
+		return result;
+
+		
+	}
+
+	// TODO: add intersection (shared tokens/entities)
+	public ObjectNode calculateCosineSimilarityExtendedInfo(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
+		
+		ObjectNode result = Json.newObject();
+
+		TFIDFResult tfidfResult1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResult2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		Map<String,Map<String,Double>> map1 = tfidfResult1.getTfidfMap();
+		Map<String,Map<String,Double>> map2 = tfidfResult2.getTfidfMap();
+		
+		Set<String> providers= map1.keySet();
+		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck1 = new HashMap<>();
+		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck2 = new HashMap<>();
+		
+		ArrayNode detailsArrayNode = Json.newArray();
+		for (String provider : providers) {
+		
+			Map<String,Double> tfidfMapDeck1 = map1.get(provider);
+			Map<String,Double> tfidfMapDeck2 = map2.get(provider);
+			
+			Map<String,Double> tfidfMapDeck1OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck1, maxValuesToConsider);
+			Map<String,Double> tfidfMapDeck2OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck2, maxValuesToConsider);
+
+			tfidfMapForAllProvidersTogetherForDeck1.putAll(tfidfMapDeck1OnlyTopX);
+			tfidfMapForAllProvidersTogetherForDeck2.putAll(tfidfMapDeck2OnlyTopX);
+
+			ObjectNode detailsNode = Json.newObject();
+			detailsNode.put("shortname", NLPResultUtil.getShortName(provider));
+			detailsNode.put("longname", provider);
+
+			detailsNode = CosineSimilarity.getCosineSimilarityWithExtendedInfo(tfidfMapDeck1OnlyTopX, tfidfMapDeck2OnlyTopX, detailsNode);
+			
+				
+			detailsArrayNode.add(detailsNode);
 
 		}
 
 		// calculate cosine similarity as well for tokens, NEs, Spotlight entities as one
-		double d = CosineSimilarity.getCosineSimilarity(tfidfMapAsOneDeck1, tfidfMapAsOneDeck2);
-		result.put("cosineSimilarity_alltogether", d);
+		double d = CosineSimilarity.getCosineSimilarity(tfidfMapForAllProvidersTogetherForDeck1, tfidfMapForAllProvidersTogetherForDeck2);
+		result.put("cosineSimilarity", d);
+		result.set("details", detailsArrayNode);
 
 		
 		return result;
