@@ -7,6 +7,7 @@ import java.util.Map;
 import services.nlp.microserviceutil.NLPStorageUtil;
 import services.nlp.tfidf.ITFIDFMerger;
 import services.nlp.tfidf.TFIDF;
+import services.nlp.tfidf.TFIDFResult;
 import services.nlp.tfidf.TitleBoostSettings;
 
 public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender{
@@ -31,8 +32,9 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn) {
 		
 		// calculate tfidf for tokens, NER and Spotlight
-		Map<String,Map<String,Double>> tfidfMap = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-	
+		TFIDFResult tfidfResult = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		Map<String,Map<String,Double>> tfidfMap = tfidfResult.getTfidfMap();
+		
 		if(tfidfMap.size()==0){
 			return new ArrayList<NlpTag>();
 		}

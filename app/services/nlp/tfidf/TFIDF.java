@@ -34,9 +34,8 @@ public class TFIDF {
 	 * @param titleBoostSettings for no title boosting set to null, for details of title boosting see {@link TitleBoostSettings}
 	 * @return
 	 */
-	public static Map<String,Map<String,Double>> getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+	public static TFIDFResult getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
 		
-
 		// get frequencies data from nlp store
 		Response responseFrequencies = nlpStorageUtil.getStatisticsDeckFrequencies(deckId);
 		JsonNode nlpStoreFrequencyNode = MicroserviceUtil.getJsonFromMessageBody(responseFrequencies);
@@ -55,7 +54,7 @@ public class TFIDF {
 		String propertyNameForFrequencyEntries;
 		String tfidfproviderName;
 		
-		Map<String,Map<String,Double>> tfidfResult = new HashMap<>();
+		Map<String,Map<String,Double>> tfidfResultMap = new HashMap<>();
 		
 		// tokens
 		propertyNameForFrequencyEntries = NLPResultUtil.propertyNameWordFrequenciesExclStopwords;
@@ -66,7 +65,7 @@ public class TFIDF {
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
 		Map<String,Double> tfidfTokens = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings, termFilterSettings);
-		tfidfResult.put(tfidfproviderName, tfidfTokens);
+		tfidfResultMap.put(tfidfproviderName, tfidfTokens);
 		
 		// NER
 		propertyNameForFrequencyEntries = NLPResultUtil.propertyNameNERFrequencies;
@@ -77,7 +76,7 @@ public class TFIDF {
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
 		Map<String,Double> tfidfNER = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings, termFilterSettings);
-		tfidfResult.put(tfidfproviderName, tfidfNER);
+		tfidfResultMap.put(tfidfproviderName, tfidfNER);
 
 		// Spotlight
 		propertyNameForFrequencyEntries = NLPResultUtil.propertyNameDBPediaSpotlightURIFrequencies;
@@ -88,13 +87,13 @@ public class TFIDF {
 			tfidfproviderName = tfidfproviderName + "_notlanguagedependent";
 		}	
 		Map<String,Double> tfidfSpotlight = calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(nlpStoreFrequencyNode, propertyNameForFrequencyEntries, frequencyOfMostFrequentWord, numberOfDocsOverall, numberOfDocsForGivenLanguage, performLanguageDependent, titleBoostSettings, termFilterSettings);
-		tfidfResult.put(tfidfproviderName, tfidfSpotlight);
+		tfidfResultMap.put(tfidfproviderName, tfidfSpotlight);
 
 		
-		return tfidfResult;
+		return new TFIDFResult(tfidfResultMap, FrequencyResultUtil.getLanguage(nlpStoreFrequencyNode), numberOfDocsForGivenLanguage, numberOfDocsOverall, performLanguageDependent);
 	}
 	
-	public static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNode(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent){
+	private static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNode(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent){
 		
 		List<TermFrequency> termFrequencyData = FrequencyResultUtil.getTermFrequenciesFromFrequencyResultNode(nlpStoreFrequencyNode, keynameFrequencies);
 		Map<String,Double> tfidfResult = new HashMap<>();
@@ -117,7 +116,7 @@ public class TFIDF {
 		return tfidfResult;
 	}
 	
-	public static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+	private static Map<String,Double> calcTFIDFViaNLPStoreFrequencyNodeInclTitleBoost(JsonNode nlpStoreFrequencyNode, String keynameFrequencies, int frequencyOfMostFrequentWord, int numberOfAllDocsNotLanguageDependent, int numberOfAllDocsLanguageDependent, boolean performLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
 		
 		// get term frequency data from node
 		List<TermFrequency> termFrequencyData = FrequencyResultUtil.getTermFrequenciesFromFrequencyResultNode(nlpStoreFrequencyNode, keynameFrequencies);

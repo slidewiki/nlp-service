@@ -36,6 +36,7 @@ import services.nlp.recommendation.TermFilterSettings;
 import services.nlp.slidecontentutil.SlideContentUtil;
 import services.nlp.stopwords.IStopwordRemover;
 import services.nlp.tfidf.TFIDF;
+import services.nlp.tfidf.TFIDFResult;
 import services.nlp.tfidf.TitleBoostSettings;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
@@ -147,7 +148,7 @@ public class NLPComponent {
 		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
 	}
 	
-	public Map<String,Map<String,Double>> getTfidfMap(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+	public TFIDFResult getTfidfResult(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
 		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 	}
 	
@@ -496,15 +497,20 @@ public class NLPComponent {
 		
 		ObjectNode result = Json.newObject();
 		
-		Map<String,Map<String,Double>> tfidfmap = getTfidfMap(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResult = getTfidfResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		result.put("language", tfidfResult.getLanguage());
+		result.put("numberOfDecksWithGivenLanguage", tfidfResult.getNumberOfDecksInPlatformWithGivenLanguage());
+		result.put("numberOfDecksOverall", tfidfResult.getNumberOfDecksInPlatformOverall());
+		result.put("tfidfValuesWereCalculatedLanguageDependent", tfidfResult.isTfidfValuesWereCalculatedLanguageDependent());
 		
+		Map<String,Map<String,Double>> tfidfmap = tfidfResult.getTfidfMap();
 		Set<String> providers= tfidfmap.keySet();
 
 		for (String provider : providers) {
 			
 			Map<String,Double> tfidfMap = tfidfmap.get(provider);
-			
-			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToConsider);
+			String keynameForSolr = NLPResultUtil.getSolrNameForProviderName(provider);
+			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToConsider, keynameForSolr);
 			
 			result.set(provider, nodeForProvider);
 		}
@@ -517,8 +523,10 @@ public class NLPComponent {
 		
 		ObjectNode result = Json.newObject();
 
-		Map<String,Map<String,Double>> map1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		Map<String,Map<String,Double>> map2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResult1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResult2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		Map<String,Map<String,Double>> map1 = tfidfResult1.getTfidfMap();
+		Map<String,Map<String,Double>> map2 = tfidfResult2.getTfidfMap();
 		
 		Set<String> providers= map1.keySet();
 		Map<String,Double> tfidfMapAsOneDeck1 = new HashMap<>();
