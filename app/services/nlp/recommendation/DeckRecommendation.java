@@ -112,6 +112,9 @@ public class DeckRecommendation {
 		for (String provider : providers) {
 			
 			Map<String,Double> tfidfMap = tfidfmap.get(provider);
+			if(tfidfMap.isEmpty()){
+				continue;
+			}
 			String keynameForSolr = NLPResultUtil.getSolrNameForProviderName(provider);
 			
 			// calculate & create lucene stuff
