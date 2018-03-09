@@ -197,8 +197,8 @@ public class NLPController extends Controller{
     @javax.ws.rs.Path(value = "/deckRecommendationBackgroundInfo")
     @ApiOperation(
     		tags = "deck",
-    		value = "retrieves deck recommendation background infos for a given deck id", 
-    		notes = "retrieves deck recommendation background infos for a given deck id by calculating tfidf using frequency information stored nlp results of nlp store")
+    		value = "retrieves deck recommendation background infos for a given deck id (most important tokens and entities and lucene query)", 
+    		notes = "retrieves deck recommendation background infos for a given deck id (most important tokens and entities and lucene query) by calculating tfidf using frequency information stored nlp results of nlp store")
     @ApiResponses(
     		value = {
     				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
@@ -287,7 +287,7 @@ public class NLPController extends Controller{
     @javax.ws.rs.Path(value = "/deckSimilarityExtendedInfo")
     @ApiOperation(
     		tags = "deck",
-    		value = "calculates cosine similarity between 2 given decks based on the content", 
+    		value = "calculates cosine similarity between 2 given decks based on the content - includes info about shared entries", 
     		notes = "calculates cosine similarity between 2 given decks based on the content by using top x tfidf terms (tokens, named entities & spotlight entities) calculated using frequency information stored nlp results of nlp store")
     @ApiResponses(
     		value = {
