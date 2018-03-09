@@ -1,6 +1,9 @@
 package services.nlp.tfidf;
 
 import java.util.Map;
+import java.util.Set;
+
+import services.util.Sorter;
 
 public class TFIDFResult {
 
@@ -43,6 +46,14 @@ public class TFIDFResult {
 		return tfidfValuesWereCalculatedLanguageDependent;
 	}
 
-	
+	public void reduceTfIdfMapToTopX(int x){
+		Set<String> providerNames = tfidfMap.keySet();
+		for (String provider : providerNames) {
+			
+			Map<String,Double> map = tfidfMap.get(provider);
+			Map<String,Double> reducedMap = Sorter.keepOnlyTopXValues(map, x);
+			this.tfidfMap.put(provider, reducedMap);
+		}
+	}
 	
 }
