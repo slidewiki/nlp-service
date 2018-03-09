@@ -26,6 +26,7 @@ import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
+import services.nlp.microserviceutil.SolrResultUtil;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NerAnnotation;
 import services.nlp.recommendation.CosineSimilarity;
@@ -495,113 +496,66 @@ public class NLPComponent {
 	
 	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider){
 		
-		ObjectNode result = Json.newObject();
-		
+	
 		TFIDFResult tfidfResult = getTfidfResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		result.put("language", tfidfResult.getLanguage());
-		result.put("numberOfDecksWithGivenLanguage", tfidfResult.getNumberOfDecksInPlatformWithGivenLanguage());
-		result.put("numberOfDecksOverall", tfidfResult.getNumberOfDecksInPlatformOverall());
-		result.put("tfidfValuesWereCalculatedLanguageDependent", tfidfResult.isTfidfValuesWereCalculatedLanguageDependent());
 		
-		Map<String,Map<String,Double>> tfidfmap = tfidfResult.getTfidfMap();
-		Set<String> providers= tfidfmap.keySet();
-
-		StringBuilder sb = new StringBuilder();
-		for (String provider : providers) {
-			
-			Map<String,Double> tfidfMap = tfidfmap.get(provider);
-			String keynameForSolr = NLPResultUtil.getSolrNameForProviderName(provider);
-			JsonNode nodeForProvider = DeckRecommendation.createJsonNodeForResponseFromMap(tfidfMap, maxTermsToConsider, keynameForSolr);
-			String luceneQueryStringForProvider = nodeForProvider.get("luceneQuery").asText();
-			sb.append(luceneQueryStringForProvider);
-			
-			result.set(provider, nodeForProvider);
-		}
-		result.put("luceneQuery", sb.toString());
-		
+		ObjectNode result = DeckRecommendation.createDeckRecommendationBackgroundInfoNodeIncludingLuceneQueryFromTFIDFResult(tfidfResult, maxTermsToConsider);
 		return result;
+		
 	}
 	
-	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
+	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
 		
-		ObjectNode result = Json.newObject();
-
+		// get tfidf
 		TFIDFResult tfidfResult1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 		TFIDFResult tfidfResult2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		Map<String,Map<String,Double>> map1 = tfidfResult1.getTfidfMap();
-		Map<String,Map<String,Double>> map2 = tfidfResult2.getTfidfMap();
-		
-		Set<String> providers= map1.keySet();
-		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck1 = new HashMap<>();
-		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck2 = new HashMap<>();
-		
-		ArrayNode detailsArrayNode = Json.newArray();
-		for (String provider : providers) {
-		
-			Map<String,Double> tfidfMapDeck1 = map1.get(provider);
-			Map<String,Double> tfidfMapDeck2 = map2.get(provider);
-			
-			Map<String,Double> tfidfMapDeck1OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck1, maxValuesToConsider);
-			Map<String,Double> tfidfMapDeck2OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck2, maxValuesToConsider);
 
-			tfidfMapForAllProvidersTogetherForDeck1.putAll(tfidfMapDeck1OnlyTopX);
-			tfidfMapForAllProvidersTogetherForDeck2.putAll(tfidfMapDeck2OnlyTopX);
-
-			double d = CosineSimilarity.getCosineSimilarity(tfidfMapDeck1OnlyTopX, tfidfMapDeck2OnlyTopX);
-			
-			ObjectNode node = Json.newObject();
-			node.put("shortname", NLPResultUtil.getShortName(provider));
-			node.put("longname", provider);
-			node.put("cosinesimilarity", d);
-			detailsArrayNode.add(node);
-			
-		}
-
-		// calculate cosine similarity as well for tokens, NEs, Spotlight entities as one
-		double d = CosineSimilarity.getCosineSimilarity(tfidfMapForAllProvidersTogetherForDeck1, tfidfMapForAllProvidersTogetherForDeck2);
-		result.put("cosineSimilarity_alltogether", d);
-
-		result.set("details", detailsArrayNode);
-		
+		ObjectNode result = calculateCosineSimilarity(tfidfResult1, tfidfResult2, maxValuesToConsider, titleBoostSettings, termFilterSettings, minDocsToPerformLanguageDependent, calculateAndIncludeSimilarityPerProvider, includeDetailsAboutSharedEntriesForProviders);
 		return result;
-
-		
 	}
 
-	// TODO: add intersection (shared tokens/entities)
-	public ObjectNode calculateCosineSimilarityExtendedInfo(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
+	public ObjectNode calculateCosineSimilarity(TFIDFResult tfidfResult1, TFIDFResult tfidfResult2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
 		
 		ObjectNode result = Json.newObject();
 
-		TFIDFResult tfidfResult1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		TFIDFResult tfidfResult2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		Map<String,Map<String,Double>> map1 = tfidfResult1.getTfidfMap();
-		Map<String,Map<String,Double>> map2 = tfidfResult2.getTfidfMap();
-		
-		Set<String> providers= map1.keySet();
+		// reduce to top x
+		tfidfResult1.reduceTfIdfMapToTopX(maxValuesToConsider);
+		tfidfResult2.reduceTfIdfMapToTopX(maxValuesToConsider);
+
+		// get providers
+		Set<String> providers= tfidfResult1.getTfidfMap().keySet();
+
 		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck1 = new HashMap<>();
 		Map<String,Double> tfidfMapForAllProvidersTogetherForDeck2 = new HashMap<>();
 		
 		ArrayNode detailsArrayNode = Json.newArray();
 		for (String provider : providers) {
 		
-			Map<String,Double> tfidfMapDeck1 = map1.get(provider);
-			Map<String,Double> tfidfMapDeck2 = map2.get(provider);
-			
-			Map<String,Double> tfidfMapDeck1OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck1, maxValuesToConsider);
-			Map<String,Double> tfidfMapDeck2OnlyTopX = Sorter.keepOnlyTopXValues(tfidfMapDeck2, maxValuesToConsider);
+			Map<String,Double> tfidfMapDeck1 = tfidfResult1.getTfidfMap().get(provider);
+			Map<String,Double> tfidfMapDeck2 = tfidfResult2.getTfidfMap().get(provider);
 
-			tfidfMapForAllProvidersTogetherForDeck1.putAll(tfidfMapDeck1OnlyTopX);
-			tfidfMapForAllProvidersTogetherForDeck2.putAll(tfidfMapDeck2OnlyTopX);
+			tfidfMapForAllProvidersTogetherForDeck1.putAll(tfidfMapDeck1);
+			tfidfMapForAllProvidersTogetherForDeck2.putAll(tfidfMapDeck2);
 
-			ObjectNode detailsNode = Json.newObject();
-			detailsNode.put("shortname", NLPResultUtil.getShortName(provider));
-			detailsNode.put("longname", provider);
-
-			detailsNode = CosineSimilarity.getCosineSimilarityWithExtendedInfo(tfidfMapDeck1OnlyTopX, tfidfMapDeck2OnlyTopX, detailsNode);
-			
+			if(calculateAndIncludeSimilarityPerProvider){
 				
-			detailsArrayNode.add(detailsNode);
+				ObjectNode detailsNode = Json.newObject();
+				detailsNode.put("shortname", NLPResultUtil.getShortName(provider));
+				detailsNode.put("longname", provider);
+
+				if(includeDetailsAboutSharedEntriesForProviders){
+					
+					// add cosine similarity and details about shared entries to given node
+					detailsNode = CosineSimilarity.getCosineSimilarityWithExtendedInfo(tfidfMapDeck1, tfidfMapDeck2, detailsNode);
+				}else{
+					// just calculate similarity and add it to details node
+					double d = CosineSimilarity.getCosineSimilarity(tfidfMapDeck1, tfidfMapDeck2);
+					detailsNode.put("cosinesimilarity", d);
+				}
+				
+				detailsArrayNode.add(detailsNode);
+
+			}
 
 		}
 
@@ -613,9 +567,66 @@ public class NLPComponent {
 		
 		return result;
 
-		
 	}
 
+	public ObjectNode getDeckRecommendation(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider, int maxRecommendationsToReturn){
+
+		
+		ObjectNode result = Json.newObject();
+		
+		// identify most important tokens and entities in given deck
+		TFIDFResult tfidfResultGivenDeck = getTfidfResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+
+		// create lucene query from deck recommendation background info, to query similar decks based on most important terms and entities contained in deck
+		ObjectNode deckRecommendationBackgroundInfoNode = DeckRecommendation.createDeckRecommendationBackgroundInfoNodeIncludingLuceneQueryFromTFIDFResult(tfidfResultGivenDeck, maxTermsToConsider);
+
+		// query lucene/solr
+		String luceneQuery = deckRecommendationBackgroundInfoNode.get("luceneQuery").textValue();
+		// TODO: recommendation: add exclude given deckId, exclude forks, maybe reduce to same language
+
+		ObjectNode luceneResultNode = nlpStorageUtil.getSolrResult(luceneQuery);
+		ArrayNode solrResults = SolrResultUtil.getSolrResultArrayNode(luceneResultNode);
+
+		// for each returned deck
+		Iterator<JsonNode> iterator = solrResults.iterator();		
+		Map<String,Double> mapDeckIdToSimilarityValue = new HashMap<>();	
+		while(iterator.hasNext()){
+			
+			JsonNode solrResult = iterator.next();
+			String solrResultDeckId = SolrResultUtil.getDeckIdFromSingleSolrResultEntry(solrResult);
+			double solrResultImportanceValue = SolrResultUtil.getSolrValueFromSingleSolrResultEntry(solrResult);
+			
+			// calculate most important tokens and entities for returned deck id
+			TFIDFResult tfidfResultSolrDeck = getTfidfResult(solrResultDeckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+
+			ObjectNode cosineSimilarityNode = calculateCosineSimilarity(tfidfResultGivenDeck, tfidfResultSolrDeck, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, false, false);
+			
+			double cosinesimilarity = cosineSimilarityNode.get("cosineSimilarity").asDouble();
+			
+			mapDeckIdToSimilarityValue.put(deckId, cosinesimilarity);
+			
+		}
+		
+		// sort by similarity value reverse and include in result until maxRecommendationsToReturn
+		List<Entry<String, Double>> sortedDeckIdsWithSimilarityValue = Sorter.sortByValueAndReturnAsList(mapDeckIdToSimilarityValue, true);
+		ArrayNode resultArrayNode = Json.newArray();
+		int counter = 0;
+		for (Entry<String, Double> entry : sortedDeckIdsWithSimilarityValue) {
+			if(counter >= maxRecommendationsToReturn){
+				break;
+			}
+			counter++;
+			ObjectNode entryNode = Json.newObject();
+			entryNode.put("deckId", entry.getKey());
+			entryNode.put("value", entry.getValue());
+			
+			resultArrayNode.add(entryNode);
+		}
+		
+		result.set("contentbasedRecommendations", resultArrayNode);
+		return result;
+	}
+	
 	public ILanguageDetector getLanguageDetector() {
 		return languageDetector;
 	}

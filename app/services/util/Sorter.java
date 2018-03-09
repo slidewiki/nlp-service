@@ -58,6 +58,12 @@ public class Sorter {
 	
 	public static <E,F> Map<E,F> keepOnlyTopXValues(Map<E,F> map, int maximumTopXValuesToKeep){
 		
+		if(maximumTopXValuesToKeep<0){
+			return map;
+		}
+		if(map.size()<=maximumTopXValuesToKeep){
+			return map;
+		}
 		Map<E,F> result = new HashMap<>();
 		List<Entry<E, F>> sortedList = sortByValueAndReturnAsList(map, true);
 		int counter = 0;

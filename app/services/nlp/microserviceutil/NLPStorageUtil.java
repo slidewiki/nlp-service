@@ -9,6 +9,10 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.NotImplementedException;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 public class NLPStorageUtil {
 
 	private Client client;
@@ -90,6 +94,11 @@ public class NLPStorageUtil {
 		Integer result = Integer.valueOf(string);
 		return result;
 			
+	}
+
+	public ObjectNode getSolrResult(String luceneQuery) {
+		// TODO: recommendation: not implemented yet: NLPStorageUtil.getSolrResult: implement this method to get solr result via nlp store
+		throw new NotImplementedException("method getSolrResult from nlp store not yet implememented!");
 	}
 	
 }

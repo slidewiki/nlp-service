@@ -269,7 +269,7 @@ public class NLPController extends Controller{
     	try{
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
         	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
-			ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent);
+			ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, true, false);
         	Result r = Results.ok(resultNode);        	
             return r;
     	}catch (WebApplicationException e) {
@@ -313,7 +313,7 @@ public class NLPController extends Controller{
     	try{
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
         	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
-			ObjectNode resultNode = nlpComponent.calculateCosineSimilarityExtendedInfo(deckId1, deckId2, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent);
+			ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, true, true);
         	Result r = Results.ok(resultNode);        	
             return r;
     	}catch (WebApplicationException e) {
@@ -328,6 +328,8 @@ public class NLPController extends Controller{
        
     }
 
+    // TODO: recommendation: add receommendation method to NLP controller and route (when other methods for Solr are implemented)
+    
     @javax.ws.rs.Path(value = "/dbpediaspotlight")
     @ApiOperation(
     		tags = "sub",
