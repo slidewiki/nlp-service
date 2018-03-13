@@ -26,6 +26,8 @@ after_success:
 - openssl aes-256-cbc -K $encrypted_5ed05c44ff65_key -iv $encrypted_5ed05c44ff65_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
 - activator clean docker:stage
 - cp Dockerfile target/docker/
+- cp entrypoint.sh target/docker/stage/opt/
+- cp application.conf.template target/docker/stage/opt/
 - cd target/docker
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ../../travis_scripts/dockerhub.sh ; fi
 - if [[ "$TRAVIS_TAG" =~ ^[0-9]+(\.[0-9]+)+$ ]] ; then ../../travis_scripts/dockerhub.sh ; fi
