@@ -31,5 +31,5 @@ RUN apt-get update && \
 #   Run!   #
 # -------- #
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
 # CMD ["bin/nlp-services"]
