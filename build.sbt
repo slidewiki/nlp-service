@@ -27,6 +27,8 @@ libraryDependencies ++= Seq(
   "org.glassfish.jersey.core" % "jersey-client" % "2.26-b02"
  )
 
-fork in run := true
 
 mappings in Universal ++= directory("resources")
+
+
+fork in run := true

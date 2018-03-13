@@ -8,6 +8,7 @@ branches:
   only:
   - "/^(?i:SWIK)-.*$/"
   - master
+  - /^\d+(\.\d+)+$/
 cache:
   directories:
   - "$HOME/.sbt"
@@ -20,13 +21,14 @@ before_script:
 - activator update
 script:
 - activator compile
-- activator test
 after_success:
+- activator test
 - openssl aes-256-cbc -K $encrypted_5ed05c44ff65_key -iv $encrypted_5ed05c44ff65_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
 - activator clean docker:stage
 - cp Dockerfile target/docker/
 - cd target/docker
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ../../travis_scripts/dockerhub.sh ; fi
+- if [[ "$TRAVIS_TAG" =~ ^[0-9]+(\.[0-9]+)+$ ]] ; then ../../travis_scripts/dockerhub.sh ; fi
 - cd ../../
 - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then ./travis_scripts/deploy.sh ; fi
 after_script:
