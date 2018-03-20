@@ -9,9 +9,10 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
-import org.apache.commons.lang3.NotImplementedException;
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import play.libs.Json;
+import services.util.StringRepresentation;
 
 public class NLPStorageUtil {
 
@@ -96,9 +97,34 @@ public class NLPStorageUtil {
 			
 	}
 
-	public ObjectNode getSolrResult(String luceneQuery) {
-		// TODO: recommendation: not implemented yet: NLPStorageUtil.getSolrResult: implement this method to get solr result via nlp store
-		throw new NotImplementedException("method getSolrResult from nlp store not yet implememented!");
+	public Response queryIndex(String query, String language, String[] excludeDeckIds, int maxResultsToReturn) {
+		
+		ObjectNode jsonObject = getJsonObjectToQueryNLPStoreIndex(query, language, excludeDeckIds, maxResultsToReturn);
+		String indexQuery = jsonObject.toString();
+		
+		String URL = this.URL + "/nlp/query";
+		
+		Response response =  client.target(URL)
+                .request()
+                .accept(MediaType.APPLICATION_JSON)
+                .post(Entity.entity(indexQuery, MediaType.APPLICATION_JSON));
+        
+        return response;
+	}
+	
+	public static ObjectNode getJsonObjectToQueryNLPStoreIndex(String query, String language, String[] excludeDeckIds, int maxResultsToReturn){
+		
+		ObjectNode result = Json.newObject();
+		result.put("query", query);
+		if(language!=null && language.length()>0){
+			result.put("language", language);
+		}
+		if(excludeDeckIds!=null && excludeDeckIds.length>0){
+			result.put("excludeDeckIds", StringRepresentation.fromArray(excludeDeckIds, ","));
+		}
+		result.put("pageSize", maxResultsToReturn);
+		
+		return result;
 	}
 	
 }
