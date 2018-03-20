@@ -51,13 +51,9 @@ public class DeckRecommendation {
 			String valueRounded = df.format(valueNormalized).replace(',', '.');
 			
 			String valueForLuceneQuery = valueRounded;
-			// remove leading zero (normalized can be only start with 0 or 1
-			if(valueRounded.startsWith("0")){
-				valueForLuceneQuery = valueRounded.substring(1);
-			}
 			
 			sbLuceneQuery.append(" " + keynameForSolr + ":");
-			sbLuceneQuery.append(key);
+			sbLuceneQuery.append("\""+ key + "\"");
 			sbLuceneQuery.append("^");
 			sbLuceneQuery.append(valueForLuceneQuery);
 			
