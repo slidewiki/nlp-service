@@ -1,5 +1,6 @@
 package services.nlp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -584,9 +585,25 @@ public class NLPComponent {
 		String luceneQuery = deckRecommendationBackgroundInfoNode.get("luceneQuery").textValue();
 		String language = deckRecommendationBackgroundInfoNode.get("language").textValue();
 		
-		// TODO: retrieve forks	from given deck and add them to decksToExcludeFromCandidates: use deck service `/deck/:deckid/forkGroup`
-		String[] decksToExcludeFromCandidates = new String[]{deckId};
-		Response responseFromIndex = nlpStorageUtil.queryIndex(luceneQuery, language, new String[]{deckId}, maxCandidatesToUseForSimilarityCalculation);
+		// set decks to exclude from Candidates
+		List<String> decksToExcludeFromCandidates = new ArrayList<>();
+		decksToExcludeFromCandidates.add(deckId);
+
+		// retrieve forks from given deck and add them to decksToExcludeFromCandidates: use deck service `/deck/:deckid/forkGroup`
+		Response responseForForks = deckServiceUtil.getForksForGivenDeck(deckId);
+		if(responseForForks.getStatus()!=200){
+			throw new WebApplicationException("Problem calling deckServiceUtil to retrieve forks for given deck. Returned status " + responseForForks.getStatus());
+		}
+		ArrayNode forksArrayNode = (ArrayNode) MicroserviceUtil.getJsonFromMessageBody(responseForForks);
+		Iterator<JsonNode> iteratorForForks = forksArrayNode.iterator();
+		while(iteratorForForks.hasNext()){
+			JsonNode fork = iteratorForForks.next();
+			String fordId = fork.asText();
+			decksToExcludeFromCandidates.add(fordId);
+		}
+		
+		
+		Response responseFromIndex = nlpStorageUtil.queryIndex(luceneQuery, language, decksToExcludeFromCandidates, maxCandidatesToUseForSimilarityCalculation);
 		if(responseFromIndex.getStatus()!=200){
 			throw new WebApplicationException("Problem calling nlpStore index to retrieve candidates. Returned status " + responseFromIndex.getStatus() + ". Query to index was:\n\"" + NLPStorageUtil.getJsonObjectToQueryNLPStoreIndex(luceneQuery, language, decksToExcludeFromCandidates, maxCandidatesToUseForSimilarityCalculation) + "\"", responseFromIndex);
 		}

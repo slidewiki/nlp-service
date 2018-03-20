@@ -1,5 +1,7 @@
 package services.nlp.microserviceutil;
 
+import java.util.List;
+
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -97,7 +99,7 @@ public class NLPStorageUtil {
 			
 	}
 
-	public Response queryIndex(String query, String language, String[] excludeDeckIds, int maxResultsToReturn) {
+	public Response queryIndex(String query, String language, List<String> excludeDeckIds, int maxResultsToReturn) {
 		
 		ObjectNode jsonObject = getJsonObjectToQueryNLPStoreIndex(query, language, excludeDeckIds, maxResultsToReturn);
 		String indexQuery = jsonObject.toString();
@@ -112,15 +114,15 @@ public class NLPStorageUtil {
         return response;
 	}
 	
-	public static ObjectNode getJsonObjectToQueryNLPStoreIndex(String query, String language, String[] excludeDeckIds, int maxResultsToReturn){
+	public static ObjectNode getJsonObjectToQueryNLPStoreIndex(String query, String language, List<String> excludeDeckIds, int maxResultsToReturn){
 		
 		ObjectNode result = Json.newObject();
 		result.put("query", query);
 		if(language!=null && language.length()>0){
 			result.put("language", language);
 		}
-		if(excludeDeckIds!=null && excludeDeckIds.length>0){
-			result.put("excludeDeckIds", StringRepresentation.fromArray(excludeDeckIds, ","));
+		if(excludeDeckIds!=null && excludeDeckIds.size()>0){
+			result.put("excludeDeckIds", StringRepresentation.fromList(excludeDeckIds, ","));
 		}
 		result.put("pageSize", maxResultsToReturn);
 		

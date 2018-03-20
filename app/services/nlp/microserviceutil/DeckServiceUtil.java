@@ -51,6 +51,16 @@ public class DeckServiceUtil {
 		return response;
 	}
 	
+	public Response getForksForGivenDeck(String deckId){
+		
+		String URL = serviceURL + "/deck/" + deckId + "/forkGroup";
+		Response response = client.target(URL)
+        .request(MediaType.APPLICATION_JSON).get();
+		
+		return response;
+	}
+	
+	
 	/**
 	 * Returns iterator for slides for given deck service response. Expects a normal response object. Please check for error responses before.
 	 * @param deckserviceResult
