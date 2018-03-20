@@ -632,7 +632,8 @@ public class NLPComponent {
 			resultArrayNode.add(entryNode);
 		}
 		
-		result.set("deckRecommendationsBasedOnDeckContentSimilarity", resultArrayNode);
+		result.put("name", "deckRecommendationsBasedOnDeckContentSimilarity");
+		result.set("items", resultArrayNode);
 		return result;
 	}
 	
