@@ -342,7 +342,7 @@ public class NLPController extends Controller{
     public Result deckRecommendationOfSimilarDecks(
     		@ApiParam(required = true, value = "deckId") String deckId, 
      		@ApiParam(required = true, defaultValue = "10", value = "the maximum number of recommendations to return.") int maxRecommendationsToReturn,
-     		@ApiParam(required = true, defaultValue = "200", value = "the maximum number of candidates to use for similarity calculation") int maxCandidatesToUseForSimilarityCalculation,
+     		@ApiParam(required = true, defaultValue = "30", value = "the maximum number of candidates to use for similarity calculation") int maxCandidatesToUseForSimilarityCalculation,
      		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of top terms to consider. E.g. if set to 10, the top 10 tokens, top 10 named entities and top 10 spotlight resources are used") int tfidfMaxTermsToConsider,
      		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
