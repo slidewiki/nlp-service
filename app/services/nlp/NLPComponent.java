@@ -26,7 +26,7 @@ import services.nlp.microserviceutil.DeckServiceUtil;
 import services.nlp.microserviceutil.MicroserviceUtil;
 import services.nlp.microserviceutil.NLPResultUtil;
 import services.nlp.microserviceutil.NLPStorageUtil;
-import services.nlp.microserviceutil.SolrResultUtil;
+import services.nlp.microserviceutil.NLPStoreIndexResultUtil;
 import services.nlp.ner.INERLanguageDependent;
 import services.nlp.ner.NerAnnotation;
 import services.nlp.recommendation.CosineSimilarity;
@@ -569,7 +569,7 @@ public class NLPComponent {
 
 	}
 
-	public ObjectNode getDeckRecommendation(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider, int maxRecommendationsToReturn){
+	public ObjectNode getDeckRecommendation(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider, int maxCandidatesToUseForSimilarityCalculation, int maxRecommendationsToReturn){
 
 		
 		ObjectNode result = Json.newObject();
@@ -582,28 +582,37 @@ public class NLPComponent {
 
 		// query lucene/solr
 		String luceneQuery = deckRecommendationBackgroundInfoNode.get("luceneQuery").textValue();
-		// TODO: recommendation: add exclude given deckId, exclude forks, maybe reduce to same language
+		String language = deckRecommendationBackgroundInfoNode.get("language").textValue();
+		
+		// TODO: retrieve forks	from given deck and add them to decksToExcludeFromCandidates: use deck service `/deck/:deckid/forkGroup`
+		String[] decksToExcludeFromCandidates = new String[]{deckId};
+		Response responseFromIndex = nlpStorageUtil.queryIndex(luceneQuery, language, new String[]{deckId}, maxCandidatesToUseForSimilarityCalculation);
+		if(responseFromIndex.getStatus()!=200){
+			throw new WebApplicationException("Problem calling nlpStore index to retrieve candidates. Returned status " + responseFromIndex.getStatus() + ". Query to index was:\n\"" + NLPStorageUtil.getJsonObjectToQueryNLPStoreIndex(luceneQuery, language, decksToExcludeFromCandidates, maxCandidatesToUseForSimilarityCalculation) + "\"", responseFromIndex);
+		}
+		JsonNode indexResultNode = MicroserviceUtil.getJsonFromMessageBody(responseFromIndex);
+		ArrayNode itemsArrayNode = NLPStoreIndexResultUtil.getArrayNodeWithItems(indexResultNode);
 
-		ObjectNode luceneResultNode = nlpStorageUtil.getSolrResult(luceneQuery);
-		ArrayNode solrResults = SolrResultUtil.getSolrResultArrayNode(luceneResultNode);
-
+		// TODO: recommendation: handle empty itemnode
+		
 		// for each returned deck
-		Iterator<JsonNode> iterator = solrResults.iterator();		
+		Iterator<JsonNode> iterator = itemsArrayNode.iterator();		
 		Map<String,Double> mapDeckIdToSimilarityValue = new HashMap<>();	
 		while(iterator.hasNext()){
 			
-			JsonNode solrResult = iterator.next();
-			String solrResultDeckId = SolrResultUtil.getDeckIdFromSingleSolrResultEntry(solrResult);
-			double solrResultImportanceValue = SolrResultUtil.getSolrValueFromSingleSolrResultEntry(solrResult);
+			JsonNode itemNode = iterator.next();
+			String itemDeckId = NLPStoreIndexResultUtil.getDeckIdFromSingleItemEntry(itemNode);
+			double itemScore = NLPStoreIndexResultUtil.getValueFromSingleItemEntry(itemNode);
 			
 			// calculate most important tokens and entities for returned deck id
-			TFIDFResult tfidfResultSolrDeck = getTfidfResult(solrResultDeckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+			TFIDFResult tfidfResultItem = getTfidfResult(itemDeckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 
-			ObjectNode cosineSimilarityNode = calculateCosineSimilarity(tfidfResultGivenDeck, tfidfResultSolrDeck, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, false, false);
+			// TODO: recommendation: if needed/wished: include detailed info about shared entities and words for similar decks
+			ObjectNode cosineSimilarityNode = calculateCosineSimilarity(tfidfResultGivenDeck, tfidfResultItem, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, false, false);
 			
 			double cosinesimilarity = cosineSimilarityNode.get("cosineSimilarity").asDouble();
 			
-			mapDeckIdToSimilarityValue.put(deckId, cosinesimilarity);
+			mapDeckIdToSimilarityValue.put(itemDeckId, cosinesimilarity);
 			
 		}
 		
@@ -623,7 +632,7 @@ public class NLPComponent {
 			resultArrayNode.add(entryNode);
 		}
 		
-		result.set("contentbasedRecommendations", resultArrayNode);
+		result.set("deckRecommendationsBasedOnDeckContentSimilarity", resultArrayNode);
 		return result;
 	}
 	
