@@ -68,6 +68,21 @@ public class NLPStorageUtil {
 		return response;
 	}
 	
+	/***
+	 * Returns TFIDFResult which was precalculated and stored
+	 * Has the same structure like TFIDF Result result resturned from NLP service GET /nlp/calculateTfidfValues/{deckId}
+	 * @param deckId
+	 * @return
+	 */
+	public Response getPrecalculatedTFIDFResult(String deckId){
+		
+        String URL = this.URL + "/nlp/precalculatedTFIDFResult/" + deckId;
+		Response response = client.target(URL)
+					.request().
+					get();
+		
+		return response;
+	}
 	 
 	public Response updateNLPStoreByRecalculatingNLPResult(String deckId){
 		

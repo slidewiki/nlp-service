@@ -37,13 +37,17 @@ import services.nlp.recommendation.NlpTag;
 import services.nlp.recommendation.TermFilterSettings;
 import services.nlp.slidecontentutil.SlideContentUtil;
 import services.nlp.stopwords.IStopwordRemover;
+import services.nlp.tfidf.ITFIDFResultProvider;
 import services.nlp.tfidf.TFIDF;
 import services.nlp.tfidf.TFIDFResult;
+import services.nlp.tfidf.TFIDFResultProviderCalculateViaNLPStoreFrequencies;
+import services.nlp.tfidf.TFIDFResultProviderRetrievedViaStoredPrecalculatedTfidfResult;
 import services.nlp.tfidf.TitleBoostSettings;
 import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
 import services.util.NodeUtil;
 import services.util.Sorter;
+import services.util.Timer;
 
 //TODO: clean up
 
@@ -150,9 +154,7 @@ public class NLPComponent {
 		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
 	}
 	
-	public TFIDFResult getTfidfResult(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
-		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-	}
+
 	
 	
 
@@ -494,28 +496,51 @@ public class NLPComponent {
 		return result;
 	}
 	
+	private TFIDFResult calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsTFIDFResult(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+		return TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+	}
 	
+	public ObjectNode calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsJsonNode(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+		
+		ObjectNode result = Json.newObject();
+		
+		TFIDFResult tfidfResult = calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsTFIDFResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		JsonNode tfidfResultAsJsonNode = Json.toJson(tfidfResult);
+		
+		result.set("tfidfResult", tfidfResultAsJsonNode);
+		return result;
+	}
+	
+	// TODO: remove this method, tell Jaume to use tfidf calculation or tfidf from nlp store instead
 	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider){
 		
 	
-		TFIDFResult tfidfResult = getTfidfResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResult = calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsTFIDFResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
 		
 		ObjectNode result = DeckRecommendation.createDeckRecommendationBackgroundInfoNodeIncludingLuceneQueryFromTFIDFResult(tfidfResult, maxTermsToConsider);
 		return result;
 		
 	}
 	
-	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
+	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, boolean performLiveTFIDFCalculation, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
 		
-		// get tfidf
-		TFIDFResult tfidfResult1 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId1, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		TFIDFResult tfidfResult2 = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId2, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		ITFIDFResultProvider tfidfResultProvider = getTFIDFProvider(performLiveTFIDFCalculation, titleBoostSettings, termFilterSettings, minDocsToPerformLanguageDependent);
+	
+		ObjectNode result = calculateCosineSimilarityViaTFIDFResultProvider(deckId1, deckId2, tfidfResultProvider, maxValuesToConsider, calculateAndIncludeSimilarityPerProvider, includeDetailsAboutSharedEntriesForProviders);
+		return result;
+	}
+	
+	private ObjectNode calculateCosineSimilarityViaTFIDFResultProvider(String deckId1, String deckId2, ITFIDFResultProvider tfidfResultProvider, int maxValuesToConsider, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
+		
+		// get tfidf result via provider
+		TFIDFResult tfidfResult1 = tfidfResultProvider.provideTFIDFResult(deckId1);
+		TFIDFResult tfidfResult2 = tfidfResultProvider.provideTFIDFResult(deckId1);
 
-		ObjectNode result = calculateCosineSimilarity(tfidfResult1, tfidfResult2, maxValuesToConsider, titleBoostSettings, termFilterSettings, minDocsToPerformLanguageDependent, calculateAndIncludeSimilarityPerProvider, includeDetailsAboutSharedEntriesForProviders);
+		ObjectNode result = calculateCosineSimilarityUsingGivenTFDIDFResults(tfidfResult1, tfidfResult2, maxValuesToConsider, calculateAndIncludeSimilarityPerProvider, includeDetailsAboutSharedEntriesForProviders);
 		return result;
 	}
 
-	public ObjectNode calculateCosineSimilarity(TFIDFResult tfidfResult1, TFIDFResult tfidfResult2, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
+	private ObjectNode calculateCosineSimilarityUsingGivenTFDIDFResults(TFIDFResult tfidfResult1, TFIDFResult tfidfResult2, int maxValuesToConsider, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
 		
 		ObjectNode result = Json.newObject();
 
@@ -570,15 +595,35 @@ public class NLPComponent {
 
 	}
 
-	public ObjectNode getDeckRecommendation(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider, int maxCandidatesToUseForSimilarityCalculation, int maxRecommendationsToReturn){
+	public ObjectNode getDeckRecommendation(String deckId, boolean performLiveTFIDFCalculationOfGivenDeck, boolean performLiveTFIDFCalculationOfDeckCandidates, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int tfidfMinDocsToPerformLanguageDependent, int maxTermsToConsider, int maxCandidatesToUseForSimilarityCalculation, int maxRecommendationsToReturn){
+		
+    	ITFIDFResultProvider tfidfResultProviderForGivenDeck = getTFIDFProvider(performLiveTFIDFCalculationOfGivenDeck, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent);
+    	ITFIDFResultProvider tfidfResultProviderForDeckCandidates = getTFIDFProvider(performLiveTFIDFCalculationOfDeckCandidates, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent);
+
+    	return getDeckRecommendation(deckId, tfidfResultProviderForGivenDeck, tfidfResultProviderForDeckCandidates, maxTermsToConsider, maxCandidatesToUseForSimilarityCalculation, maxRecommendationsToReturn);
+    	
+	}
+	
+	private ITFIDFResultProvider getTFIDFProvider(boolean performLiveTFIDFCalculation, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent){
+		
+		ITFIDFResultProvider tfidfResultProvider;
+		if(performLiveTFIDFCalculation){
+			tfidfResultProvider = new TFIDFResultProviderCalculateViaNLPStoreFrequencies(nlpStorageUtil, minDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		}else{
+			tfidfResultProvider = new TFIDFResultProviderRetrievedViaStoredPrecalculatedTfidfResult(nlpStorageUtil);
+		}
+		return tfidfResultProvider;
+	}
+
+	private ObjectNode getDeckRecommendation(String deckId, ITFIDFResultProvider tfidfResultProviderForGivenDeck, ITFIDFResultProvider tfidfResultProviderForDeckCandidates, int maxTermsToConsider, int maxCandidatesToUseForSimilarityCalculation, int maxRecommendationsToReturn){
 
 		
 		ObjectNode result = Json.newObject();
 		
 		// identify most important tokens and entities in given deck
-		TFIDFResult tfidfResultGivenDeck = getTfidfResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
+		TFIDFResult tfidfResultGivenDeck = tfidfResultProviderForGivenDeck.provideTFIDFResult(deckId);
 
-		// create lucene query from deck recommendation background info, to query similar decks based on most important terms and entities contained in deck
+		// create index query from deck recommendation background info, to query similar decks based on most important terms and entities contained in deck
 		ObjectNode deckRecommendationBackgroundInfoNode = DeckRecommendation.createDeckRecommendationBackgroundInfoNodeIncludingLuceneQueryFromTFIDFResult(tfidfResultGivenDeck, maxTermsToConsider);
 
 		// query lucene/solr
@@ -602,7 +647,8 @@ public class NLPComponent {
 			decksToExcludeFromCandidates.add(fordId);
 		}
 		
-		
+//		System.out.println(Timer.getDateAndTime()+ "\tquery candidates from nlp store");
+		// query candidates from nlp store
 		Response responseFromIndex = nlpStorageUtil.queryIndex(luceneQuery, language, decksToExcludeFromCandidates, maxCandidatesToUseForSimilarityCalculation);
 		if(responseFromIndex.getStatus()!=200){
 			throw new WebApplicationException("Problem calling nlpStore index to retrieve candidates. Returned status " + responseFromIndex.getStatus() + ". Query to index was:\n\"" + NLPStorageUtil.getJsonObjectToQueryNLPStoreIndex(luceneQuery, language, decksToExcludeFromCandidates, maxCandidatesToUseForSimilarityCalculation) + "\"", responseFromIndex);
@@ -610,22 +656,27 @@ public class NLPComponent {
 		JsonNode indexResultNode = MicroserviceUtil.getJsonFromMessageBody(responseFromIndex);
 		ArrayNode itemsArrayNode = NLPStoreIndexResultUtil.getArrayNodeWithItems(indexResultNode);
 
-		// TODO: recommendation: handle empty itemnode
+		// TODO: recommendation possible improvement: handle empty result of candidates: repeat with more tfidf values?
 		
+//		System.out.println(Timer.getDateAndTime()+ "\tfor each candidate");
 		// for each returned deck
 		Iterator<JsonNode> iterator = itemsArrayNode.iterator();		
 		Map<String,Double> mapDeckIdToSimilarityValue = new HashMap<>();	
 		while(iterator.hasNext()){
 			
+//			System.out.println("\t" + Timer.getDateAndTime()+ "\t\tnext candidate");
 			JsonNode itemNode = iterator.next();
 			String itemDeckId = NLPStoreIndexResultUtil.getDeckIdFromSingleItemEntry(itemNode);
 			double itemScore = NLPStoreIndexResultUtil.getValueFromSingleItemEntry(itemNode);
 			
-			// calculate most important tokens and entities for returned deck id
-			TFIDFResult tfidfResultItem = getTfidfResult(itemDeckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-
+//			System.out.println("\t" + "\t" + Timer.getDateAndTime()+ "\t\t\tcalc tfidf");
+			// get tfidf result for candidatee via tfidf result provider (e.g. by calculating tfidf values life or retrieve from precalcualted stored result, see implementations of interface ITFIDFResultProvider)
+			TFIDFResult tfidfResultItem = tfidfResultProviderForDeckCandidates.provideTFIDFResult(itemDeckId);				
+			
+//			System.out.println("\t" + "\t" + Timer.getDateAndTime()+ "\t\t\tcalc cosine similarity to given deck");
+			
 			// TODO: recommendation: if needed/wished: include detailed info about shared entities and words for similar decks
-			ObjectNode cosineSimilarityNode = calculateCosineSimilarity(tfidfResultGivenDeck, tfidfResultItem, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, false, false);
+			ObjectNode cosineSimilarityNode = calculateCosineSimilarityUsingGivenTFDIDFResults(tfidfResultGivenDeck, tfidfResultItem, maxTermsToConsider, false, false);
 			
 			double cosinesimilarity = cosineSimilarityNode.get("cosineSimilarity").asDouble();
 			
@@ -633,6 +684,7 @@ public class NLPComponent {
 			
 		}
 		
+
 		// sort by similarity value reverse and include in result until maxRecommendationsToReturn
 		List<Entry<String, Double>> sortedDeckIdsWithSimilarityValue = Sorter.sortByValueAndReturnAsList(mapDeckIdToSimilarityValue, true);
 		ArrayNode resultArrayNode = Json.newArray();
@@ -651,6 +703,10 @@ public class NLPComponent {
 		
 		result.put("name", "deckRecommendationsBasedOnDeckContentSimilarity");
 		result.set("items", resultArrayNode);
+		
+		
+//		System.out.println(Timer.getDateAndTime()+ "\treturn top result");
+
 		return result;
 	}
 	
