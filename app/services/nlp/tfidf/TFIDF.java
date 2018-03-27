@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,10 +35,13 @@ public class TFIDF {
 	 * @param titleBoostSettings for no title boosting set to null, for details of title boosting see {@link TitleBoostSettings}
 	 * @return
 	 */
-	public static TFIDFResult getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings){
+	public static TFIDFResult getTFIDFViaNLPStoreFrequencies(NLPStorageUtil nlpStorageUtil, String deckId, int minDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings) throws WebApplicationException{
 		
 		// get frequencies data from nlp store
 		Response responseFrequencies = nlpStorageUtil.getStatisticsDeckFrequencies(deckId);
+		if(responseFrequencies.getStatus()!=200){
+			throw new WebApplicationException("Problem calling nlpStore to retrieve frequencies statistics. Returned status was " + responseFrequencies.getStatus());		
+		}
 		JsonNode nlpStoreFrequencyNode = MicroserviceUtil.getJsonFromMessageBody(responseFrequencies);
 
 		int frequencyOfMostFrequentWord = FrequencyResultUtil.getfrequencyOfMostFrequentWord(nlpStoreFrequencyNode);
