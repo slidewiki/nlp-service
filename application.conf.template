@@ -369,8 +369,8 @@ swagger.api.info = {
 ## other config params
 
 #service URLs
-deckservice.baseurl = ${SERVICE_URL_DECK} 
-nlpstoreservice.baseurl = ${SERVICE_URL_NLPSTORE} 
+deckservice.baseurl = "${SERVICE_URL_DECK}"
+nlpstoreservice.baseurl = "${SERVICE_URL_NLPSTORE}"
 
 #DBPedia Spotlight
 dbpediaSpotlight.webservice.url = "http://model.dbpedia-spotlight.org/en/annotate"
