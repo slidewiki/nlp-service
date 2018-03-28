@@ -6,7 +6,7 @@ nlpservice:
   environment:
     - APPLICATION_SECRET=sndv9sd98adpvnaa0wefe0fa04nvpdnvp9e+-.sfw03fs
     - VIRTUAL_HOST=nlpservice.experimental.slidewiki.org
-    - SERVICE_URL_DECK="https://deckservice.experimental.slidewiki.org"
-    - SERVICE_URL_NLPSTORE="https://nlpstore.experimental.slidewiki.org"
+    - SERVICE_URL_DECK=https://deckservice.experimental.slidewiki.org
+    - SERVICE_URL_NLPSTORE=https://nlpstore.experimental.slidewiki.org
     - LETSENCRYPT_HOST=nlpservice.experimental.slidewiki.org
     - LETSENCRYPT_EMAIL=meissner@informatik.uni-leipzig.de
