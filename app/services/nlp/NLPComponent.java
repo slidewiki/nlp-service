@@ -148,8 +148,8 @@ public class NLPComponent {
 	}
 
 	
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn){
-		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int tfidfMinDocsToPerformLanguageDependent, int maxEntriesToReturn){
+		return this.tagRecommender.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, maxEntriesToReturn);
 	}
 	
 

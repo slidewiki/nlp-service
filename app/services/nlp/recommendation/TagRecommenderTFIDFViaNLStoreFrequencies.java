@@ -14,22 +14,19 @@ public class TagRecommenderTFIDFViaNLStoreFrequencies implements ITagRecommender
 
 	private NLPStorageUtil nlpStorageUtil;
 	private ITFIDFMerger tfidfMerger;
-	private int tfidfMinDocsToPerformLanguageDependent;
 
 
 
-	public TagRecommenderTFIDFViaNLStoreFrequencies(NLPStorageUtil nlpStorageUtil,
-			int minDocsToPerformLanguageDependent, ITFIDFMerger tfidfMerger) {
+	public TagRecommenderTFIDFViaNLStoreFrequencies(NLPStorageUtil nlpStorageUtil, ITFIDFMerger tfidfMerger) {
 		super();
 		this.nlpStorageUtil = nlpStorageUtil;
-		this.tfidfMinDocsToPerformLanguageDependent = minDocsToPerformLanguageDependent;
 		this.tfidfMerger = tfidfMerger;
 	}
 
 
 
 	@Override
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn) {
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int tfidfMinDocsToPerformLanguageDependent, int maxEntriesToReturn) {
 		
 		// calculate tfidf for tokens, NER and Spotlight
 		TFIDFResult tfidfResult = TFIDF.getTFIDFViaNLPStoreFrequencies(nlpStorageUtil, deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);

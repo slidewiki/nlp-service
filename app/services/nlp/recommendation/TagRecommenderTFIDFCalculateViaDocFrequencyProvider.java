@@ -29,8 +29,6 @@ public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITag
 
 	private NLPStorageUtil nlpStorageUtil;
 	private IDocFrequencyProviderTypeDependent docFrequencyProvider;
-
-	private int minDocsToPerformLanguageDependent;
 	private int maxEntriesToReturnForTFIDF;
 	private ITFIDFMerger tfidfMerger;
 
@@ -38,18 +36,16 @@ public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITag
 	
 	
 	public TagRecommenderTFIDFCalculateViaDocFrequencyProvider(NLPStorageUtil nlpStorageUtil,
-			IDocFrequencyProviderTypeDependent docFrequencyProvider, int minDocsToPerformLanguageDependent,
-			int maxEntriesToReturnForTFIDF, ITFIDFMerger tfidfMerger) {
+			IDocFrequencyProviderTypeDependent docFrequencyProvider, int maxEntriesToReturnForTFIDF, ITFIDFMerger tfidfMerger) {
 		super();
 		this.nlpStorageUtil = nlpStorageUtil;
 		this.docFrequencyProvider = docFrequencyProvider;
-		this.minDocsToPerformLanguageDependent = minDocsToPerformLanguageDependent;
 		this.maxEntriesToReturnForTFIDF = maxEntriesToReturnForTFIDF;
 		this.tfidfMerger = tfidfMerger;
 	}
 
 	@Override
-	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxEntriesToReturn) {		
+	public List<NlpTag> getTagRecommendations(String deckId, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int tfidfMinDocsToPerformLanguageDependent, int maxEntriesToReturn) {		
 		
 		// get nlp result for deck id
 		Response response = nlpStorageUtil.getNLPResultForDeckId(deckId);
@@ -63,7 +59,7 @@ public class TagRecommenderTFIDFCalculateViaDocFrequencyProvider implements ITag
 		
 		
 		// calc tfidf
-		ObjectNode tfidf = TFIDF.getTFIDFViaNLPResultAndDocFreqProvider(nlpResult, docFrequencyProvider, minDocsToPerformLanguageDependent, maxEntriesToReturnForTFIDF);
+		ObjectNode tfidf = TFIDF.getTFIDFViaNLPResultAndDocFreqProvider(nlpResult, docFrequencyProvider, tfidfMinDocsToPerformLanguageDependent, maxEntriesToReturnForTFIDF);
 		Map<String, Map<String, Double>> mapProviderNameToTFIDFEnntries = NLPResultUtil.getTFIDFEntries(tfidf);
 		
 		

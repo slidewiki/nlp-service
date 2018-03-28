@@ -366,7 +366,10 @@ swagger.api.info = {
   #licenseUrl : (String) - Terms Of Service | default : empty
 }
 
+
+###############################
 ## other config params
+###############################
 
 #service URLs
 deckservice.baseurl = "${SERVICE_URL_DECK}"
@@ -402,26 +405,6 @@ stopwords.wortschatz.includeSpecialCharsAtBeginningAdditionalToTopX = true
 stopwords.wortschatz.filepathOfLanguageCodes = "resources/languageCodesWikipedia.txt"
 stopwords.wortschatz.transformStopwordsFromFileToLowerCase = true
 
-
-
-#TFIDF
-
-docFreqProvider_Tokens_SlideWiki1_perDeck_languageDependent = "resources/docFreq_tokens_SlideWiki1_tokensWholeDeck_lowercase_languagedependent"
-docFreqProvider_Tokens_SlideWiki1_perDeck_notlanguageDependent = ""
-docFreqProvider_Spotlight_SlideWiki1_perDeck_languageDependent = "resources/docFreq_spotlight_SlideWiki1_spotlight06WholeDeck_languagedependent"
-docFreqProvider_Spotlight_SlideWiki1_perDeck_notlanguageDependent = "resources/docFreq_spotlight_SlideWiki1_spotlight06WholeDeck_notlanguagedependent"
-
-docFreqProvider_Tokens_SlideWiki2_perDeck_languageDependent = ""
-docFreqProvider_Tokens_SlideWiki2_perDeck_notlanguageDependent = "" 
-docFreqProvider_Spotlight_SlideWiki2_perDeck_languageDependent = "resources/docFreq_spotlight_SlideWiki2-20170302_spotlight035RetrievedPerSlideStoredPerDeck_languageDependent"
-docFreqProvider_Spotlight_SlideWiki2_perDeck_notlanguageDependent = "resources/docFreq_spotlight_SlideWiki2-20170302_spotlight035RetrievedPerSlideStoredPerDeck_notlanguageDependent"
-
-tagrecommendation.tagsToLowerCase = true
-tagrecommendation.minCharLengthForTag = 3
-tagrecommendation.maxNumberOfWordsForNEsWhenNoLinkAvailable = 4
-tagrecommendation.TFIDF.minDocsToPerformLanguageDependent = 100
-tagrecommendation.TFIDF.maxEntriesToReturn = 20
-tagrecommendation.maxEntriesToReturn = 50
 
 
 #play.ws.ssl.loose.acceptAnyCertificate=true

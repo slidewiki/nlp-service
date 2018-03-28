@@ -154,10 +154,8 @@ public class InstanceProvider {
    
     public static TagRecommenderTFIDFViaNLStoreFrequencies provideTagRecommenderTFIDFViaNLPStoreFrequencies(Configuration configuration, NLPStorageUtil nlpStorageUtil){
     	
-  
-    	int minDocsToPerformLanguageDependent = configuration.getInt("tagrecommendation.TFIDF.minDocsToPerformLanguageDependent");
-		ITFIDFMerger tfidfMerger = provideTFIDFMerger();
-		return new TagRecommenderTFIDFViaNLStoreFrequencies(nlpStorageUtil, minDocsToPerformLanguageDependent, tfidfMerger);
+  		ITFIDFMerger tfidfMerger = provideTFIDFMerger();
+		return new TagRecommenderTFIDFViaNLStoreFrequencies(nlpStorageUtil, tfidfMerger);
     }
     
     public static TitleBoostSettings provideTitleBoostSettingDefault(){

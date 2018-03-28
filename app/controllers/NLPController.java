@@ -151,6 +151,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length for a recommended tag.") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWords, 
+     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturn) {
     	
     	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
@@ -160,7 +161,7 @@ public class NLPController extends Controller{
     	
     	try{
 
-        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, maxEntriesToReturn);
+        	List<NlpTag> tags = nlpComponent.getTagRecommendations(deckId, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, maxEntriesToReturn);
         	JsonNode tagNode = Json.toJson(tags);
         	resultNode.set(NLPResultUtil.propertyNameTagRecommendations, tagNode);
 
