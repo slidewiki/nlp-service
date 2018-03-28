@@ -3,12 +3,10 @@ package services.util;
 import java.util.List;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import play.libs.Json;
-import services.nlp.microserviceutil.NLPResultUtil;
 
 public class NodeUtil {
 

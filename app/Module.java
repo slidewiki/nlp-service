@@ -23,12 +23,6 @@ public class Module extends AbstractModule {
     @Override
     public void configure() {
         
-//        bind(ILanguageDetector.class).to(LanguageDetector_optimaize.class);
-//        bind(ITokenizerLanguageDependent.class).to(TokenizerLanguageDependentViaMap.class);
-//        bind(INERLanguageDependent.class).to(NERLanguageDependentViaMap.class);
-//
-//        bind(IHtmlToText.class).to(HTMLJsoup.class);
-
     }
 
     

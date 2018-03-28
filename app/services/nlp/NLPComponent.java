@@ -47,7 +47,6 @@ import services.nlp.tokenization.ITokenizerLanguageDependent;
 import services.nlp.types.TypeCounter;
 import services.util.NodeUtil;
 import services.util.Sorter;
-import services.util.Timer;
 
 //TODO: clean up
 
@@ -68,7 +67,6 @@ public class NLPComponent {
     private IStopwordRemover stopwordRemover;
     private INERLanguageDependent ner;
     private DBPediaSpotlightUtil dbPediaSpotlightUtil;  
-//    private IDocFrequencyProviderTypeDependent docFrequencyProvider; 
     private NLPStorageUtil nlpStorageUtil;
     private ITagRecommender tagRecommender;
     private boolean typesToLowerCase = true;
@@ -157,73 +155,6 @@ public class NLPComponent {
 
 	
 	
-
-	@Deprecated
-	/**
-	 * Deprecated. If this is needed, please check processNLPForDeck.
-	 * @param input
-	 * @param node
-	 * @param dbpediaSpotlightConfidence
-	 * @return
-	 */
-	public ObjectNode performNLP(String input, ObjectNode node, double dbpediaSpotlightConfidence){
-		
-		String plainText = htmlToPlainText.getText(input).trim();
-		node.put(NLPResultUtil.propertyNameOriginalInput, input);
-		node.put(NLPResultUtil.propertyNameHtmlToPlainText, plainText);
-		
-		String detectedLanguage = this.languageDetector.getLanguage(plainText);	
-		node.put(NLPResultUtil.propertyNameLanguage, detectedLanguage);
-		
-    	String[] tokens = this.tokenizer.tokenize(plainText, detectedLanguage);	
-    	JsonNode tokenNode = Json.toJson(tokens);
-    	node.set(NLPResultUtil.propertyNameTokens, tokenNode);
-
-    	List<NerAnnotation> ners = this.ner.getNEs(tokens, detectedLanguage);	
-    	JsonNode nerNode = Json.toJson(ners);
-    	node.set(NLPResultUtil.propertyNameNER, nerNode);
-
-		// dbpediaspotlight
-		Response response = performDBpediaSpotlight(plainText, dbpediaSpotlightConfidence, null);
-		if(response.getStatus()!=200){
-			throw new WebApplicationException("Problem calling DBPedia Spotlight for given text. Returned status " + response.getStatus() + ". Text was:\n\"" + plainText + "\"", response);
-		}
-		JsonNode spotlightresult = MicroserviceUtil.getJsonFromMessageBody(response);
-		node.set(NLPResultUtil.propertyNameDBPediaSpotlight, spotlightresult);
-
-		
-		// frequencyOfMostFrequentType (needed for tfidf later, stored in nlp result)
-		Map<String,Integer> wordCountings = TypeCounter.getTypeCountings(tokens, typesToLowerCase);
-		List<Entry<String,Integer>> wordCountingsSortedAsList = Sorter.sortByValueAndReturnAsList(wordCountings, true);
-		int frequencyOfMostFrequentType = wordCountingsSortedAsList.get(0).getValue();  // 
-		node.put(NLPResultUtil.propertyNameFrequencyOfMostFrequentWord, frequencyOfMostFrequentType);
-	
-		// types stop words removed
-		Map<String,Integer> wordCountingsStopWordsRemoved = new HashMap<>(wordCountings);
-		stopwordRemover.removeStopwords(wordCountingsStopWordsRemoved, detectedLanguage); // might also include removal of special chars when stopword remover wortschatz is used 
-		
-		// remove numbers
-		Iterator<Map.Entry<String,Integer>> iter = wordCountingsStopWordsRemoved.entrySet().iterator();
-		while (iter.hasNext()) {
-		    Map.Entry<String,Integer> entry = iter.next();
-		    if(StringUtils.isNumeric(entry.getKey())){
-		        iter.remove();
-		    }
-		}
-		
-		// add to nlp result: words without stopwords sorted by frequency
-		JsonNode wordCountingsStopWordsRemovedNode = null;
-		if(wordCountingsStopWordsRemoved.size()>0){
-			// output types without stopwords sorted by frequency
-			List<Entry<String,Integer>> wordCountingsSortedStopWordsRemoved=  Sorter.sortByValueAndReturnAsList(wordCountingsStopWordsRemoved, true);
-			wordCountingsStopWordsRemovedNode = NodeUtil.createArrayNodeFromStringIntegerEntryList(wordCountingsSortedStopWordsRemoved, NLPResultUtil.propertyNameInFrequencyEntriesForWord, NLPResultUtil.propertyNameInFrequencyEntriesForFrequency);
-			node.set(NLPResultUtil.propertyNameWordFrequenciesExclStopwords, wordCountingsStopWordsRemovedNode);
-		}
-		
-		// frequencies of NEs and Spotlight entities are not added, add code here if these should be added 
-		
-    	return node;
-	}
 
 	/**
 	 * 
@@ -511,17 +442,6 @@ public class NLPComponent {
 		return result;
 	}
 	
-	// TODO: remove this method, tell Jaume to use tfidf calculation or tfidf from nlp store instead
-	public ObjectNode getDeckRecommendationBackgroundInfo(String deckId, int tfidfMinDocsToPerformLanguageDependent, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int maxTermsToConsider){
-		
-	
-		TFIDFResult tfidfResult = calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsTFIDFResult(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
-		
-		ObjectNode result = DeckRecommendation.createDeckRecommendationBackgroundInfoNodeIncludingLuceneQueryFromTFIDFResult(tfidfResult, maxTermsToConsider);
-		return result;
-		
-	}
-	
 	public ObjectNode calculateCosineSimilarity(String deckId1, String deckId2, boolean performLiveTFIDFCalculation, int maxValuesToConsider, TitleBoostSettings titleBoostSettings, TermFilterSettings termFilterSettings, int minDocsToPerformLanguageDependent, boolean calculateAndIncludeSimilarityPerProvider, boolean includeDetailsAboutSharedEntriesForProviders){
 		
 		ITFIDFResultProvider tfidfResultProvider = getTFIDFProvider(performLiveTFIDFCalculation, titleBoostSettings, termFilterSettings, minDocsToPerformLanguageDependent);
@@ -661,13 +581,13 @@ public class NLPComponent {
 //		System.out.println(Timer.getDateAndTime()+ "\tfor each candidate");
 		// for each returned deck
 		Iterator<JsonNode> iterator = itemsArrayNode.iterator();		
-		Map<String,Double> mapDeckIdToSimilarityValue = new HashMap<>();	
+		Map<String,Double> mapDeckIdToSimilarityValue = new HashMap<>();
 		while(iterator.hasNext()){
 			
 //			System.out.println("\t" + Timer.getDateAndTime()+ "\t\tnext candidate");
 			JsonNode itemNode = iterator.next();
 			String itemDeckId = NLPStoreIndexResultUtil.getDeckIdFromSingleItemEntry(itemNode);
-			double itemScore = NLPStoreIndexResultUtil.getValueFromSingleItemEntry(itemNode);
+			//double itemScore = NLPStoreIndexResultUtil.getValueFromSingleItemEntry(itemNode);
 			
 //			System.out.println("\t" + "\t" + Timer.getDateAndTime()+ "\t\t\tcalc tfidf");
 			// get tfidf result for candidatee via tfidf result provider (e.g. by calculating tfidf values life or retrieve from precalcualted stored result, see implementations of interface ITFIDFResultProvider)
@@ -675,12 +595,13 @@ public class NLPComponent {
 			
 //			System.out.println("\t" + "\t" + Timer.getDateAndTime()+ "\t\t\tcalc cosine similarity to given deck");
 			
-			// TODO: recommendation: if needed/wished: include detailed info about shared entities and words for similar decks
+			// TODO: recommendation: if needed/wished: include detailed info about shared entities and words for similar decks. Detailed infos can be retrieved by setting parameter "includeDetailsAboutSharedEntriesForProviders" to true. These then have to be included in the returned json object
 			ObjectNode cosineSimilarityNode = calculateCosineSimilarityUsingGivenTFDIDFResults(tfidfResultGivenDeck, tfidfResultItem, maxTermsToConsider, false, false);
 			
 			double cosinesimilarity = cosineSimilarityNode.get("cosineSimilarity").asDouble();
 			
 			mapDeckIdToSimilarityValue.put(itemDeckId, cosinesimilarity);
+			
 			
 		}
 		
@@ -699,7 +620,9 @@ public class NLPComponent {
 			entryNode.put("value", entry.getValue());
 			
 			resultArrayNode.add(entryNode);
-		}
+			
+			}
+		
 		
 		result.put("name", "deckRecommendationsBasedOnDeckContentSimilarity");
 		result.set("items", resultArrayNode);

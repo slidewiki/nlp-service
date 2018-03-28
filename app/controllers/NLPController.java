@@ -95,22 +95,7 @@ public class NLPController extends Controller{
         return ok(result);
        
     }
-    
-    
 
-    
-    @javax.ws.rs.Path(value = "/nlp")
-    @ApiOperation(tags = "sub", value = "performs different available nlp steps", notes = "different nlp steps are performed, currently: language detection, tokenization, NER and tfidf (top 10)")
-    public Result performNLP(
-    		@ApiParam(value = "input text") String inputText) {
-    	
-    	ObjectNode result = Json.newObject();
-    	double dbpediaSpotlightConfidence = DBPediaSpotlightUtil.dbpediaspotlightdefaultConfidence; // TODO: make this conigurable
-		result = nlpComponent.performNLP(inputText, result, dbpediaSpotlightConfidence);
-    	
-        return ok(result);
-       
-    }
     
     @javax.ws.rs.Path(value = "/processDeck")
     @ApiOperation(
@@ -238,51 +223,6 @@ public class NLPController extends Controller{
     }
     
 
-    @javax.ws.rs.Path(value = "/deckRecommendationBackgroundInfo")
-    @ApiOperation(
-    		tags = "deck",
-    		value = "retrieves deck recommendation background infos for a given deck id (most important tokens and entities and lucene query)", 
-    		notes = "retrieves deck recommendation background infos for a given deck id (most important tokens and entities and lucene query) by calculating tfidf using frequency information stored nlp results of nlp store")
-    @ApiResponses(
-    		value = {
-    				@ApiResponse(code = 404, message = "Problem while retrieving slides for given deck id  via nlp storage service. Slides for given deck id not found. Probably this deck id does not exist."),
-    				@ApiResponse(code = 500, message = "Problem occured. For more information see details provided.")
-    				})
-
-    public Result deckRecommendationBackgroundInfo(
-    		@ApiParam(required = true, value = "deckId") String deckId, 
-    		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of results to return") int maxTermsToConsider, 
-     		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
-    		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
-    		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
-    		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
-    		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
-    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
-     		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
-
-    		) {
-    	
-   	 	
-    	
-    	try{
-
-    		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    		TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
-        	ObjectNode resultNode = nlpComponent.getDeckRecommendationBackgroundInfo(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings, maxTermsToConsider);
-        
-        	Result r = Results.ok(resultNode);        	
-            return r;
-    	}catch (WebApplicationException e) {
-
-    		return createResultForExceptionalResponseCausedByWebApllicationException(e);
-    	}catch(ProcessingException f){
-    		String message = "Processing was interupted. Problem occured during Processing. For more information see details provided.";
-    		
-    		return createResultForProcessingException(500, f, message);
-    	}
-    	
-       
-    }
     
     @javax.ws.rs.Path(value = "/deckSimilarity")
     @ApiOperation(
@@ -390,7 +330,7 @@ public class NLPController extends Controller{
      		@ApiParam(required = true, defaultValue = "10", value = "the maximum number of recommendations to return.") int maxRecommendationsToReturn,
      		@ApiParam(required = true, defaultValue = "30", value = "the maximum number of candidates to use for similarity calculation. This might increase number and quality of the results but also calcualtion time.") int maxCandidatesToUseForSimilarityCalculation,
      		@ApiParam(required = true, defaultValue = "10", value = "the maximum number of top terms to consider. E.g. if set to 10, the top 10 tokens, top 10 named entities and top 10 spotlight resources are used. You can try to increase this number if no recommendations are returned.") int maxTermsToConsider,
-     		@ApiParam(required = true, defaultValue = "true", value = "if true, tfidf for the given deck is freshly calculated by using frequency data from nlp store. If false, the precalculated tfdif result is used and the following parameters of title boost params, term filter params and tfidfMinDocsToPerformLanguageDependent are not used.") boolean performLiveTFIDFCalculationOfGivenDeck,
+     		@ApiParam(required = true, defaultValue = "true", value = "if true, tfidf for the given deck is freshly calculated by using frequency data from nlp store. If false, the precalculated tfdif result is used and the following parameters of title boost params, term filter params and tfidfMinDocsToPerformLanguageDependent are not used. Use true until storage and API to precalcualted tfidf values is implemented in nlp store.") boolean performLiveTFIDFCalculationOfGivenDeck,
      		@ApiParam(required = true, defaultValue = "true", value = "if true, tfidf for the deck candidates is freshly calculated by using frequency data from nlp store. If false, the precalculated tfdif result is used and the following parameters of title boost params, term filter params and tfidfMinDocsToPerformLanguageDependent are not used.") boolean performLiveTFIDFCalculationOfDeckCandidates,
      		@ApiParam(required = true, defaultValue = "true", value = "title boost: if true, title boost will be performed using the given title boost parameters below. If false no title boost will be performed and title boost parameters will be ignored.") boolean performTitleBoost, 
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
