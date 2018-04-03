@@ -57,6 +57,11 @@ public class NLPStorageUtil {
 		return response;
 	}
 	
+	/**
+	 * @deprecated
+	 * @param deckId
+	 * @return
+	 */
 	public Response getStatisticsDeckFrequencies(String deckId){
 		
                
@@ -64,6 +69,18 @@ public class NLPStorageUtil {
 		Response response = client.target(URL)
 					.request().
 					get();
+		
+		return response;
+	}
+	
+	public Response getStatisticsDeckFrequenciesV2(String deckId, int minForLanguageDependent, int minFrequencyOfTermOrEntityToBeConsidered){
+		
+        String URL = this.URL + "/statistics/termFrequencies/v2/" + deckId;
+		Response response = client.target(URL)
+				 .queryParam("minForLanguageDependent", minForLanguageDependent)
+				 .queryParam("minFrequencyOfTermOrEntityToBeConsidered", minFrequencyOfTermOrEntityToBeConsidered)
+				 .request().
+				 get();
 		
 		return response;
 	}

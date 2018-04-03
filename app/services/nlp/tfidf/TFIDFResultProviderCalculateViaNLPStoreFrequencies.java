@@ -20,6 +20,7 @@ public class TFIDFResultProviderCalculateViaNLPStoreFrequencies implements ITFID
 		this.minDocsToPerformLanguageDependent = minDocsToPerformLanguageDependent;
 		this.titleBoostSettings = titleBoostSettings;
 		this.termFilterSettings = termFilterSettings;
+		
 	}
 
 

@@ -5,13 +5,19 @@ public class TermFilterSettings {
 	private int minCharLength;
 	private int minFrequencyOfTermOrEntityToBeConsidered;
 	private int maxNumberOfWords;
+	private boolean applyMinFrequencyOfTermOnlyAfterTitleBoost;
 	
 	public TermFilterSettings(int minCharLength, int minFrequencyOfTermOrEntityToBeConsidered,
-			int maxNumberOfWords) {
+			int maxNumberOfWords, boolean applyMinFrequencyOfTermOnlyAfterTitleBoost) {
 		super();
 		this.minCharLength = minCharLength;
 		this.minFrequencyOfTermOrEntityToBeConsidered = minFrequencyOfTermOrEntityToBeConsidered;
 		this.maxNumberOfWords = maxNumberOfWords;
+		this.applyMinFrequencyOfTermOnlyAfterTitleBoost = applyMinFrequencyOfTermOnlyAfterTitleBoost;
+	}
+
+	public boolean isApplyMinFrequencyOfTermOnlyAfterTitleBoost() {
+		return applyMinFrequencyOfTermOnlyAfterTitleBoost;
 	}
 
 	public int getMinCharLength() {

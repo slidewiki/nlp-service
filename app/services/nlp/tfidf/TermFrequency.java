@@ -9,18 +9,15 @@ public class TermFrequency {
 	private int frequency;
 	private int frequencyInTitle;
 	private int frequencyOtherDecks;
-	private int frequencyOtherDecksWithLanguageRestriction;
 	
 	
 	@JsonCreator
-	public TermFrequency(@JsonProperty("entry") String entry, @JsonProperty("frequency") int frequency, @JsonProperty("frequencyInDeckTitle") int frequencyInDeckTitle ,@JsonProperty("frequencyOtherDecks") int frequencyOtherDecks,
-			@JsonProperty("frequencyOtherDecksWithLanguageRestriction") int frequencyOtherDecksWithLanguageRestriction) {
+	public TermFrequency(@JsonProperty("entry") String entry, @JsonProperty("frequency") int frequency, @JsonProperty("frequencyInDeckTitle") int frequencyInDeckTitle ,@JsonProperty("frequencyOtherDecks") int frequencyOtherDecks) {
 		super();
 		this.entry = entry;
 		this.frequency = frequency;
 		this.frequencyInTitle = frequencyInDeckTitle;
 		this.frequencyOtherDecks = frequencyOtherDecks;
-		this.frequencyOtherDecksWithLanguageRestriction = frequencyOtherDecksWithLanguageRestriction;
 	}
 
 
@@ -39,9 +36,4 @@ public class TermFrequency {
 		return frequencyOtherDecks;
 	}
 
-	public int getFrequencyOtherDecksWithLanguageRestriction() {
-		return frequencyOtherDecksWithLanguageRestriction;
-	}
-
-	
 }

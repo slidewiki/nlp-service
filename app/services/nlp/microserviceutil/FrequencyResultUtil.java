@@ -16,6 +16,7 @@ public class FrequencyResultUtil {
 	private static String propertyNameFrequencyOfMostFrequentWord = "frequencyOfMostFrequentWord";
 	private static String propertyNameTotalDocs = "totalDocs";
 	private static String propertyNameDocsForLanguage = "docsForLanguage";
+	private static String propertyNameFrequencyOfOtherDocsWasRetrievedLanguageDependent = "languageDependent";
 	
 	
 	public static List<TermFrequency> getTermFrequenciesFromFrequencyResultNode(JsonNode node, String keyname){
@@ -65,5 +66,10 @@ public class FrequencyResultUtil {
 		}
 		return 0;
 	}
+	
+	public static boolean isFrequencyOfOtherDocsWasRetrievedLanguageDependent(JsonNode node){
+		return node.get(propertyNameFrequencyOfOtherDocsWasRetrievedLanguageDependent).asBoolean();
+	}
+	
 	
 }

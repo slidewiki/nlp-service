@@ -149,13 +149,14 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: if true, the min frequency set is only applied after title boost (if title boost is performed)") boolean applyMinFrequencyOfTermOnlyAfterTitleBoost, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length for a recommended tag.") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit if there is no URI available. NER tends to be greedy regarding multi word units and may create strange NEs. If there is no spotlight URI available for the multi word unit, only results up to the given number of words will be returned") int maxNumberOfWords, 
      		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent,
     		@ApiParam(required = true, defaultValue = "20", value = "the maximum number of tag recommendations to return. Returns the top x.") int maxEntriesToReturn) {
     	
     	TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    	TermFilterSettings termFilterSettings = new TermFilterSettings(minFrequencyOfTermOrEntityToBeConsidered, minCharLength, maxNumberOfWords);
+    	TermFilterSettings termFilterSettings = new TermFilterSettings(minFrequencyOfTermOrEntityToBeConsidered, minCharLength, maxNumberOfWords, applyMinFrequencyOfTermOnlyAfterTitleBoost);
    	 	
     	ObjectNode resultNode = Json.newObject();
     	
@@ -195,6 +196,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: if true, the min frequency set is only applied after title boost (if title boost is performed)") boolean applyMinFrequencyOfTermOnlyAfterTitleBoost, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
      		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
@@ -206,7 +208,7 @@ public class NLPController extends Controller{
     	try{
 
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord);
-    		TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
+    		TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords, applyMinFrequencyOfTermOnlyAfterTitleBoost);
         	ObjectNode resultNode = nlpComponent.calculateTfidfResultViaNLPStoreFrequenciesAndReturnAsJsonNode(deckId, tfidfMinDocsToPerformLanguageDependent, titleBoostSettings, termFilterSettings);
         
         	Result r = Results.ok(resultNode);        	
@@ -245,6 +247,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: if true, the min frequency set is only applied after title boost (if title boost is performed)") boolean applyMinFrequencyOfTermOnlyAfterTitleBoost, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
      		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
@@ -254,7 +257,7 @@ public class NLPController extends Controller{
     	
     	try{
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
-        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);			
+        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords, applyMinFrequencyOfTermOnlyAfterTitleBoost);			
         	ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, performLiveTFIDFCalculation, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, true, false);
         	Result r = Results.ok(resultNode);        	
             return r;
@@ -290,6 +293,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: if true, the min frequency set is only applied after title boost (if title boost is performed)") boolean applyMinFrequencyOfTermOnlyAfterTitleBoost, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
      		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
@@ -299,7 +303,7 @@ public class NLPController extends Controller{
     	
     	try{
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
-        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
+        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords, applyMinFrequencyOfTermOnlyAfterTitleBoost);
 			ObjectNode resultNode = nlpComponent.calculateCosineSimilarity(deckId1, deckId2, performLiveTFIDFCalculation, maxTermsToConsider, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, true, true);
         	Result r = Results.ok(resultNode);        	
             return r;
@@ -337,6 +341,7 @@ public class NLPController extends Controller{
     		@ApiParam(required = true, defaultValue = "-1", value = "title boost parameter: if this value is set (bigger than 0), the title frequencies are multiplied with this given number as fixed factor. If not set (below or equal to 0), title boost is performed with factor equal to the number of slides with text of the given deck.") int titleBoostWithFixedFactor, 
     		@ApiParam(required = true, defaultValue = "true", value = "title boost parameter: if true, the result of title boost will be limited to the frequency of the most frequent word in the deck ") boolean titleBoostlimitToFrequencyOfMostFrequentWord, 
     		@ApiParam(required = true, defaultValue = "2", value = "term filter setting: the minimum frequency a term or entity must have to be considered in the processing.") int minFrequencyOfTermOrEntityToBeConsidered, 
+    		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: if true, the min frequency set is only applied after title boost (if title boost is performed)") boolean applyMinFrequencyOfTermOnlyAfterTitleBoost, 
     		@ApiParam(required = true, defaultValue = "3", value = "term filter setting: the minimum character length of a term to be considered") int minCharLength, 
     		@ApiParam(required = true, defaultValue = "4", value = "term filter setting: maximum number of words in multi word unit. (NER tends to be greedy regarding multi word units and may create strange NEs)") int maxNumberOfWords, 
      		@ApiParam(required = true, defaultValue = "100", value = "the minimum number of documents of a certain language must exist in the platform to perform langauage dependent.") int tfidfMinDocsToPerformLanguageDependent
@@ -346,7 +351,7 @@ public class NLPController extends Controller{
     	
     	try{
     		TitleBoostSettings titleBoostSettings = new TitleBoostSettings(performTitleBoost, titleBoostWithFixedFactor, titleBoostlimitToFrequencyOfMostFrequentWord );
-        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords);
+        	TermFilterSettings termFilterSettings = new TermFilterSettings(minCharLength, minFrequencyOfTermOrEntityToBeConsidered, maxNumberOfWords, applyMinFrequencyOfTermOnlyAfterTitleBoost);
 
         	ObjectNode resultNode = nlpComponent.getDeckRecommendation(deckId, performLiveTFIDFCalculationOfGivenDeck, performLiveTFIDFCalculationOfDeckCandidates, titleBoostSettings, termFilterSettings, tfidfMinDocsToPerformLanguageDependent, maxTermsToConsider, maxCandidatesToUseForSimilarityCalculation, maxRecommendationsToReturn);
         	Result r = Results.ok(resultNode);        	
