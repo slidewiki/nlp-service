@@ -16,6 +16,6 @@ CUDA_VISIBLE_DEVICES=2 python -m torch.distributed.launch ./examples/question-an
     --num_train_epochs 2 \
     --max_seq_length 96 \
     --doc_stride 64 \
-    --output_dir ../models/wwm_uncased_finetuned_squad/
+    --output_dir ../models/wwm_uncased_finetuned_squad/ \
     
-    The checkpoint saved from training using above configurations will be used for slidewiki qa predictions.
+The checkpoint saved from training using above configurations is being used for slidewiki qa predictions.
