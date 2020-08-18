@@ -19,13 +19,13 @@ conda install -c pytorch ignite==0.1 \
 python -m spacy download en \
 
 Example to run program for both models with some optional adjustable parameters: \
-(py36) ukumar@sda-srv04:~/sentence_similarity$ python main.py --model sif --dataset sick --batch-size 32 \
+(py36) ukumar@sda-srv04:~/sentence_similarity$ python main.py --batch-size 32 \
 Validation Results - Epoch: 15 Accuracy: 0.8307 \
 Test Results - Epoch: 15 Accuracy: 0.8183 \
  eg of model: \
  f4c38bd0-62d3-4a85-a3ad-d41765b12269.model \
 
-(py36) ukumar@sda-srv04:~/sentence_similarity$ python main.py --model bimpm --dataset sick --batch-size 64 \
+(py36) ukumar@sda-srv04:~/sentence_similarity$ python main.py --batch-size 64 \
 Validation Results - Epoch: 15 Accuracy: 0.7293 \
 Test Results - Epoch: 15 Accuracy: 0.7315 \
 --model can be saved so that in next run we do not have to train the model, and just can get the results. eg of model: \
